@@ -1,0 +1,743 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useTracks, VideoTrack, useRemoteParticipants, useSpeakingParticipants } from '@livekit/components-react';
+import { Track } from 'livekit-client';
+import { endSession } from '../api/endpoints';
+import { useSocket } from '../hooks/useSocket.js';
+import useAppStore from '../store/useAppStore.js';
+import CallControls from '../components/CallControls.jsx';
+import ChatOverlay from '../components/ChatOverlay.jsx';
+import EndSessionSheet from '../components/EndSessionSheet.jsx';
+import Avatar from '../components/Avatar.jsx';
+import SpeakingQuestions from '../components/SpeakingQuestions.jsx';
+import { useT } from '../i18n/index.js';
+import { notifyHaptic } from '../utils/haptics.js';
+import { AlertCircle, AlertTriangle, X } from 'lucide-react';
+
+function fmt(s) {
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function MediaController({ micOn, camOn }) {
+  const room = useRoomContext();
+  useEffect(() => { room?.localParticipant?.setMicrophoneEnabled(micOn); }, [micOn, room]);
+  useEffect(() => { room?.localParticipant?.setCameraEnabled(camOn); }, [camOn, room]);
+  return null;
+}
+
+// ── Drag hook for PiP window ───────────────────────────────────────────────
+function useDrag(initialPos, onClick) {
+  const [pos, setPos] = useState(initialPos);
+  const dragging = useRef(false);
+  const moved = useRef(false);
+  const startRef = useRef({ x: 0, y: 0, px: 0, py: 0 });
+
+  function onPointerDown(e) {
+    dragging.current = true;
+    moved.current = false;
+    startRef.current = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.stopPropagation();
+  }
+
+  function onPointerMove(e) {
+    if (!dragging.current) return;
+    const dx = e.clientX - startRef.current.x;
+    const dy = e.clientY - startRef.current.y;
+
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      moved.current = true;
+    }
+
+    const newX = startRef.current.px + dx;
+    const newY = startRef.current.py + dy;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const pipW = 110;
+    const pipH = 160;
+
+    const clampedX = Math.max(-(vw - pipW - 12), Math.min(newX, -12));
+    const clampedY = Math.max(-(vh - pipH - 12), Math.min(newY, -12));
+
+    setPos({ x: clampedX, y: clampedY });
+  }
+
+  function onPointerUp() {
+    dragging.current = false;
+    if (!moved.current && onClick) {
+      onClick();
+    }
+  }
+
+  return { pos, onPointerDown, onPointerMove, onPointerUp };
+}
+
+function VideoGrid({ session }) {
+  const tracks = useTracks(
+    [{ source: Track.Source.Camera, withPlaceholder: true }],
+    { onlySubscribed: false }
+  );
+  // Active-speaker — qaysi ishtirokchi gapirayotganini kuzatadi (re-render bilan)
+  const speakingIds = new Set(useSpeakingParticipants().map(p => p.identity));
+
+  const localTrack  = tracks.find(t => t.participant?.isLocal);
+  const remoteTrack = tracks.find(t => t.participant && !t.participant.isLocal);
+  const hasLocal    = !!localTrack?.publication?.track;
+  const hasRemote   = !!remoteTrack?.publication?.track;
+
+  // Swapped: true bo'lsa local to'liq ekran, remote PiP
+  const [swapped, setSwapped] = useState(false);
+
+  // Drag hook for PiP. Initial position matches bottom: 130px, right: 14px
+  const pip = useDrag({ x: -14, y: -130 }, () => setSwapped(v => !v));
+
+  if (!hasLocal && !hasRemote) return null;
+
+  const mainTrack   = swapped ? localTrack  : remoteTrack;
+  const mainName    = swapped ? 'You'        : (session?.partnerName || 'Partner');
+  const mainHas     = swapped ? hasLocal     : hasRemote;
+  const mainLetter  = swapped ? 'You'        : (session?.partnerName?.[0]?.toUpperCase() || '?');
+
+  const pipTrack    = swapped ? remoteTrack  : localTrack;
+  const pipName     = swapped ? (session?.partnerName || 'Partner') : 'You';
+  const pipHas      = swapped ? hasRemote    : hasLocal;
+  const pipLetter   = swapped ? (session?.partnerName?.[0]?.toUpperCase() || '?') : 'You';
+
+  // Mirror HAR DOIM o'z (local) trekiga ergashadi — main yoki PiP'da bo'lishidan
+  // qat'i nazar. Shu sababli swap qilganda o'z video teskari bo'lib qolmaydi.
+  const mainMirror = swapped;   // swapped bo'lsa main = local
+  const pipMirror  = !swapped;  // aks holda PiP = local
+
+  const mainSpeaking = mainTrack?.participant ? speakingIds.has(mainTrack.participant.identity) : false;
+  const pipSpeaking  = pipTrack?.participant  ? speakingIds.has(pipTrack.participant.identity)  : false;
+
+  return (
+    <div className="video-grid">
+      {/* To'liq ekran */}
+      <div className={`video-main${mainSpeaking ? ' video-main--speaking' : ''}`}>
+        {mainHas
+          ? <VideoTrack trackRef={mainTrack} style={mainMirror ? { transform: 'scaleX(-1)' } : {}} />
+          : <div className="video-avatar"><span>{mainLetter}</span></div>
+        }
+        <div className="video-scrim" />
+        <span className="video-label">
+          {mainSpeaking && <span className="video-label__dot" />}
+          {mainName}
+        </span>
+      </div>
+
+      {/* Picture-in-picture — sudrab yuriladigan va bosganda almashadigan */}
+      <div
+        className={`video-pip${pipSpeaking ? ' video-pip--speaking' : ''}`}
+        style={{
+          right: Math.max(12, -pip.pos.x),
+          bottom: Math.max(12, -pip.pos.y),
+          touchAction: 'none',
+        }}
+        onPointerDown={pip.onPointerDown}
+        onPointerMove={pip.onPointerMove}
+        onPointerUp={pip.onPointerUp}
+      >
+        {pipHas
+          ? <VideoTrack trackRef={pipTrack} style={pipMirror ? { transform: 'scaleX(-1)' } : {}} />
+          : <div className="video-avatar video-avatar--pip"><span>{pipLetter}</span></div>
+        }
+        <span className="video-label video-label--pip">{pipName}</span>
+        <div className="video-pip__swap" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 3 4 7l4 4" /><path d="M4 7h16" />
+            <path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// LiveKit xato xabarini foydalanuvchiga tushunarli qilib ko'rsatish
+function friendlyError(msg, t) {
+  if (!msg) return t('call.err.generic');
+  const m = msg.toLowerCase();
+  if (m.includes('webrtc') || m.includes('not supported'))
+    return t('call.err.webrtc');
+  if (m.includes('permission') || m.includes('notallowed'))
+    return t('call.err.permission');
+  if (m.includes('network') || m.includes('ice') || m.includes('connection'))
+    return t('call.err.network');
+  return t('call.err.generic');
+}
+
+function ConnectionWatcher() {
+  const participants = useRemoteParticipants();
+  const setPartnerConnected = useAppStore((s) => s.setPartnerConnected);
+  const hasRemote = participants.length > 0;
+
+  useEffect(() => {
+    if (hasRemote) {
+      setPartnerConnected(true);
+    }
+  }, [hasRemote, setPartnerConnected]);
+
+  return null;
+}
+
+// Kim gapirayotganini kuzatadi (LiveKit active-speaker) va yuqoriga uzatadi —
+// shu orqali header avatari va mikrofon tugmasi jonli "gapiryapti" holatini ko'rsatadi.
+function SpeakingWatcher({ onChange }) {
+  const speaking = useSpeakingParticipants();
+  const youSpeaking = speaking.some((p) => p.isLocal);
+  const partnerSpeaking = speaking.some((p) => !p.isLocal);
+
+  useEffect(() => {
+    onChange(youSpeaking, partnerSpeaking);
+  }, [youSpeaking, partnerSpeaking, onChange]);
+
+  return null;
+}
+
+export default function Chat() {
+  const {
+    session, messages, isPartnerTyping,
+    isCallActive, navigate, setCallActive,
+    livekitToken, livekitUrl,
+    clearSession, setMatchingStatus,
+    partnerConnected, setPartnerConnected,
+  } = useAppStore();
+  const { joinSession, sendMessage, sendTyping } = useSocket();
+  const t = useT();
+
+  const [elapsed, setElapsed]       = useState(0);
+  const [showChat, setShowChat]     = useState(false);
+  const [showEnd, setShowEnd]       = useState(false);
+  const [ending, setEnding]         = useState(false);
+  const [micOn, setMicOn]           = useState(true);
+  const [camOn, setCamOn]           = useState(false);
+  // Speaking paneli detail sahifada (parts'dan boshqa) bo'lsa, call tugmalari yashiriladi
+  const [speakingDetail, setSpeakingDetail] = useState(false);
+  const [liveKitError, setLiveKitError] = useState(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [lastSeenCount, setLastSeenCount] = useState(0);
+  const [connectionTimeout, setConnectionTimeout] = useState(false);
+  const [youSpeaking, setYouSpeaking] = useState(false);
+  const [partnerSpeaking, setPartnerSpeaking] = useState(false);
+
+  const handleSpeaking = useCallback((you, partner) => {
+    setYouSpeaking(you);
+    setPartnerSpeaking(partner);
+  }, []);
+
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (session?.id) joinSession(session.id);
+    const backBtn = window.Telegram?.WebApp?.BackButton;
+    const onBack = () => setShowEnd(true);
+    if (backBtn) {
+      backBtn.show();
+      backBtn.onClick(onBack);
+    }
+    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+
+    // 25 soniya ichida sherik ulanmasa, taymaut qilish
+    const timeoutId = setTimeout(() => {
+      if (!useAppStore.getState().partnerConnected) {
+        setConnectionTimeout(true);
+      }
+    }, 25000);
+
+    return () => {
+      clearInterval(timerRef.current);
+      clearTimeout(timeoutId);
+      if (backBtn) {
+        backBtn.offClick(onBack); // handlerni olib tashlaymiz — leak oldini olish
+        backBtn.hide();
+      }
+    };
+  }, []);
+
+  async function handleRetryConnection() {
+    if (session?.id) {
+      try { await endSession(session.id); } catch {}
+    }
+    clearSession();
+    setMatchingStatus('idle');
+    navigate('matching');
+  }
+
+  async function handleGoHome() {
+    if (session?.id) {
+      try { await endSession(session.id); } catch {}
+    }
+    clearSession();
+    setMatchingStatus('idle');
+    navigate('home');
+  }
+
+  async function handleEnd() {
+    if (ending || !session?.id) return;
+    setEnding(true);
+    try { await endSession(session.id); } catch {}
+    navigate('session_end', { sessionId: session.id, elapsed });
+  }
+
+  const unread = showChat ? 0 : Math.max(0, messages.length - lastSeenCount);
+  useEffect(() => {
+    if (showChat) setLastSeenCount(messages.length);
+  }, [showChat, messages.length]);
+
+  // Suhbatdosh ulanganda yengil haptik signal
+  useEffect(() => {
+    if (partnerConnected) notifyHaptic('success');
+  }, [partnerConnected]);
+
+  if (connectionTimeout) {
+    return (
+      <div className="timeout-screen scale-in">
+        <span className="chat-glyph"><AlertCircle size={30} /></span>
+        <div className="timeout-info">
+          <h2>{t('call.timeoutTitle')}</h2>
+          <p>{t('call.timeoutDesc')}</p>
+        </div>
+        <div className="timeout-actions">
+          <button className="btn-primary" onClick={handleRetryConnection}>{t('common.tryAgain')}</button>
+          <button className="btn-secondary" onClick={handleGoHome}>{t('common.goHome')}</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="call-screen">
+
+      {/* LiveKit room */}
+      {isCallActive && livekitToken && livekitUrl && (
+        <LiveKitRoom
+          token={livekitToken}
+          serverUrl={livekitUrl}
+          connect={true}
+          audio={true}
+          video={camOn}
+          onConnected={() => { setLiveKitError(null); setIsReconnecting(false); }}
+          onDisconnected={() => setCallActive(false)}
+          onReconnecting={() => setIsReconnecting(true)}
+          onReconnected={() => setIsReconnecting(false)}
+          onError={(err) => {
+            console.error('LiveKit error:', err);
+            setLiveKitError(err?.message || 'Connection failed');
+          }}
+          style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+        >
+          <RoomAudioRenderer />
+          <MediaController micOn={micOn} camOn={camOn} />
+          <ConnectionWatcher />
+          <SpeakingWatcher onChange={handleSpeaking} />
+          {camOn && <VideoGrid session={session} />}
+        </LiveKitRoom>
+      )}
+
+      {/* Reconnecting banner */}
+      {isReconnecting && (
+        <div className="reconnecting-banner fade-down">
+          <span>{t('call.reconnecting')}</span>
+        </div>
+      )}
+
+      {/* Gradient bg — audio mode only */}
+      {!camOn && <div className="call-bg-glow" />}
+
+      {/* LiveKit error banner */}
+      {liveKitError && (
+        <div className="call-error-banner">
+          <span><AlertTriangle size={14} /> {friendlyError(liveKitError, t)}</span>
+          <button onClick={() => setLiveKitError(null)} aria-label="Close"><X size={15} /></button>
+        </div>
+      )}
+
+      {/* Camera timer overlay */}
+      {camOn && (
+        <div className="call-cam-timer">
+          <span
+            className="call-dot"
+            style={{
+              background: partnerConnected ? 'var(--success)' : 'var(--warning)',
+              boxShadow: partnerConnected ? '0 0 6px var(--success)' : '0 0 6px var(--warning)',
+            }}
+          />
+          <span>{partnerConnected ? fmt(elapsed) : t('call.waiting')}</span>
+        </div>
+      )}
+
+      {/* ── Header — audio mode ── */}
+      {!camOn && (
+        <div className="call-header">
+          <div className={`call-presence${partnerSpeaking ? ' call-presence--speaking' : ''}`}>
+            <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
+          </div>
+          <div className="call-header__info">
+            <span className="call-header__name">{session?.partnerName || 'Partner'}</span>
+            <div className="call-header__meta">
+              <div className="call-header__meta-row">
+                <span className="call-tag">{t('lang.en')}</span>
+                {session?.partnerLevel && (
+                  <span className="call-tag call-tag--dim">{t(`level.${session.partnerLevel}`)}</span>
+                )}
+                {partnerSpeaking && (
+                  <span className="call-status call-status--speaking">
+                    {t('call.speaking')}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="call-header__timer">
+            <span
+              className="call-dot"
+              style={{
+                background: partnerConnected ? 'var(--success)' : 'var(--warning)',
+                boxShadow: partnerConnected ? '0 0 8px var(--success)' : '0 0 8px var(--warning)',
+              }}
+            />
+            <span className="call-header__elapsed">
+              {partnerConnected ? fmt(elapsed) : t('call.waiting')}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Speaking section — audio mode ── */}
+      {!camOn && (
+        <div className="call-body">
+          {!partnerConnected && (
+            <div className="call-waiting-note">
+              <span className="call-waiting-spinner" />
+              <span>{t('call.waiting')}</span>
+            </div>
+          )}
+          <SpeakingQuestions onDetailChange={setSpeakingDetail} />
+        </div>
+      )}
+
+      <CallControls
+        micOn={micOn}
+        camOn={camOn}
+        speaking={youSpeaking && micOn}
+        onToggleMic={() => setMicOn(v => !v)}
+        onToggleCam={() => setCamOn(v => !v)}
+        onEnd={() => setShowEnd(true)}
+        onOpenChat={() => setShowChat(true)}
+        unread={unread}
+        hidden={!camOn && speakingDetail}
+      />
+
+      {showChat && (
+        <ChatOverlay
+          messages={messages}
+          isPartnerTyping={isPartnerTyping}
+          sessionId={session?.id}
+          onClose={() => setShowChat(false)}
+          sendMessage={sendMessage}
+          sendTyping={sendTyping}
+        />
+      )}
+
+      {showEnd && (
+        <EndSessionSheet
+          onConfirm={handleEnd}
+          onCancel={() => setShowEnd(false)}
+          isEnding={ending}
+        />
+      )}
+
+      <style>{`
+        /* ── Screen ── */
+        /* Qo'ng'iroq ekrani har doim qoramtir — Telegram light theme'da ham
+           matn/taglar oq fonda yo'qolib qolmasligi uchun CSS o'zgaruvchilarni
+           shu yuza ichida majburan qoraytirilgan holatga o'rnatamiz. */
+        .call-screen {
+          --bg: #0e0e12;
+          --bg-secondary: rgba(255,255,255,0.08);
+          --text-primary: #ffffff;
+          --text-secondary: rgba(255,255,255,0.6);
+          --border: rgba(255,255,255,0.12);
+          position: relative;
+          width: 100%; height: 100%;
+          background: #0e0e12;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Background glow */
+        .call-bg-glow {
+          position: absolute; inset: 0; z-index: 0;
+          background:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.18) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.1) 0%, transparent 60%);
+          pointer-events: none;
+        }
+
+        /* ── Header ── */
+        .call-header {
+          position: relative; z-index: 10;
+          display: flex; align-items: center; gap: var(--space-3);
+          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          animation: fadeIn 0.2s ease both;
+          flex-shrink: 0;
+        }
+        /* Sherik "borligi" — avatar atrofidagi gapirish halqasi */
+        .call-presence {
+          position: relative;
+          flex-shrink: 0;
+          border-radius: 50%;
+        }
+        .call-presence::after {
+          content: '';
+          position: absolute; inset: -3px;
+          border-radius: 50%;
+          border: 2px solid transparent;
+          transition: border-color 0.18s ease;
+          pointer-events: none;
+        }
+        .call-presence--speaking::after {
+          border-color: var(--success);
+          animation: speakPulse 1.3s ease-out infinite;
+        }
+        @keyframes speakPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(52,199,89,0.45); }
+          100% { box-shadow: 0 0 0 9px rgba(52,199,89,0); }
+        }
+
+        .call-header__info {
+          flex: 1; min-width: 0;
+          display: flex; flex-direction: column; gap: var(--space-1);
+        }
+        .call-header__name {
+          font-size: var(--text-md); font-weight: var(--weight-bold);
+          color: var(--text-primary);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          line-height: 1.2;
+        }
+        .call-header__meta {
+          display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start;
+        }
+        .call-header__meta-row {
+          display: flex; align-items: center; gap: var(--space-1);
+        }
+        .call-tag {
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          color: var(--text-primary);
+          background: rgba(255,255,255,0.1);
+          border-radius: 6px; padding: var(--space-0-5) var(--space-1-5);
+          letter-spacing: 0.4px;
+          white-space: nowrap;
+        }
+        .call-tag--dim {
+          color: var(--text-secondary);
+          background: rgba(255,255,255,0.06);
+          font-weight: var(--weight-medium);
+        }
+        /* Jonli holat: "Listening" / "Speaking…" */
+        .call-status {
+          font-size: var(--text-xs); font-weight: var(--weight-semi);
+          color: var(--text-secondary);
+          display: inline-flex; align-items: center;
+          white-space: nowrap;
+          transition: color 0.18s ease;
+        }
+        .call-status::before {
+          content: '';
+          width: 6px; height: 6px; border-radius: 50%;
+          margin-right: var(--space-1);
+          background: currentColor;
+          flex-shrink: 0;
+        }
+        .call-status--speaking {
+          color: var(--success);
+        }
+        .call-header__timer {
+          display: flex; align-items: center; gap: var(--space-1-5);
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 99px; padding: var(--space-1) var(--space-3);
+          font-size: var(--text-sm); font-weight: var(--weight-bold);
+          color: var(--text-primary);
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .call-header__elapsed { letter-spacing: 0.3px; }
+        .call-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          flex-shrink: 0;
+          animation: dotPulse 2s ease-in-out infinite;
+        }
+
+        /* ── Body (speaking questions area) ── */
+        .call-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          min-height: 0;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          position: relative; z-index: 5;
+          padding-top: var(--space-3);
+          /* Bottom padding so content isn't hidden behind controls */
+          padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+        }
+        .call-body > * { width: 100%; }
+
+        /* Suhbatdosh kutilayotgan paytdagi banner */
+        .call-waiting-note {
+          display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+          margin: var(--space-0-5) var(--space-4) var(--space-1-5);
+          padding: var(--space-2) var(--space-3);
+          background: rgba(255,149,0,0.12);
+          border: 1px solid rgba(255,149,0,0.22);
+          border-radius: 12px;
+          font-size: var(--text-sm); font-weight: var(--weight-semi);
+          color: #ffb454;
+        }
+        .call-waiting-spinner {
+          width: 13px; height: 13px; border-radius: 50%;
+          border: 2px solid rgba(255,180,84,0.35);
+          border-top-color: #ffb454;
+          animation: spin 0.8s linear infinite;
+        }
+
+        /* ── Camera timer overlay ── */
+        .call-cam-timer {
+          position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+          display: flex; align-items: center; gap: var(--space-1-5);
+          background: rgba(0,0,0,0.45);
+          backdrop-filter: blur(10px);
+          border-radius: 99px; padding: var(--space-1) var(--space-4);
+          font-size: var(--text-sm); font-weight: var(--weight-bold);
+          color: rgba(255,255,255,0.9);
+          font-variant-numeric: tabular-nums;
+          z-index: 15; pointer-events: none;
+        }
+
+        /* ── Error banner ── */
+        .call-error-banner {
+          position: absolute; top: 12px; left: 12px; right: 12px;
+          display: flex; align-items: center; justify-content: space-between;
+          background: rgba(220,38,38,0.9);
+          backdrop-filter: blur(8px);
+          border-radius: 12px; padding: var(--space-3) var(--space-4);
+          font-size: var(--text-sm); font-weight: var(--weight-semi); color: #fff;
+          z-index: 30; gap: var(--space-3);
+          box-shadow: 0 4px 20px rgba(220,38,38,0.4);
+        }
+        .call-error-banner button {
+          font-size: var(--text-md); color: rgba(255,255,255,0.7);
+          flex-shrink: 0;
+        }
+
+        /* ── Video grid ── */
+        .video-grid {
+          position: absolute; inset: 0;
+          background: #000; z-index: 1;
+        }
+        .video-main {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: #111;
+        }
+        .video-main video { width: 100%; height: 100%; object-fit: cover; }
+        /* Pastki gradient — label/taymer yorqin video ustida ham o'qilsin */
+        .video-scrim {
+          position: absolute; left: 0; right: 0; bottom: 0; height: 140px;
+          background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+          z-index: 1; pointer-events: none;
+        }
+        /* Active-speaker — gapirayotgan ishtirokchi oynasi yashil porlaydi */
+        .video-main--speaking::after {
+          content: '';
+          position: absolute; inset: 0;
+          border: 3px solid var(--success);
+          box-shadow: inset 0 0 24px rgba(52,199,89,0.35);
+          z-index: 3; pointer-events: none;
+          animation: videoSpeak 1.4s ease-in-out infinite;
+        }
+        @keyframes videoSpeak {
+          0%, 100% { opacity: 0.65; }
+          50% { opacity: 1; }
+        }
+        .video-pip {
+          position: absolute; bottom: 130px; right: 14px;
+          width: 112px; height: 162px;
+          border-radius: 18px; overflow: hidden;
+          background: #1a1a2e;
+          border: 2px solid rgba(255,255,255,0.18);
+          box-shadow: 0 6px 28px rgba(0,0,0,0.55);
+          cursor: pointer; z-index: 15;
+          display: flex; align-items: center; justify-content: center;
+          transition: transform 0.15s, border-color 0.18s, box-shadow 0.18s;
+        }
+        .video-pip:active { transform: scale(0.95); }
+        .video-pip--speaking {
+          border-color: var(--success);
+          box-shadow: 0 6px 28px rgba(0,0,0,0.55), 0 0 0 2px rgba(52,199,89,0.45);
+        }
+        .video-pip video { width: 100%; height: 100%; object-fit: cover; }
+        .video-pip__swap {
+          position: absolute; top: 7px; right: 7px;
+          width: 24px; height: 24px;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(0,0,0,0.5); color: #fff;
+          border-radius: 50%; backdrop-filter: blur(6px);
+          border: 1px solid rgba(255,255,255,0.18);
+          pointer-events: none;
+        }
+        .video-avatar {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          background: radial-gradient(circle at 50% 38%, #2a2a45 0%, #14141f 75%);
+        }
+        /* Bu ikkitasi shrift shkalasidan tashqarida — matn ierarxiyasi emas,
+           avatar doirasining o'lchamiga proporsional bosh harflar. Shkalaga
+           tortilsa harflar doiraga sig'may qoladi. */
+        .video-avatar span { font-size: 52px; font-weight: var(--weight-bold); color: rgba(255,255,255,0.6); }
+        .video-avatar--pip span { font-size: 28px; }
+        .video-label {
+          position: absolute; bottom: 10px; left: 12px;
+          display: inline-flex; align-items: center; gap: var(--space-1-5);
+          font-size: var(--text-sm); font-weight: var(--weight-semi);
+          color: #fff; background: rgba(0,0,0,0.4);
+          padding: var(--space-1) var(--space-3); border-radius: 20px;
+          backdrop-filter: blur(6px); z-index: 4; pointer-events: none;
+        }
+        .video-label__dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: var(--success); flex-shrink: 0;
+          box-shadow: 0 0 6px var(--success);
+        }
+        .video-label--pip {
+          font-size: var(--text-xs); bottom: 6px; left: 6px;
+          padding: var(--space-0-5) var(--space-1-5);
+        }
+
+        /* ── Timeout screen ── */
+        .timeout-screen {
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: var(--space-5); padding: var(--space-7) var(--space-5);
+          flex: 1; height: 100%; background: var(--bg); text-align: center;
+        }
+        .timeout-info { display: flex; flex-direction: column; gap: var(--space-2); }
+        .timeout-info h2 { font-size: var(--text-lg); font-weight: var(--weight-heavy); color: var(--text-primary); }
+        .timeout-info p { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.6; }
+        .timeout-actions {
+          display: flex; flex-direction: column; gap: var(--space-2); width: 100%; max-width: 260px;
+        }
+
+        @keyframes dotPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.15); }
+        }
+      `}</style>
+    </div>
+  );
+}

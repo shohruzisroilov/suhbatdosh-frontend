@@ -1,0 +1,421 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Suhbatdosh — dizayn tizimi
+   ═══════════════════════════════════════════════════════════════════════════
+
+   YO'NALISH
+   Ilova ikkita ishni qiladi: jonli sherik bilan gapirish va IELTS Speaking
+   mock. Ikkalasi ham bitta narsa atrofida aylanadi — ovoz chiqarib gapirish
+   va o'lchanish. Dizayn shundan kelib chiqadi.
+
+   RANG. Oldin barcha ranglar Telegram temasidan olinardi (--tg-theme-*).
+   Bu ilovaning o'z qiyofasini butunlay yo'q qilardi: tugma Telegram ko'ki
+   edi, fon esa foydalanuvchi tanlagan tema. Endi palitra o'zimizniki.
+   Manba — Samarqand va Buxoro koshinlarining sirlangan ko'k-firuzasi va
+   shahar g'ishtining iliq loy rangi. Bu O'zbekistonda qurilgan mahsulot va
+   palitra ham shundan kelib chiqqan bo'lgani mantiqiy.
+
+   Telegram temasidan faqat BITTA narsa olinadi — light/dark tanlovi
+   (useAuth.js `light`/`dark` klassini qo'yadi). Ranglarning o'zi emas.
+
+   SHRIFT. Bitta display shrift (Bricolage Grotesque) faqat sarlavha va
+   raqamlar uchun; matn tanasi tizim shriftida qoladi. Nega ikkitasi emas:
+   ilova O'zbekistondagi o'rta darajali Android telefonlarda, ko'pincha
+   sekin tarmoqda ochiladi. Ikkinchi shrift fayli birinchi ko'rinishni
+   kechiktiradi va bu narx tipografik nozikliкdan qimmatroq.
+
+   IMZO. IELTS band shkalasi (0–9) — bu auditoriya uchun yagona muhim
+   raqam va u aslida chizg'ich: belgilangan bo'linmalari bor gorizontal
+   o'lchov. Shu shakl butun ilovada takrorlanadi (BandScale.jsx): natijada
+   ham, kunlik daqiqa hisoblagichida ham, mock progressida ham. Ya'ni
+   "sizni o'lchaydigan hamma narsa — bo'linmali shkala".
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Display shrift — faqat sarlavha va raqamlar uchun (weight 600..800).
+   `display=swap`: shrift kelguncha tizim shrifti ko'rinadi, matn hech
+   qachon ko'rinmas holatda turmaydi. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap');
+
+:root {
+  /* ─── Rang: qorong'i tema (standart) ─────────────────────────────────────
+     Sof qora ishlatilmaydi — OLED ekranda u siljish izini (smear) beradi va
+     kartalar fondan ajralmay qoladi. Fon — tun ko'kining eng to'qi. */
+  --bg:             #0A1118;   /* sahifa foni */
+  --bg-secondary:   #111C26;   /* karta, ko'tarilgan yuza */
+  --surface-2:      #17242F;   /* ichki yuza: input, meter, tick yo'li */
+  --border:         rgba(255, 255, 255, 0.09);
+  --border-strong:  rgba(255, 255, 255, 0.16);
+
+  --text-primary:   #F2F6F8;
+  --text-secondary: #90A4B1;   /* #0A1118 ga nisbatan 5.9:1 — AA dan yuqori */
+
+  /* Telegram och ko'k — asosiy brend rangi.
+     Ustidagi matn har doim tiniq oq (#FFFFFF). */
+  --btn-bg:         #2AABEE;
+  --btn-text:       #FFFFFF;
+  --link-color:     #2AABEE;
+
+  /* Iliq loy — ball, reyting, premium. Ataylab bitta iliq token:
+     "yulduz sariq, narx boshqa sariq" kabi tarqoqlik oldini oladi. */
+  --accent:         #E9873F;
+  --rating:         var(--accent);
+
+  --success:        #35C88A;
+  --warning:        #E9873F;
+  --danger:         #FF5A52;   /* yozib olish holati va xatolar */
+
+  --success-bg:     rgba(53, 200, 138, 0.14);
+  --warning-bg:     rgba(233, 135, 63, 0.14);
+  --danger-bg:      rgba(255, 90, 82, 0.14);
+  --rating-bg:      rgba(233, 135, 63, 0.14);
+  --accent-bg:      rgba(233, 135, 63, 0.14);
+  --btn-bg-soft:    rgba(42, 171, 238, 0.15);
+
+  /* Yagona Telegram ko'k gradient. CTA va jonli mikrofon orbida ishlatiladi. */
+  --grad-primary:   linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+
+  /* ─── Shrift ─────────────────────────────────────────────────────────── */
+  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', var(--font-body);
+
+  /* Shkala 1.25 nisbatda. Oldin ettita qadam bor edi, lekin --text-2xl
+     (40px) va hero raqamlari orasida bo'shliq bor edi — natija ekranidagi
+     ball uchun alohida qadam qo'shildi. */
+  --text-xs:   11px;   /* yorliq, meta, vaqt */
+  --text-sm:   13px;   /* ikkilamchi matn */
+  --text-base: 15px;   /* asosiy matn, tugmalar */
+  --text-md:   17px;   /* ro'yxat sarlavhasi, urg'u */
+  --text-lg:   21px;   /* bo'lim sarlavhasi */
+  --text-xl:   27px;   /* sahifa sarlavhasi */
+  --text-2xl:  34px;   /* katta raqamlar */
+  --text-3xl:  56px;   /* faqat band bali — sahifada bitta */
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semi:   600;
+  --weight-bold:   700;
+  --weight-heavy:  800;   /* sahifada bittadan ko'p emas */
+
+  /* ─── Bo'shliq (4px asosida) ─────────────────────────────────────────── */
+  --space-0-5:  2px;
+  --space-1:    4px;
+  --space-1-5:  6px;
+  --space-2:    8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   24px;
+  --space-6:   32px;
+  --space-7:   40px;
+
+  /* ─── Radius ─────────────────────────────────────────────────────────── */
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   26px;
+  --radius-full: 9999px;
+
+  /* ─── Soya ───────────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.34);
+
+  /* ─── Harakat ────────────────────────────────────────────────────────── */
+  /* Expo-out: tez boshlanadi, yumshoq to'xtaydi — bosishga javob shu
+     egri chiziqda eng "javobgar" his qilinadi. */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t:        0.18s var(--ease-out);
+  --t-slow:   0.3s  var(--ease-out);
+  --t-spring: 0.32s var(--ease-spring);
+
+  /* Ikonka o'lchamlari — token, tasodifiy son emas. */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+}
+
+/* ─── Yorug' tema ─────────────────────────────────────────────────────────
+   Telegram `light` klassini qo'yadi (useAuth.js). Bu Telegram ranglarini
+   emas, bizning yorug' palitramizni yoqadi.
+
+   Firuza to'qroq: yorug' fonda #2FB6C9 oq matn bilan 2.2:1 beradi. */
+.light {
+  --bg:             #F7FAFB;
+  --bg-secondary:   #FFFFFF;
+  --surface-2:      #EDF3F5;
+  --border:         rgba(12, 26, 34, 0.10);
+  --border-strong:  rgba(12, 26, 34, 0.20);
+
+  --text-primary:   #0C1A22;
+  --text-secondary: #5A7180;   /* #F7FAFB ga nisbatan 4.7:1 */
+
+  --btn-bg:         #229ED9;
+  --btn-text:       #FFFFFF;
+  --link-color:     #229ED9;
+
+  --accent:         #B65A17;   /* yorug' fonda o'qilishi uchun to'qroq loy */
+  --success:        #12855C;
+  --danger:         #C7362F;
+
+  --success-bg:     rgba(18, 133, 92, 0.12);
+  --warning-bg:     rgba(182, 90, 23, 0.12);
+  --danger-bg:      rgba(199, 54, 47, 0.12);
+  --rating-bg:      rgba(182, 90, 23, 0.12);
+  --accent-bg:      rgba(182, 90, 23, 0.12);
+  --btn-bg-soft:    rgba(34, 158, 217, 0.12);
+
+  --grad-primary:   linear-gradient(135deg, #2AABEE 0%, #1E8AC7 100%);
+
+  --shadow-sm: 0 1px 3px rgba(12, 26, 34, 0.07);
+  --shadow-md: 0 8px 28px rgba(12, 26, 34, 0.10);
+}
+
+/* Telegram tashqarisida (brauzerda) ochilganda tizim temasiga ergashamiz. */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --bg:             #F7FAFB;
+    --bg-secondary:   #FFFFFF;
+    --surface-2:      #EDF3F5;
+    --border:         rgba(12, 26, 34, 0.10);
+    --border-strong:  rgba(12, 26, 34, 0.20);
+    --text-primary:   #0C1A22;
+    --text-secondary: #5A7180;
+    --btn-bg:         #229ED9;
+    --btn-text:       #FFFFFF;
+    --link-color:     #229ED9;
+    --accent:         #B65A17;
+    --success:        #12855C;
+    --danger:         #C7362F;
+    --btn-bg-soft:    rgba(34, 158, 217, 0.12);
+    --grad-primary:   linear-gradient(135deg, #2AABEE 0%, #1E8AC7 100%);
+  }
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body { height: 100%; overscroll-behavior: none; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { height: 100%; display: flex; flex-direction: column; }
+button, input, textarea, select {
+  font-family: inherit; font-size: inherit;
+  color: inherit;
+  outline: none; border: none; background: none;
+}
+button { cursor: pointer; }
+
+/* Sarlavhalar display shriftida — matn tanasi tizim shriftida qoladi. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* Raqamlar hamma joyda bir xil kenglikda — taymer sanaganda raqamlar
+   sakramaydi, jadvaldagi ballar esa bir chiziqda turadi. */
+.num, .tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ─── Klaviatura fokusi ──────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Sahifa karkasi ─────────────────────────────────────────────────────── */
+.screen {
+  flex: 1; display: flex; flex-direction: column;
+  height: 100%; overflow: hidden; background: var(--bg);
+}
+
+/* ═══ Umumiy primitivlar ═══════════════════════════════════════════════════
+   Oldin har ekran o'z <style> blokida karta, tugma va ro'yxat qatorini
+   qaytadan yozardi — natijada bir xil element sahifadan sahifaga bir necha
+   piksel farq qilardi. Quyidagilar shu takrorni yopadi. */
+
+/* ─── Karta ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.card--inset { background: var(--surface-2); }
+/* Faqat urg'u kerak bo'lgan kartada — chap qirrada firuza chiziq. */
+.card--marked { border-left: 3px solid var(--btn-bg); }
+
+/* Bo'lim sarlavhasi: kichik, katta harfda, ikkilamchi rangda. */
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+/* ─── Tugmalar ───────────────────────────────────────────────────────────── */
+/* Bosish holati layout'ni siljitmaydi: scale transform faqat elementning
+   o'zini kichraytiradi, atrofidagi kontentga tegmaydi. */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  width: 100%; min-height: 50px; padding: var(--space-3) var(--space-5);
+  background: var(--grad-primary); color: var(--btn-text);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base); font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
+  transition: transform var(--t), opacity var(--t);
+  user-select: none;
+}
+.btn-primary:active   { transform: scale(0.975); opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.4; pointer-events: none; }
+
+.btn-secondary {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  width: 100%; min-height: 50px; padding: var(--space-3) var(--space-5);
+  background: var(--bg-secondary); color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base); font-weight: var(--weight-semi);
+  transition: transform var(--t), opacity var(--t);
+}
+.btn-secondary:active   { transform: scale(0.975); opacity: 0.85; }
+.btn-secondary:disabled { opacity: 0.4; pointer-events: none; }
+
+/* Uchinchi daraja — matn tugmasi. Tap maydoni 44px dan kichik bo'lmasligi
+   uchun min-height bilan. */
+.btn-quiet {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-1-5);
+  min-height: 44px; padding: var(--space-2) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm); font-weight: var(--weight-medium);
+  border-radius: var(--radius-full);
+  transition: background var(--t), color var(--t);
+}
+.btn-quiet:active { background: var(--surface-2); color: var(--text-primary); }
+
+/* Faqat ikonkali tugma — 44×44 tap maydoni majburiy. */
+.btn-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  transition: background var(--t), color var(--t);
+}
+.btn-icon:active { background: var(--surface-2); color: var(--text-primary); }
+
+/* ─── Yorliq (pill) ──────────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex; align-items: center; gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs); font-weight: var(--weight-bold);
+  background: var(--surface-2); color: var(--text-secondary);
+  white-space: nowrap;
+}
+.pill--live    { background: var(--danger-bg);  color: var(--danger); }
+.pill--good    { background: var(--success-bg); color: var(--success); }
+.pill--accent  { background: var(--accent-bg);  color: var(--accent); }
+.pill--primary { background: var(--btn-bg-soft); color: var(--btn-bg); }
+
+/* Jonli nuqta — "hozir sodir bo'lyapti" signali. */
+.dot-live {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+
+/* ─── Ro'yxat qatori ─────────────────────────────────────────────────────── */
+.row {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: transform var(--t), background var(--t);
+}
+.row:active { transform: scale(0.99); background: var(--surface-2); }
+.row__text  { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 1px; }
+.row__title { font-size: var(--text-base); font-weight: var(--weight-semi); color: var(--text-primary); }
+.row__sub   { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4; }
+/* Ikonka uchun doira — o'lchami token bilan, tasodifiy emas. */
+.row__ico {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--text-secondary);
+}
+.row__ico--primary { background: var(--btn-bg-soft); color: var(--btn-bg); }
+.row__ico--accent  { background: var(--accent-bg);   color: var(--accent); }
+
+/* ─── Skeleton ───────────────────────────────────────────────────────────── */
+.skeleton {
+  display: block; position: relative; overflow: hidden; flex-shrink: 0;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: '';
+  position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+.light .skeleton::after,
+:root:not(.dark) .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(12,26,34,0.05), transparent);
+}
+
+/* ─── Tab shell ──────────────────────────────────────────────────────────── */
+.tab-shell {
+  flex: 1; height: 100%;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.tab-shell__content { flex: 1; min-height: 0; overflow: hidden; }
+
+/* ─── Animatsiyalar ──────────────────────────────────────────────────────── */
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn  { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideUp  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes pulse    { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes dotBlink { 0%,60%,100% { opacity: 0; } 30% { opacity: 1; } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes skeleton-shimmer { 100% { transform: translateX(100%); } }
+
+.fade-up  { animation: fadeUp  0.32s var(--ease-out) both; }
+.fade-in  { animation: fadeIn  0.22s ease both; }
+.scale-in { animation: scaleIn 0.28s var(--ease-spring) both; }
+
+/* Ketma-ket chiqish — ro'yxat elementlari uchun. Har biriga qo'lda
+   animationDelay yozish o'rniga. */
+.stagger > * { animation: fadeUp 0.32s var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.10s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+
+/* ─── Harakatni kamaytirish ──────────────────────────────────────────────── */
+/* animation butunlay o'chirilmaydi, juda qisqartiriladi — shunda `both`
+   fill-mode'ga tayanadigan elementlar ko'rinmay qolmaydi. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,100 @@
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import useAppStore from './store/useAppStore';
+import { useAuth } from './hooks/useAuth';
+import { useSocket } from './hooks/useSocket';
+import LoadingScreen from './components/LoadingScreen';
+import ErrorBoundary from './components/ErrorBoundary';
+import ConnectionBanner from './components/ConnectionBanner';
+import Toast from './components/Toast';
+import BottomNav from './components/BottomNav';
+
+import Onboarding from './pages/Onboarding';
+import Home from './pages/Home';
+import Leaderboard from './pages/Leaderboard';
+import Invite from './pages/Invite';
+import Reviews from './pages/Reviews';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import Premium from './pages/Premium';
+import Statistics from './pages/Statistics';
+import Matching from './pages/Matching';
+import SessionEnd from './pages/SessionEnd';
+
+const Chat = lazy(() => import('./pages/Chat'));
+const IeltsMock = lazy(() => import('./pages/IeltsMock'));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
+
+const SCREENS: Record<string, React.ComponentType<any>> = {
+  onboarding: Onboarding,
+  home: Home,
+  leaderboard: Leaderboard,
+  invite: Invite,
+  reviews: Reviews,
+  profile: Profile,
+  settings: Settings,
+  premium: Premium,
+  statistics: Statistics,
+  matching: Matching,
+  chat: Chat,
+  session_end: SessionEnd,
+  ielts: Home,
+};
+
+const TAB_SCREENS = ['home', 'leaderboard', 'invite', 'profile'];
+
+function TelegramApp() {
+  const { screen, isAuthLoading } = useAppStore();
+  useAuth();
+  useSocket();
+
+  if (isAuthLoading) return <LoadingScreen />;
+
+  const ScreenComponent = SCREENS[screen] || Home;
+  const showTabs = TAB_SCREENS.includes(screen);
+
+  return (
+    <>
+      <ConnectionBanner />
+      <Toast />
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          {showTabs ? (
+            <div className="tab-shell">
+              <div className="tab-shell__content">
+                <ScreenComponent />
+              </div>
+              <BottomNav active={screen} />
+            </div>
+          ) : (
+            <ScreenComponent />
+          )}
+        </Suspense>
+      </ErrorBoundary>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            <Route path="*" element={<TelegramApp />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+}
