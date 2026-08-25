@@ -3,9 +3,9 @@ import { authTelegram, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { translate } from '../i18n/index';
 
-// Vite production build'da import.meta.env.PROD = true, DEV = false
-// Lekin ishonchli bo'lishi uchun VITE_APP_ENV ni ham tekshiramiz
-const IS_PROD = import.meta.env.PROD === true;
+// Faqat localhost'da test mode ishlaydi
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const IS_PROD = import.meta.env.PROD;
 
 /** Telegram WebApp.initData bo'sh kelsa bir oz kuting */
 function waitForInitData(timeoutMs = 2000): Promise<string> {
