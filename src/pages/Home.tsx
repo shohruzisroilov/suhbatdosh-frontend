@@ -3,21 +3,13 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, Compass, MessageSquare, Users } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
-import Avatar from '../components/Avatar';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
 import DailyProgress from '../components/DailyProgress';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
-
-const TOPICS = [
-  { id: '1', title: 'Travel & Culture', emoji: '✈️', desc: 'Share your favorite trip stories' },
-  { id: '2', title: 'Hometown & Life', emoji: '🏡', desc: 'Talk about where you grew up' },
-  { id: '3', title: 'Movies & Music', emoji: '🎬', desc: 'Discuss your favorite films' },
-  { id: '4', title: 'Career & Ambition', emoji: '🚀', desc: 'Future goals and dream job' },
-];
 
 /**
  * Bosh sahifa — Conversation-First layout.
@@ -52,41 +44,6 @@ export default function Home() {
         <section className="hero fade-up">
           <div className="hero__glow" />
 
-          {/* Animated 3D/Vector Audio Connection Graphic */}
-          <div className="hero__visual">
-            <div className="hero__node">
-              <Avatar name={user?.displayName || 'You'} avatarUrl={user?.avatarUrl || undefined} size={36} />
-              <span className="hero__node-glow" />
-            </div>
-
-            <div className="hero__connector">
-              <div className="hero__soundwave">
-                <span className="sw-bar bar-1" />
-                <span className="sw-bar bar-2" />
-                <span className="sw-bar bar-3" />
-                <span className="sw-bar bar-4" />
-                <span className="sw-bar bar-5" />
-              </div>
-              <div className="hero__mic-core">
-                <Mic size={16} strokeWidth={2.4} />
-              </div>
-              <div className="hero__soundwave">
-                <span className="sw-bar bar-5" />
-                <span className="sw-bar bar-4" />
-                <span className="sw-bar bar-3" />
-                <span className="sw-bar bar-2" />
-                <span className="sw-bar bar-1" />
-              </div>
-            </div>
-
-            <div className="hero__node hero__node--partner">
-              <div className="hero__partner-avatar">
-                <Users size={18} />
-              </div>
-              <span className="hero__node-pulse" />
-            </div>
-          </div>
-
           <div className="hero__top">
             <span className="hero__tag">
               <span className="dot-live" />
@@ -110,32 +67,6 @@ export default function Home() {
             </span>
             <span className="hero__btn-text">{t('home.start')}</span>
           </button>
-        </section>
-
-        {/* Quick Conversation Topics Carousel */}
-        <section className="home__section fade-up">
-          <div className="home__section-head">
-            <span className="eyebrow flex items-center gap-1">
-              <Compass size={13} className="text-[var(--btn-bg)]" />
-              Practice Topics
-            </span>
-          </div>
-
-          <div className="topics-carousel">
-            {TOPICS.map((topic) => (
-              <div
-                key={topic.id}
-                className="topic-card"
-                onClick={() => { tapHaptic('light'); navigate('matching'); }}
-              >
-                <span className="topic-card__emoji">{topic.emoji}</span>
-                <div className="topic-card__content">
-                  <span className="topic-card__title">{topic.title}</span>
-                  <span className="topic-card__desc">{topic.desc}</span>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
 
         <div className="home__list stagger">
