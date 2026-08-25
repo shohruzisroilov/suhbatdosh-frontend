@@ -86,21 +86,38 @@ export default function BottomNav({ active }: BottomNavProps) {
       <style>{`
         .bottom-nav {
           display: flex; align-items: stretch;
-          border-top: 1px solid var(--border);
-          background: var(--bg);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(10, 17, 24, 0.78);
+          backdrop-filter: blur(24px) saturate(200%);
+          -webkit-backdrop-filter: blur(24px) saturate(200%);
+          box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
           padding-bottom: env(safe-area-inset-bottom, 0px);
           flex-shrink: 0;
+          position: relative;
+          z-index: 50;
+        }
+        .light .bottom-nav {
+          background: rgba(247, 250, 251, 0.85);
+          border-top: 1px solid rgba(12, 26, 34, 0.08);
+          box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.06);
         }
         .bottom-nav__item {
           flex: 1;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: var(--space-1); padding: var(--space-2) 0;
+          gap: 3px; padding: 10px 0;
           color: var(--text-secondary);
-          transition: color var(--t), opacity var(--t);
+          transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
         }
-        .bottom-nav__item:active { opacity: 0.6; }
-        .bottom-nav__item.active { color: var(--btn-bg); }
-        .bottom-nav__label { font-size: var(--text-xs); font-weight: var(--weight-semi); letter-spacing: 0.1px; }
+        .bottom-nav__item:active { transform: scale(0.92); opacity: 0.8; }
+        .bottom-nav__item.active {
+          color: var(--btn-bg);
+          font-weight: var(--weight-bold);
+        }
+        .bottom-nav__item.active svg {
+          filter: drop-shadow(0 0 8px rgba(42, 171, 238, 0.6));
+        }
+        .bottom-nav__label { font-size: 11px; font-weight: var(--weight-semi); letter-spacing: 0.1px; }
       `}</style>
     </nav>
   );

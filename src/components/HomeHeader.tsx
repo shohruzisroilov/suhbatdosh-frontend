@@ -47,8 +47,17 @@ export default function HomeHeader({
         .hh {
           display: flex; align-items: center; gap: var(--space-3);
           padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-3) var(--space-3) var(--space-4);
-          border-bottom: 1px solid var(--border);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(10, 17, 24, 0.65);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
           flex-shrink: 0;
+          position: relative;
+          z-index: 20;
+        }
+        .light .hh {
+          background: rgba(247, 250, 251, 0.75);
+          border-bottom: 1px solid rgba(12, 26, 34, 0.08);
         }
         .hh__info { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 1px; }
         .hh__name {
