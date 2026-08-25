@@ -72,47 +72,50 @@ export default function ReportSheet({ sessionId, partnerName, onClose, onDone }:
 
       <style>{`
         .rs-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+          position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+          backdrop-filter: blur(6px);
           display: flex; align-items: flex-end;
           z-index: 300; animation: fadeIn 0.2s ease;
         }
         .rs-sheet {
-          background: var(--bg); width: 100%;
+          background: var(--bg-secondary); width: 100%;
           border-radius: 24px 24px 0 0;
-          padding: var(--space-3) var(--space-5) calc(env(safe-area-inset-bottom, 0px) + var(--space-6));
+          border: 1px solid var(--border-strong); border-bottom: none;
+          padding: var(--space-1) var(--space-5) calc(env(safe-area-inset-bottom, 0px) + var(--space-6));
           display: flex; flex-direction: column; gap: var(--space-2);
-          animation: slideUp 0.25s cubic-bezier(0.34,1.2,0.64,1);
+          animation: slideUp 0.28s var(--ease-spring);
+          box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
         }
         .rs-handle {
-          width: 36px; height: 4px; border-radius: 2px;
-          background: var(--border); margin: 0 auto var(--space-1-5);
+          width: 40px; height: 4px; border-radius: 2px;
+          background: var(--border-strong); margin: 12px auto var(--space-1-5);
         }
         .rs-title { font-size: var(--text-md); font-weight: var(--weight-heavy); letter-spacing: -0.3px; }
         .rs-desc { font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-1-5); }
-        .rs-reasons { display: flex; flex-direction: column; gap: var(--space-2); }
+        .rs-reasons { display: flex; flex-direction: column; gap: var(--space-1-5); }
         .rs-reason {
           width: 100%; text-align: left;
-          padding: var(--space-4) var(--space-4); font-size: var(--text-base); font-weight: var(--weight-semi);
+          padding: var(--space-4); font-size: var(--text-base); font-weight: var(--weight-semi);
           color: var(--text-primary);
-          background: var(--bg-secondary);
+          background: var(--surface-2);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          transition: opacity var(--t);
+          transition: background var(--t), opacity var(--t);
         }
-        .rs-reason:active:not(:disabled) { opacity: 0.6; }
+        .rs-reason:active:not(:disabled) { background: var(--surface-3); }
         .rs-reason:disabled { opacity: 0.4; }
         .rs-block {
           margin-top: var(--space-2); width: 100%; padding: var(--space-4);
           font-size: var(--text-base); font-weight: var(--weight-bold); color: var(--danger);
-          background: rgba(239,68,68,0.08);
-          border: 1px solid rgba(239,68,68,0.3);
+          background: rgba(255, 69, 58, 0.08);
+          border: 1px solid rgba(255, 69, 58, 0.25);
           border-radius: var(--radius-md);
-          transition: opacity var(--t);
+          transition: opacity var(--t), background var(--t);
         }
-        .rs-block:active:not(:disabled) { opacity: 0.6; }
+        .rs-block:active:not(:disabled) { background: rgba(255, 69, 58, 0.15); }
         .rs-cancel {
           width: 100%; padding: var(--space-3);
-          font-size: var(--text-base); color: var(--text-secondary); font-weight: var(--weight-semi);
+          font-size: var(--text-sm); color: var(--text-secondary); font-weight: var(--weight-semi);
           transition: opacity var(--t);
         }
         .rs-cancel:active { opacity: 0.6; }

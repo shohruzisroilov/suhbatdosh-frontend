@@ -161,7 +161,7 @@ const Styles = React.memo(function Styles() {
       }
 
       .mt__dial {
-        position: relative; width: 190px; height: 190px; flex-shrink: 0;
+        position: relative; width: 200px; height: 200px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
       }
       .mt__ripple {
@@ -190,10 +190,10 @@ const Styles = React.memo(function Styles() {
       .mt__hole { width: 82%; height: 82%; background: var(--bg); }
       .mt__core {
         position: relative; z-index: 1;
-        width: 88px; height: 88px; border-radius: 50%;
+        width: 92px; height: 92px; border-radius: 50%;
         background: var(--grad-primary); color: var(--btn-text);
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: 0 0 35px rgba(0, 168, 255, 0.55), 0 8px 24px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 0 40px rgba(0, 168, 255, 0.6), 0 8px 28px rgba(0, 0, 0, 0.45);
       }
       .mt__core-level {
         font-family: var(--font-display);
@@ -203,12 +203,13 @@ const Styles = React.memo(function Styles() {
       @keyframes dialScan { to { transform: rotate(360deg); } }
 
       .mt__glyph {
-        width: 64px; height: 64px; border-radius: var(--radius-full);
+        width: 68px; height: 68px; border-radius: var(--radius-full);
         display: flex; align-items: center; justify-content: center;
         background: var(--surface-2); color: var(--text-secondary);
+        border: 1px solid var(--border);
       }
 
-      .mt__copy { display: flex; flex-direction: column; gap: var(--space-1.5); }
+      .mt__copy { display: flex; flex-direction: column; gap: var(--space-1-5); }
       .mt__title {
         font-family: var(--font-display);
         font-size: var(--text-lg); font-weight: var(--weight-heavy);
@@ -238,6 +239,7 @@ const Styles = React.memo(function Styles() {
         background: var(--bg-secondary);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
+        overflow: hidden;
       }
       .mt__cell {
         flex: 1; min-width: 0;
@@ -257,7 +259,14 @@ const Styles = React.memo(function Styles() {
         font-size: var(--text-xs); color: var(--text-secondary);
         line-height: 1.5; max-width: 300px;
       }
-      .mt__cancel { border: 1px solid var(--border); padding: 0 var(--space-5); }
+      .mt__cancel {
+        border: 1px solid var(--border); padding: 0 var(--space-5);
+        border-radius: var(--radius-full); min-height: 40px;
+        font-size: var(--text-sm); font-weight: var(--weight-bold);
+        color: var(--text-secondary);
+        transition: background var(--t), color var(--t);
+      }
+      .mt__cancel:active { background: var(--surface-2); color: var(--text-primary); }
     `}</style>
   );
 });

@@ -178,9 +178,10 @@ export default function Statistics() {
           width: 36px; height: 36px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           background: var(--bg-secondary); color: var(--text-primary);
-          transition: opacity var(--t);
+          border: 1px solid var(--border);
+          transition: opacity var(--t), background var(--t);
         }
-        .stx-back:active { opacity: 0.6; }
+        .stx-back:active { opacity: 0.6; background: var(--surface-2); }
         .stx-topbar-title { font-size: var(--text-md); font-weight: var(--weight-bold); }
 
         .stx-scroll {
@@ -199,29 +200,34 @@ export default function Statistics() {
         }
         .stx-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
         .stx-card-title { font-size: var(--text-md); font-weight: var(--weight-heavy); letter-spacing: -0.3px; }
-        .stx-card-sub { font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-0-5); }
+        .stx-card-sub { font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-0-5); }
 
         .stx-seg {
-          display: flex; gap: var(--space-1); padding: var(--space-1);
-          background: var(--bg); border: 1px solid var(--border);
-          border-radius: 999px;
+          display: flex; gap: var(--space-1); padding: 3px;
+          background: var(--surface-2); border: 1px solid var(--border);
+          border-radius: var(--radius-full);
         }
         .stx-seg-btn {
           flex: 1; padding: var(--space-1-5) 0; border-radius: 999px;
-          font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-secondary);
+          font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--text-secondary);
           transition: background var(--t), color var(--t);
         }
-        .stx-seg-btn--on { background: var(--btn-bg); color: var(--btn-text, #fff); }
+        .stx-seg-btn--on {
+          background: var(--btn-bg); color: var(--btn-text, #fff);
+          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.25);
+        }
 
         .stx-summary {
           display: flex; align-items: center; justify-content: center; gap: var(--space-3);
           font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary);
+          padding: var(--space-2) var(--space-4);
+          background: var(--surface-2); border-radius: var(--radius-sm);
         }
-        .stx-summary-sep { color: var(--text-secondary); font-weight: var(--weight-semi); }
+        .stx-summary-sep { color: var(--text-tertiary); font-weight: var(--weight-semi); }
 
         .stx-chart {
           display: flex; align-items: flex-end; justify-content: space-between;
-          gap: var(--space-1-5); height: 150px;
+          gap: var(--space-1-5); height: 160px;
         }
         .stx-chart--dense { gap: var(--space-0-5); }
         .stx-bar-col {
@@ -234,20 +240,23 @@ export default function Statistics() {
         }
         .stx-bar {
           width: 70%; max-width: 22px; min-height: 0;
-          background: var(--border);
+          background: var(--surface-3);
           border-radius: 6px 6px 3px 3px;
-          transition: height 0.4s ease;
+          transition: height 0.45s var(--ease-out);
         }
         .stx-chart--dense .stx-bar { width: 80%; max-width: none; border-radius: 3px 3px 1px 1px; }
-        .stx-bar--today { background: var(--btn-bg); }
-        .stx-bar--skel { height: 40%; opacity: 0.5; }
-        .stx-chart--skel { opacity: 0.6; }
+        .stx-bar--today {
+          background: var(--grad-primary);
+          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.35);
+        }
+        .stx-bar--skel { height: 40%; opacity: 0.4; }
+        .stx-chart--skel { opacity: 0.5; }
         .stx-bar-day {
-          font-size: var(--text-xs); color: var(--text-secondary); font-weight: var(--weight-semi);
+          font-size: var(--text-xs); color: var(--text-tertiary); font-weight: var(--weight-semi);
           text-transform: capitalize; white-space: nowrap;
         }
         .stx-chart--dense .stx-bar-day { font-size: var(--text-xs); }
-        .stx-bar-day--today { color: var(--text-primary); font-weight: var(--weight-heavy); }
+        .stx-bar-day--today { color: var(--btn-bg); font-weight: var(--weight-heavy); }
 
         .stx-empty {
           text-align: center; color: var(--text-secondary);

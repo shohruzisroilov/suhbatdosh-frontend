@@ -25,19 +25,23 @@ export default function EndSessionSheet({ onConfirm, onCancel, isEnding }: EndSe
 
       <style>{`
         .end-sheet-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+          position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+          backdrop-filter: blur(6px);
           display: flex; align-items: flex-end;
           z-index: 100; animation: fadeIn 0.2s ease;
         }
         .end-sheet {
-          background: var(--bg); width: 100%;
-          border-radius: 24px 24px 0 0; padding: var(--space-3) var(--space-5) var(--space-7);
+          background: var(--bg-secondary); width: 100%;
+          border-radius: 24px 24px 0 0;
+          border: 1px solid var(--border-strong); border-bottom: none;
+          padding: var(--space-1) var(--space-5) calc(env(safe-area-inset-bottom, 0px) + var(--space-7));
           display: flex; flex-direction: column; gap: var(--space-3);
-          animation: slideUp 0.25s cubic-bezier(0.34,1.2,0.64,1);
+          animation: slideUp 0.28s var(--ease-spring);
+          box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
         }
         .end-sheet__handle {
-          width: 36px; height: 4px; border-radius: 2px;
-          background: var(--border); margin: 0 auto var(--space-2);
+          width: 40px; height: 4px; border-radius: 2px;
+          background: var(--border-strong); margin: 12px auto var(--space-2);
         }
         .end-sheet h3 { font-size: var(--text-md); font-weight: var(--weight-bold); letter-spacing: -0.3px; }
         .end-sheet p  { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
@@ -45,11 +49,12 @@ export default function EndSessionSheet({ onConfirm, onCancel, isEnding }: EndSe
           display: flex; align-items: center; justify-content: center;
           width: 100%; padding: var(--space-4);
           background: var(--btn-bg); color: var(--btn-text);
-          border-radius: var(--radius-lg);
-          font-size: var(--text-base); font-weight: var(--weight-semi);
+          border-radius: var(--radius-md);
+          font-size: var(--text-base); font-weight: var(--weight-bold);
+          box-shadow: 0 4px 16px rgba(0, 168, 255, 0.3);
           transition: opacity var(--t), transform var(--t);
         }
-        .end-sheet__confirm:active { opacity: 0.8; transform: scale(0.98); }
+        .end-sheet__confirm:active { opacity: 0.85; transform: scale(0.98); }
       `}</style>
     </div>
   );

@@ -133,7 +133,11 @@ export default function Profile() {
       <div className="profile__scroll">
         {/* User Hero Header */}
         <div className="profile__hero">
-          <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={54} />
+          <div className="profile__avatar-ring">
+            <div className="profile__avatar-ring-inner">
+              <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={58} />
+            </div>
+          </div>
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
           {isPremium && (
@@ -288,6 +292,7 @@ export default function Profile() {
       {showLevelModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowLevelModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ratings-modal__handle" />
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.levelTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowLevelModal(false)}>
@@ -323,6 +328,7 @@ export default function Profile() {
       {showGenderModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowGenderModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ratings-modal__handle" />
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.genderTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowGenderModal(false)}>
@@ -354,6 +360,7 @@ export default function Profile() {
       {showRatingsModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowRatingsModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ratings-modal__handle" />
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('profile.ratingsModalTitle')}</h2>
               <button
@@ -408,83 +415,96 @@ export default function Profile() {
         .profile__scroll {
           flex: 1; overflow-y: auto;
           padding: calc(12px + env(safe-area-inset-top, 0px)) var(--space-4) calc(130px + env(safe-area-inset-bottom, 0px));
-          display: flex; flex-direction: column; gap: 12px;
+          display: flex; flex-direction: column; gap: 14px;
         }
 
         .profile__hero {
-          display: flex; flex-direction: column; align-items: center; gap: 4px;
-          padding: 6px 0 2px;
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          padding: 12px 0 4px;
         }
-        .profile__name { font-size: 17px; font-weight: var(--weight-heavy); letter-spacing: -0.3px; text-align: center; color: var(--text-primary); }
+        .profile__avatar-ring {
+          position: relative;
+          padding: 3px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--btn-bg), #0066FF);
+          margin-bottom: 4px;
+        }
+        .profile__avatar-ring-inner {
+          padding: 2px;
+          border-radius: 50%;
+          background: var(--bg);
+        }
+        .profile__name { font-size: 19px; font-weight: var(--weight-heavy); letter-spacing: -0.4px; text-align: center; color: var(--text-primary); }
         .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -2px; }
         .profile__premium-badge {
-          margin-top: 2px; padding: 2px 10px; border-radius: var(--radius-full);
-          background: var(--btn-bg); color: var(--btn-text);
-          font-size: 10px; font-weight: var(--weight-heavy); letter-spacing: 0.2px;
+          margin-top: 2px; padding: 3px 12px; border-radius: var(--radius-full);
+          background: linear-gradient(135deg, #FFD700, #FF9500);
+          color: #1a1000;
+          font-size: 10px; font-weight: var(--weight-heavy); letter-spacing: 0.3px;
           display: inline-flex; align-items: center; gap: 4px;
-          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3);
+          box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
         }
 
         .profile__stats-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px;
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2px;
         }
         .profile__stat-box {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          padding: 10px 6px;
+          padding: 12px 8px;
           display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-          gap: 2px;
-          transition: transform 0.15s, border-color 0.15s;
+          gap: 4px;
+          transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
         }
         .profile__stat-box--clickable { cursor: pointer; }
-        .profile__stat-box--clickable:active { transform: scale(0.96); border-color: var(--btn-bg); }
+        .profile__stat-box--clickable:active { transform: scale(0.95); border-color: var(--btn-bg); box-shadow: 0 4px 14px rgba(0,168,255,0.15); }
         .profile__stat-icon {
-          width: 26px; height: 26px; border-radius: 50%;
+          width: 28px; height: 28px; border-radius: 9px;
           display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
         }
-        .profile__stat-icon--time { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-        .profile__stat-icon--users { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
-        .profile__stat-icon--star { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .profile__stat-icon--time  { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+        .profile__stat-icon--users { background: rgba(168, 85, 247, 0.14); color: #a855f7; }
+        .profile__stat-icon--star  { background: rgba(245, 158, 11, 0.14); color: #f59e0b; }
 
-        .profile__stat-value { font-size: 14px; font-weight: var(--weight-heavy); color: var(--text-primary); }
-        .profile__stat-label { font-size: 10px; color: var(--text-secondary); }
+        .profile__stat-value { font-size: 15px; font-weight: var(--weight-heavy); color: var(--text-primary); letter-spacing: -0.3px; }
+        .profile__stat-label { font-size: 10px; color: var(--text-secondary); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.05em; }
 
         .profile__section-header {
           font-size: 11px; font-weight: var(--weight-bold);
           color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em;
-          padding: 6px 4px 0;
+          padding: 4px 2px 0;
         }
 
         .profile__card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          display: flex; flex-direction: column;
+          overflow: hidden;
         }
         .profile__row {
-          display: flex; align-items: center; gap: 10px;
+          display: flex; align-items: center; gap: 12px;
           width: 100%; text-align: left;
-          padding: 12px 14px;
+          padding: 14px 14px;
           border-bottom: 1px solid var(--border);
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
           background: transparent; cursor: pointer;
         }
         .profile__row:last-child { border-bottom: none; }
-        .profile__row:active:not(:disabled) { opacity: 0.7; background: rgba(255, 255, 255, 0.03); }
-        .profile__row:disabled { cursor: default; }
+        .profile__row:active:not(:disabled) { background: var(--surface-2); }
+        .profile__row:disabled { cursor: default; opacity: 0.8; }
 
         .profile__row-icon-wrapper {
-          width: 32px; height: 32px; border-radius: 8px;
+          width: 34px; height: 34px; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-        .profile__row-icon-wrapper--blue { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+        .profile__row-icon-wrapper--blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
         .profile__row-icon-wrapper--purple { background: rgba(168, 85, 247, 0.14); color: #a855f7; }
-        .profile__row-icon-wrapper--amber { background: rgba(245, 158, 11, 0.14); color: #f59e0b; }
-        .profile__row-icon-wrapper--cyan { background: rgba(6, 182, 212, 0.14); color: #06b6d4; }
-        .profile__row-icon-wrapper--rose { background: rgba(244, 63, 94, 0.14); color: #f43f5e; }
+        .profile__row-icon-wrapper--amber  { background: rgba(245, 158, 11, 0.14);  color: #f59e0b; }
+        .profile__row-icon-wrapper--cyan   { background: rgba(6, 182, 212, 0.14);   color: #06b6d4; }
+        .profile__row-icon-wrapper--rose   { background: rgba(244, 63, 94, 0.14);   color: #f43f5e; }
 
         .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile__row-title { font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary); }
@@ -493,31 +513,41 @@ export default function Profile() {
           font-size: 11px; font-weight: var(--weight-bold); color: var(--text-secondary);
           white-space: nowrap; flex-shrink: 0;
         }
-        .profile__chev { color: var(--text-secondary); flex-shrink: 0; opacity: 0.6; }
+        .profile__chev { color: var(--text-tertiary); flex-shrink: 0; }
         .profile__footer { padding-bottom: 20px; }
 
-        /* Modals */
+        /* Bottom Sheet Modals */
         .ratings-modal-backdrop {
           position: fixed; inset: 0; z-index: 1000;
-          background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+          background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(6px);
           display: flex; align-items: flex-end; justify-content: center;
         }
         .ratings-modal {
-          width: 100%; max-width: 500px; max-height: 80vh;
-          background: var(--bg); border-top-left-radius: var(--radius-lg, 16px); border-top-right-radius: var(--radius-lg, 16px);
-          border: 1px solid var(--border); border-bottom: none;
+          width: 100%; max-width: 500px; max-height: 82vh;
+          background: var(--bg-secondary);
+          border-radius: 24px 24px 0 0;
+          border: 1px solid var(--border-strong); border-bottom: none;
           display: flex; flex-direction: column; overflow: hidden;
-          box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.28s var(--ease-spring) both;
+        }
+        .ratings-modal__handle {
+          width: 40px; height: 4px; border-radius: 2px;
+          background: var(--border-strong); margin: 12px auto 4px;
+          flex-shrink: 0;
         }
         .ratings-modal__head {
           display: flex; align-items: center; justify-content: space-between;
-          padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border);
+          padding: var(--space-2) var(--space-4) var(--space-3);
+          border-bottom: 1px solid var(--border);
         }
         .ratings-modal__title { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary); }
         .ratings-modal__close {
           background: none; border: none; color: var(--text-secondary);
           display: flex; align-items: center; justify-content: center;
           padding: var(--space-1); cursor: pointer; border-radius: var(--radius-full);
+          width: 30px; height: 30px;
+          background: var(--surface-2);
         }
         .ratings-modal__close:active { opacity: 0.6; }
 
@@ -526,7 +556,7 @@ export default function Profile() {
         .ratings-modal__list { display: flex; flex-direction: column; gap: var(--space-2); }
         .ratings-modal__item {
           display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-2-5, 10px); background: var(--bg-secondary);
+          padding: var(--space-3); background: var(--surface-2);
           border: 1px solid var(--border); border-radius: var(--radius-md);
         }
         .ratings-modal__info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -536,20 +566,24 @@ export default function Profile() {
 
         .ratings-modal__empty {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; color: var(--text-secondary);
+          gap: var(--space-3); padding: var(--space-7) var(--space-4); text-align: center; color: var(--text-secondary);
         }
+        .ratings-modal__empty p { font-size: var(--text-sm); }
 
         .profile__modal-list { display: flex; flex-direction: column; gap: var(--space-2); }
         .profile__modal-option {
           display: flex; align-items: center; gap: var(--space-3);
           padding: var(--space-3) var(--space-4);
-          background: var(--bg-secondary); border: 1px solid var(--border);
-          border-radius: var(--radius-md); cursor: pointer; transition: border-color 0.15s;
+          background: var(--surface-2); border: 1.5px solid var(--border);
+          border-radius: var(--radius-md); cursor: pointer;
+          transition: border-color 0.15s, background 0.15s;
         }
-        .profile__modal-option--selected { border-color: var(--btn-bg); }
+        .profile__modal-option:active { background: var(--surface-3); }
+        .profile__modal-option--selected { border-color: var(--btn-bg); background: rgba(0, 168, 255, 0.06); }
         .profile__level-badge {
           font-family: monospace; font-weight: var(--weight-heavy);
-          color: var(--btn-bg); font-size: var(--text-sm); min-width: 28px; text-align: center;
+          color: var(--btn-bg); font-size: var(--text-sm); min-width: 30px; text-align: center;
+          background: var(--btn-bg-soft); padding: 2px 6px; border-radius: 6px;
         }
         .profile__modal-option-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
         .profile__modal-option-title { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-primary); }

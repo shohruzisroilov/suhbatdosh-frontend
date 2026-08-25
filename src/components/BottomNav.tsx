@@ -72,39 +72,46 @@ export default function BottomNav({ active }: BottomNavProps) {
         .bottom-nav {
           position: relative; z-index: 100;
           border-top: 1px solid var(--border);
-          background: rgba(18, 24, 36, 0.85);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: rgba(9, 13, 20, 0.92);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
           padding-bottom: env(safe-area-inset-bottom, 0px);
           flex-shrink: 0;
         }
         .bottom-nav__inner {
           display: flex; align-items: center; justify-content: space-around;
-          height: 60px; max-width: 480px; margin: 0 auto;
+          height: 64px; max-width: 480px; margin: 0 auto;
         }
         .bottom-nav__item {
           flex: 1; height: 100%;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 3px; color: var(--text-secondary);
-          position: relative; transition: color 0.18s var(--ease-out), transform 0.15s var(--ease-out);
+          gap: 4px; color: var(--text-tertiary);
+          position: relative;
+          transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
         }
-        .bottom-nav__item:active { transform: scale(0.92); }
+        .bottom-nav__item:active { transform: scale(0.88); }
         .bottom-nav__item.active { color: var(--btn-bg); }
 
         .bottom-nav__icon-wrap {
           position: relative;
           display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 28px;
+          width: 40px; height: 32px;
+          border-radius: 10px;
+          transition: background 0.2s var(--ease-out);
+        }
+        .bottom-nav__item.active .bottom-nav__icon-wrap {
+          background: rgba(0, 168, 255, 0.14);
         }
         .bottom-nav__active-glow {
-          position: absolute; inset: -4px;
+          position: absolute; inset: -6px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 168, 255, 0.28) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(0, 168, 255, 0.22) 0%, transparent 70%);
           pointer-events: none;
         }
         .bottom-nav__label {
           font-size: 10px; font-weight: var(--weight-bold);
-          letter-spacing: 0.02em; line-height: 1;
+          letter-spacing: 0.03em; line-height: 1;
+          transition: color 0.2s var(--ease-out);
         }
       `}</style>
     </nav>

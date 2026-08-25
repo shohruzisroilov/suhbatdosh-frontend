@@ -66,19 +66,20 @@ export default function SessionRow({ session: s }: SessionRowProps) {
       <style>{`
         .session-row {
           display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3);
+          padding: var(--space-3) var(--space-4);
           background: var(--bg-secondary);
           border-radius: var(--radius-md);
           border: 1px solid var(--border);
-          transition: opacity var(--t);
+          transition: background var(--t), transform var(--t);
+          cursor: default;
         }
-        .session-row:active { opacity: 0.7; }
+        .session-row:active { background: var(--surface-2); transform: scale(0.99); }
         .session-row__info {
           flex: 1; display: flex; flex-direction: column; gap: var(--space-0-5);
         }
-        .session-row__name { font-weight: var(--weight-semi); font-size: var(--text-base); }
-        .session-row__sub  { font-size: var(--text-sm); color: var(--text-secondary); }
-        .session-row__date { font-size: var(--text-xs); color: var(--text-secondary); white-space: nowrap; }
+        .session-row__name { font-weight: var(--weight-bold); font-size: var(--text-base); color: var(--text-primary); }
+        .session-row__sub  { font-size: var(--text-xs); color: var(--text-secondary); }
+        .session-row__date { font-size: var(--text-xs); color: var(--text-tertiary); white-space: nowrap; }
       `}</style>
     </div>
   );

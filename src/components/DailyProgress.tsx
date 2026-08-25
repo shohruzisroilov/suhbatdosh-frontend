@@ -65,9 +65,12 @@ export default function DailyProgress({
           padding: var(--space-3) var(--space-4);
           display: flex; flex-direction: column; gap: var(--space-2);
         }
-        .dp--maxed { border-color: var(--border-strong); }
+        .dp--maxed {
+          border-color: rgba(255, 159, 10, 0.35);
+          background: linear-gradient(135deg, rgba(255, 159, 10, 0.06), var(--bg-secondary));
+        }
 
-        .dp__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+        .dp__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
         .dp__label {
           font-size: var(--text-xs); font-weight: var(--weight-bold);
           text-transform: uppercase; letter-spacing: 0.08em;
@@ -77,7 +80,7 @@ export default function DailyProgress({
         .dp--maxed .dp__val { color: var(--accent); }
 
         .dp__track {
-          position: relative; height: 8px;
+          position: relative; height: 6px;
           background: var(--surface-2);
           border-radius: var(--radius-full); overflow: hidden;
         }
@@ -85,9 +88,9 @@ export default function DailyProgress({
           position: absolute; inset: 0 auto 0 0; height: 100%;
           border-radius: var(--radius-full);
           background: var(--grad-primary);
-          transition: width 0.5s var(--ease-out);
+          transition: width 0.6s var(--ease-out);
         }
-        .dp--maxed .dp__fill { background: var(--accent); }
+        .dp--maxed .dp__fill { background: linear-gradient(90deg, var(--accent), #FF6B00); }
 
         .dp__ticks { position: absolute; inset: 0; }
         .dp__tick {
@@ -100,11 +103,13 @@ export default function DailyProgress({
           display: flex; align-items: center; justify-content: center; gap: var(--space-1);
           min-height: 40px; margin-top: var(--space-1);
           border-radius: var(--radius-sm);
-          background: var(--accent-bg); color: var(--accent);
+          background: rgba(255, 159, 10, 0.12);
+          border: 1px solid rgba(255, 159, 10, 0.25);
+          color: var(--accent);
           font-size: var(--text-sm); font-weight: var(--weight-bold);
-          transition: opacity var(--t);
+          transition: opacity var(--t), background var(--t);
         }
-        .dp__cta:active { opacity: 0.7; }
+        .dp__cta:active { opacity: 0.75; background: rgba(255, 159, 10, 0.2); }
       `}</style>
     </div>
   );

@@ -120,49 +120,63 @@ const Styles = React.memo(function Styles() {
     <style>{`
       .rp {
         width: 100%; display: flex; flex-direction: column; align-items: center;
-        gap: var(--space-2); padding: var(--space-4);
+        gap: var(--space-3); padding: var(--space-5) var(--space-4);
         background: var(--bg-secondary); border: 1px solid var(--border);
         border-radius: var(--radius-lg);
+        position: relative; overflow: hidden;
+      }
+      .rp::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, var(--btn-bg), #0066FF);
+        border-radius: 2px 2px 0 0;
       }
       .rp__title {
         font-family: var(--font-display);
         font-size: var(--text-md); font-weight: var(--weight-heavy); letter-spacing: -0.02em;
+        color: var(--text-primary);
       }
       .rp__sub {
         font-size: var(--text-sm); color: var(--text-secondary);
-        text-align: center; line-height: 1.5;
+        text-align: center; line-height: 1.5; margin-top: -4px;
       }
       .rp__thanks {
-        font-size: var(--text-sm); color: var(--text-secondary);
-        text-align: center; line-height: 1.5;
+        font-size: var(--text-sm); color: var(--success);
+        text-align: center; line-height: 1.5; font-weight: var(--weight-semi);
       }
-      .rp__stars { display: flex; gap: var(--space-1); }
+      .rp__stars { display: flex; gap: 4px; }
       .rp__star {
-        width: 40px; height: 40px;
+        width: 42px; height: 42px;
         display: flex; align-items: center; justify-content: center;
         color: var(--border-strong);
-        transition: color var(--t), transform var(--t);
+        transition: color var(--t), transform var(--t-spring);
       }
       .rp__star.on     { color: var(--rating); }
-      .rp__star:active { transform: scale(0.88); }
+      .rp__star:active { transform: scale(0.82); }
       .rp__input {
         width: 100%; resize: none;
-        background: var(--bg); border: 1px solid var(--border);
-        border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: var(--radius-md); padding: var(--space-3) var(--space-3);
         font-size: var(--text-sm); color: var(--text-primary); font-family: inherit;
+        transition: border-color var(--t);
       }
-      .rp__input::placeholder { color: var(--text-secondary); }
+      .rp__input:focus { border-color: rgba(0, 168, 255, 0.4); outline: none; }
+      .rp__input::placeholder { color: var(--text-tertiary); }
       .rp__send {
         width: 100%; background: var(--btn-bg); color: var(--btn-text);
         border-radius: var(--radius-md); padding: var(--space-3);
         font-size: var(--text-base); font-weight: var(--weight-bold);
-        transition: opacity var(--t);
+        box-shadow: 0 4px 14px rgba(0, 168, 255, 0.25);
+        transition: opacity var(--t), transform var(--t);
       }
       .rp__send:disabled { opacity: 0.5; }
+      .rp__send:active:not(:disabled) { opacity: 0.88; transform: scale(0.98); }
       .rp__later {
-        font-size: var(--text-xs); color: var(--text-secondary);
+        font-size: var(--text-xs); color: var(--text-tertiary);
         padding: var(--space-1) var(--space-3);
+        transition: color var(--t);
       }
+      .rp__later:active { color: var(--text-secondary); }
     `}</style>
   );
 });

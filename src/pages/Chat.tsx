@@ -439,14 +439,14 @@ export default function Chat() {
 
       <style>{`
         .call-screen {
-          --bg: #0e0e12;
-          --bg-secondary: rgba(255,255,255,0.08);
+          --bg: #080C14;
+          --bg-secondary: rgba(255,255,255,0.07);
           --text-primary: #ffffff;
-          --text-secondary: rgba(255,255,255,0.6);
-          --border: rgba(255,255,255,0.12);
+          --text-secondary: rgba(255,255,255,0.55);
+          --border: rgba(255,255,255,0.1);
           position: relative;
           width: 100%; height: 100%;
-          background: #0e0e12;
+          background: #080C14;
           overflow: hidden;
           display: flex;
           flex-direction: column;
@@ -455,8 +455,8 @@ export default function Chat() {
         .call-bg-glow {
           position: absolute; inset: 0; z-index: 0;
           background:
-            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.18) 0%, transparent 70%),
-            radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.1) 0%, transparent 60%);
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,168,255,0.12) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.08) 0%, transparent 60%);
           pointer-events: none;
         }
 
@@ -464,9 +464,11 @@ export default function Chat() {
           position: relative; z-index: 10;
           display: flex; align-items: center; gap: var(--space-3);
           padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(255,255,255,0.07);
           animation: fadeIn 0.2s ease both;
           flex-shrink: 0;
+          background: rgba(8, 12, 20, 0.6);
+          backdrop-filter: blur(10px);
         }
         .call-presence {
           position: relative;
@@ -508,20 +510,20 @@ export default function Chat() {
         }
         .call-tag {
           font-size: var(--text-xs); font-weight: var(--weight-bold);
-          color: var(--text-primary);
+          color: rgba(255,255,255,0.85);
           background: rgba(255,255,255,0.1);
-          border-radius: 6px; padding: var(--space-0-5) var(--space-1-5);
-          letter-spacing: 0.4px;
+          border-radius: 6px; padding: 2px 6px;
+          letter-spacing: 0.3px;
           white-space: nowrap;
         }
         .call-tag--dim {
-          color: var(--text-secondary);
-          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.4);
+          background: rgba(255,255,255,0.05);
           font-weight: var(--weight-medium);
         }
         .call-status {
           font-size: var(--text-xs); font-weight: var(--weight-semi);
-          color: var(--text-secondary);
+          color: rgba(255,255,255,0.45);
           display: inline-flex; align-items: center;
           white-space: nowrap;
           transition: color 0.18s ease;
@@ -533,16 +535,14 @@ export default function Chat() {
           background: currentColor;
           flex-shrink: 0;
         }
-        .call-status--speaking {
-          color: var(--success);
-        }
+        .call-status--speaking { color: var(--success); }
         .call-header__timer {
           display: flex; align-items: center; gap: var(--space-1-5);
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.1);
           border-radius: 99px; padding: var(--space-1) var(--space-3);
           font-size: var(--text-sm); font-weight: var(--weight-bold);
-          color: var(--text-primary);
+          color: rgba(255,255,255,0.9);
           font-variant-numeric: tabular-nums;
           white-space: nowrap;
           flex-shrink: 0;

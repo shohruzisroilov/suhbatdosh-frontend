@@ -166,21 +166,23 @@ export default function Leaderboard() {
         .lb-scope {
           display: flex; gap: var(--space-1-5);
           margin: 0 var(--space-4) var(--space-2);
-        }
-        .lb-scope-btn {
-          flex: 1; padding: 6px var(--space-2);
-          font-size: var(--text-xs); font-weight: var(--weight-bold);
-          color: var(--text-secondary);
-          background: var(--bg-secondary);
+          background: var(--surface-2);
           border: 1px solid var(--border);
           border-radius: var(--radius-full);
-          transition: all 0.15s;
+          padding: 3px;
+        }
+        .lb-scope-btn {
+          flex: 1; padding: 7px var(--space-2);
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          color: var(--text-secondary);
+          border-radius: var(--radius-full);
+          transition: all 0.18s var(--ease-out);
         }
         .lb-scope-btn.on {
-          color: #FFFFFF; background: var(--btn-bg); border-color: var(--btn-bg);
-          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
+          color: #FFFFFF; background: var(--btn-bg);
+          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3);
         }
-        .lb-scope-btn:active { opacity: 0.8; }
+        .lb-scope-btn:active:not(.on) { background: var(--surface-3); color: var(--text-primary); }
 
         .lb-tabs {
           display: flex; gap: var(--space-1);
@@ -192,7 +194,7 @@ export default function Leaderboard() {
         }
         .lb-tab {
           flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px var(--space-2);
+          padding: 9px var(--space-2);
           font-size: var(--text-xs); font-weight: var(--weight-bold);
           color: var(--text-secondary);
           border: none;
@@ -222,20 +224,21 @@ export default function Leaderboard() {
           border-radius: var(--radius-md);
           transition: transform 0.15s ease, border-color 0.15s ease;
         }
-        .lb-row.me { border-color: var(--btn-bg) !important; background: rgba(0, 168, 255, 0.08) !important; }
+        .lb-row:active { transform: scale(0.99); }
+        .lb-row.me { border-color: var(--btn-bg) !important; background: rgba(0, 168, 255, 0.06) !important; }
 
         .lb-row--rank-1 {
-          border-color: rgba(255, 215, 0, 0.45);
-          background: linear-gradient(90deg, rgba(255, 215, 0, 0.12) 0%, var(--bg-secondary) 80%);
-          box-shadow: 0 4px 16px rgba(255, 215, 0, 0.12);
+          border-color: rgba(255, 215, 0, 0.5);
+          background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, var(--bg-secondary) 70%);
+          box-shadow: 0 4px 18px rgba(255, 215, 0, 0.1);
         }
         .lb-row--rank-2 {
-          border-color: rgba(226, 232, 240, 0.3);
-          background: linear-gradient(90deg, rgba(226, 232, 240, 0.08) 0%, var(--bg-secondary) 80%);
+          border-color: rgba(226, 232, 240, 0.35);
+          background: linear-gradient(90deg, rgba(226, 232, 240, 0.07) 0%, var(--bg-secondary) 70%);
         }
         .lb-row--rank-3 {
-          border-color: rgba(245, 158, 11, 0.3);
-          background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, var(--bg-secondary) 80%);
+          border-color: rgba(245, 158, 11, 0.35);
+          background: linear-gradient(90deg, rgba(245, 158, 11, 0.07) 0%, var(--bg-secondary) 70%);
         }
 
         .lb-rank-col {
@@ -243,15 +246,15 @@ export default function Leaderboard() {
           flex-shrink: 0;
         }
         .lb-rank-num {
-          font-size: 13px; font-weight: var(--weight-heavy); color: var(--text-tertiary);
+          font-size: 12px; font-weight: var(--weight-heavy); color: var(--text-tertiary);
         }
         .lb-rank-badge {
           display: flex; align-items: center; justify-content: center;
           width: 22px; height: 22px; border-radius: 50%;
           font-size: 11px; font-weight: var(--weight-heavy);
         }
-        .lb-rank-badge--2 { background: rgba(226, 232, 240, 0.2); color: #E2E8F0; border: 1px solid rgba(226, 232, 240, 0.4); }
-        .lb-rank-badge--3 { background: rgba(245, 158, 11, 0.2); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .lb-rank-badge--2 { background: rgba(226, 232, 240, 0.18); color: #E2E8F0; border: 1px solid rgba(226, 232, 240, 0.4); }
+        .lb-rank-badge--3 { background: rgba(245, 158, 11, 0.18); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
 
         .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .lb-row__name-line {
@@ -263,14 +266,17 @@ export default function Leaderboard() {
         }
         .lb-you {
           font-size: 9px; font-weight: var(--weight-bold);
-          padding: 1px 6px; border-radius: 999px;
+          padding: 2px 6px; border-radius: 999px;
           background: var(--btn-bg); color: var(--btn-text);
           flex-shrink: 0;
         }
-        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--btn-bg); }
+        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--btn-bg); opacity: 0.8; }
 
         .lb-row__value-col { flex-shrink: 0; text-align: right; }
-        .lb-row__value { font-size: 13px; font-weight: var(--weight-heavy); color: var(--accent); white-space: nowrap; }
+        .lb-row__value {
+          font-size: 13px; font-weight: var(--weight-heavy);
+          color: var(--accent); white-space: nowrap;
+        }
 
         .lb-empty {
           font-size: var(--text-sm); color: var(--text-secondary);

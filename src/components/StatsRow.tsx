@@ -47,17 +47,20 @@ export default function StatsRow({ stats, loaded = true }: StatsRowProps) {
         }
         .stats-row__item {
           flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
-          padding: var(--space-3) var(--space-2);
+          padding: var(--space-4) var(--space-2);
           background: var(--bg-secondary);
           border-radius: var(--radius-md);
           border: 1px solid var(--border);
+          transition: transform 0.15s, border-color 0.15s;
         }
+        .stats-row__item:active { transform: scale(0.97); }
         .stats-row__val {
-          font-size: var(--text-lg); font-weight: var(--weight-bold); letter-spacing: -0.5px;
+          font-size: var(--text-lg); font-weight: var(--weight-heavy); letter-spacing: -0.5px;
+          color: var(--text-primary);
         }
         .stats-row__lbl {
-          font-size: var(--text-xs); color: var(--text-secondary);
-          font-weight: var(--weight-semi); text-transform: uppercase; letter-spacing: 0.3px;
+          font-size: 10px; color: var(--text-secondary);
+          font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.05em;
         }
       `}</style>
     </div>

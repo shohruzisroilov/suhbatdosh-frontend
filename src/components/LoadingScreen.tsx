@@ -28,11 +28,12 @@ export default function LoadingScreen() {
           animation: fadeIn 0.4s ease both;
         }
         .loading-logo {
-          width: 72px; height: 72px;
+          width: 76px; height: 76px;
           display: flex; align-items: center; justify-content: center;
-          border-radius: var(--radius-xl);
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
+          border-radius: 24px;
+          background: linear-gradient(145deg, #0EA5E9, #0066FF);
+          box-shadow: 0 8px 32px rgba(0, 168, 255, 0.35);
+          color: #fff;
           animation: loadingBreath 1.8s ease-in-out infinite;
         }
         .loading-logo-emoji {

@@ -160,9 +160,12 @@ export default function SessionEnd() {
           gap: var(--space-4); text-align: center;
         }
         .end-ico {
-          width: 62px; height: 62px; border-radius: var(--radius-full);
+          width: 68px; height: 68px; border-radius: var(--radius-full);
           display: flex; align-items: center; justify-content: center;
-          background: var(--surface-2); color: var(--text-secondary);
+          background: linear-gradient(135deg, rgba(0,168,255,0.2), rgba(0,102,255,0.3));
+          border: 1px solid rgba(0,168,255,0.25);
+          color: var(--btn-bg);
+          box-shadow: 0 8px 24px rgba(0,168,255,0.2);
         }
         .end-head h2 {
           font-family: var(--font-display);
@@ -173,12 +176,15 @@ export default function SessionEnd() {
         .end-card {
           width: 100%; background: var(--bg-secondary);
           border: 1px solid var(--border); border-radius: var(--radius-md);
-          padding: var(--space-4) var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);
+          padding: var(--space-1) 0; display: flex; flex-direction: column;
         }
         .end-row {
-          display: flex; justify-content: space-between;
+          display: flex; justify-content: space-between; align-items: center;
+          padding: var(--space-3) var(--space-4);
           font-size: var(--text-base); color: var(--text-secondary);
+          border-bottom: 1px solid var(--border);
         }
+        .end-row:last-child { border-bottom: none; }
         .end-row-val { font-weight: var(--weight-bold); color: var(--text-primary); }
 
         .end-rate { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); width: 100%; }
@@ -187,13 +193,13 @@ export default function SessionEnd() {
 
         .stars { display: flex; gap: var(--space-1); }
         .star {
-          width: 44px; height: 44px;
+          width: 46px; height: 46px;
           display: flex; align-items: center; justify-content: center;
           color: var(--border-strong);
-          transition: color var(--t), transform var(--t);
+          transition: color var(--t), transform var(--t-spring);
         }
         .star.on     { color: var(--rating); }
-        .star:active { transform: scale(0.88); }
+        .star:active { transform: scale(0.85); }
 
         .end-skip {
           font-size: var(--text-sm); color: var(--text-secondary);
@@ -206,7 +212,7 @@ export default function SessionEnd() {
 
         .end-report {
           display: flex; align-items: center; justify-content: center; gap: var(--space-1-5);
-          font-size: var(--text-sm); color: var(--text-secondary);
+          font-size: var(--text-sm); color: var(--text-tertiary);
           padding: var(--space-2); font-weight: var(--weight-medium); margin-top: var(--space-0-5);
           transition: opacity var(--t);
         }
