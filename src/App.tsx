@@ -11,20 +11,20 @@ import Toast from './components/Toast';
 import BottomNav from './components/BottomNav';
 import MicPermissionModal from './components/MicPermissionModal';
 
-import Onboarding from './pages/Onboarding';
-import Home from './pages/Home';
-import Leaderboard from './pages/Leaderboard';
-import Invite from './pages/Invite';
-import Reviews from './pages/Reviews';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import Premium from './pages/Premium';
-import Statistics from './pages/Statistics';
-import Matching from './pages/Matching';
-import SessionEnd from './pages/SessionEnd';
+import Onboarding from './pages/Onboarding.tsx';
+import Home from './pages/Home.tsx';
+import Leaderboard from './pages/Leaderboard.tsx';
+import Invite from './pages/Invite.tsx';
+import Reviews from './pages/Reviews.tsx';
+import Profile from './pages/Profile.tsx';
+import Settings from './pages/Settings.tsx';
+import Premium from './pages/Premium.tsx';
+import Statistics from './pages/Statistics.tsx';
+import Matching from './pages/Matching.tsx';
+import SessionEnd from './pages/SessionEnd.tsx';
 
-const Chat = lazy(() => import('./pages/Chat'));
-const IeltsMock = lazy(() => import('./pages/IeltsMock'));
+const Chat = lazy(() => import('./pages/Chat.tsx'));
+const IeltsMock = lazy(() => import('./pages/IeltsMock.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
