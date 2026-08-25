@@ -38,6 +38,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'common.goHome': 'Go Home',
     'common.cancel': 'Cancel',
     'common.tryAgain': 'Try Again',
+    'common.next': 'Continue',
+    'common.back': 'Back',
 
     // onboarding (welcome)
     'ob.welcome.title': 'Speak English\nevery day',

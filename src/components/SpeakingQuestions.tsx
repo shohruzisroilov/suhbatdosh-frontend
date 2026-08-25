@@ -4,14 +4,13 @@ import { useSocket } from '../hooks/useSocket';
 import { topicsForPart, findTopic } from '../constants/speakingTopics';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
-import { Bell, Star } from 'lucide-react';
-import Icebreakers from './Icebreakers';
+import { Bell, Star, ChevronLeft } from 'lucide-react';
 import { SavedQuestion } from '../types';
 
 const PART_META = [
-  { part: 1, descKey: 'sq.part1.desc' },
-  { part: 2, descKey: 'sq.part2.desc' },
-  { part: 3, descKey: 'sq.part3.desc' },
+  { part: 1, descKey: 'sq.part1.desc', emoji: '💬' },
+  { part: 2, descKey: 'sq.part2.desc', emoji: '⏱️' },
+  { part: 3, descKey: 'sq.part3.desc', emoji: '💡' },
 ];
 
 const PART_ACCENT: Record<number, string> = {
@@ -185,9 +184,8 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
     return (
       <div className="sq sq--parts">
         {partnerBanner}
-        <Icebreakers />
         <div className="sq-grid">
-          {PART_META.map(({ part, descKey }) => (
+          {PART_META.map(({ part, descKey, emoji }) => (
             <button
               key={part}
               className="sq-tile"
@@ -195,6 +193,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
               onClick={() => openPart(part)}
             >
               <span className="sq-tile__num">{part}</span>
+              <span className="sq-tile__emoji">{emoji}</span>
               <span className="sq-tile__title">{t('sq.part', { n: part })}</span>
               <span className="sq-tile__desc">{t(descKey)}</span>
             </button>
@@ -207,9 +206,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
               setView('saved');
             }}
           >
-            <span className="sq-tile__emoji">
-              <Star size={20} />
-            </span>
+            <span className="sq-tile__emoji">⭐</span>
             <span className="sq-tile__title">{t('sq.saved')}</span>
             <span className="sq-tile__desc">
               {savedQuestions.length
@@ -229,7 +226,8 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
         {partnerBanner}
         <div className="sq-nav">
           <button className="sq-back" onClick={backToParts}>
-            ‹ {t('sq.parts')}
+            <ChevronLeft size={16} />
+            <span>{t('sq.parts')}</span>
           </button>
           <span className="sq-nav__title">
             <Star size={14} /> {t('sq.saved')}
@@ -269,7 +267,8 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
         {partnerBanner}
         <div className="sq-nav">
           <button className="sq-back" onClick={backToParts}>
-            ‹ {t('sq.parts')}
+            <ChevronLeft size={16} />
+            <span>{t('sq.parts')}</span>
           </button>
           <span className="sq-nav__title">{t('sq.part', { n: browsePart })}</span>
         </div>
@@ -322,7 +321,8 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
     <div className="sq" style={{ '--acc': PART_ACCENT[speakingPart] } as React.CSSProperties}>
       <div className="sq-nav">
         <button className="sq-back" onClick={backToTopics}>
-          ‹ {t('sq.topics')}
+          <ChevronLeft size={16} />
+          <span>{t('sq.topics')}</span>
         </button>
         <span className="sq-nav__title">
           {t('sq.part', { n: speakingPart })} · {topic.title}
@@ -457,18 +457,34 @@ const css = `
   }
 
   .sq-nav {
-    display: flex; align-items: center; gap: var(--space-3);
-    min-height: 38px;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    min-height: 42px; padding: var(--space-1) 0;
   }
   .sq-back {
-    flex-shrink: 0;
-    padding: var(--space-2) var(--space-3); border-radius: 11px;
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.85);
-    font-size: var(--text-base); font-weight: var(--weight-bold);
-    transition: background 0.12s, transform 0.1s;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px 7px 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.13);
+    color: #ffffff;
+    font-size: var(--text-sm); font-weight: var(--weight-bold);
+    letter-spacing: -0.1px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    backdrop-filter: blur(8px);
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
   }
-  .sq-back:active { transform: scale(0.95); background: rgba(255,255,255,0.14); }
+  .sq-back:active {
+    transform: scale(0.94);
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.25);
+  }
+  .sq-back svg {
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+  .sq-back:active svg {
+    transform: translateX(-2px);
+  }
   .sq-nav__title {
     flex: 1; min-width: 0;
     font-size: var(--text-sm); font-weight: var(--weight-bold);

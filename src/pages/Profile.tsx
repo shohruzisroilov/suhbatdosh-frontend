@@ -22,8 +22,8 @@ const SUPPORT_URL = 'https://t.me/Shohruz_Isroilov';
 const LEVELS = [1, 2, 3, 4, 5, 6];
 
 const GENDERS = [
-  { v: 'female', key: 'gender.female' },
   { v: 'male', key: 'gender.male' },
+  { v: 'female', key: 'gender.female' },
   { v: 'skip', key: 'gender.notSay' },
 ];
 

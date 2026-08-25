@@ -11,8 +11,8 @@ import { Card } from '../components/ui/card';
 const LEVELS = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }];
 
 const GENDERS = [
-  { v: 'female', key: 'gender.female' },
   { v: 'male', key: 'gender.male' },
+  { v: 'female', key: 'gender.female' },
   { v: 'skip', key: 'gender.notSay' },
 ];
 
