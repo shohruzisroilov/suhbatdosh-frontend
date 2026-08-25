@@ -5,7 +5,6 @@ import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
-  BarChart3,
   Bell,
   Check,
   ChevronRight,
@@ -142,7 +141,7 @@ export default function Profile() {
   return (
     <div className="profile">
       <div className="profile__scroll">
-        {/* User Hero */}
+        {/* User Hero Header */}
         <div className="profile__hero">
           <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={84} />
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
@@ -154,16 +153,26 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Quick Stats Grid */}
+        {/* Quick Interactive Stats Grid */}
         <div className="profile__stats-grid">
-          <div className="profile__stat-box">
-            <span className="profile__stat-icon"><Clock size={18} /></span>
+          <div
+            className="profile__stat-box profile__stat-box--clickable"
+            onClick={() => {
+              tapHaptic('light');
+              navigate('statistics', { from: 'profile' });
+            }}
+          >
+            <span className="profile__stat-icon profile__stat-icon--time">
+              <Clock size={18} />
+            </span>
             <span className="profile__stat-value">{formatPracticeTime(totalMinutes)}</span>
             <span className="profile__stat-label">{t('profile.timeTalked')}</span>
           </div>
 
           <div className="profile__stat-box">
-            <span className="profile__stat-icon"><Users size={18} /></span>
+            <span className="profile__stat-icon profile__stat-icon--users">
+              <Users size={18} />
+            </span>
             <span className="profile__stat-value">{uniquePartners}</span>
             <span className="profile__stat-label">{t('profile.partners')}</span>
           </div>
@@ -176,7 +185,9 @@ export default function Profile() {
               <Star size={18} fill="currentColor" />
             </span>
             <span className="profile__stat-value">{avgRatingNum} ★</span>
-            <span className="profile__stat-label">{ratingCount} ratings</span>
+            <span className="profile__stat-label">
+              {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+            </span>
           </div>
         </div>
 
@@ -185,7 +196,9 @@ export default function Profile() {
         <div className="profile__card">
           {/* Level Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowLevelModal(true); }}>
-            <span className="profile__row-ico"><Gauge size={18} /></span>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
+              <Gauge size={16} />
+            </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.levelTitle')}</span>
               <span className="profile__row-sub">
@@ -197,7 +210,9 @@ export default function Profile() {
 
           {/* Gender Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowGenderModal(true); }}>
-            <span className="profile__row-ico"><UserIcon size={18} /></span>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
+              <UserIcon size={16} />
+            </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.genderTitle')}</span>
               <span className="profile__row-sub">
@@ -207,53 +222,13 @@ export default function Profile() {
             <Chevron />
           </button>
 
-          {/* Notifications Row */}
-          <div className="profile__row" onClick={toggleNotif}>
-            <span className="profile__row-ico"><Bell size={18} /></span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('settings.notifTitle')}</span>
-              <span className="profile__row-sub">
-                {reminders ? t('settings.notifAllOn') : t('settings.notifNone')}
-              </span>
-            </div>
-            <span className={`switch${reminders ? ' switch--on' : ''}`} />
-          </div>
+
         </div>
 
-        {/* Account & Activity Section */}
+        {/* Account & Support Section */}
         <div className="profile__section-header">Account</div>
         <div className="profile__card">
-          {/* Received Ratings detail row */}
-          <button className="profile__row" onClick={openRatings}>
-            <span className="profile__row-ico profile__row-ico--star">
-              <Star size={18} fill="currentColor" />
-            </span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('profile.ratingsModalTitle')}</span>
-              <span className="profile__row-sub">
-                {ratingCount > 0
-                  ? `${avgRatingNum} ★ · ${ratingCount} partners rated you`
-                  : t('profile.noRatingsYet')}
-              </span>
-            </div>
-            <Chevron />
-          </button>
-
-          <button
-            className="profile__row"
-            onClick={() => {
-              tapHaptic('light');
-              navigate('statistics', { from: 'profile' });
-            }}
-          >
-            <span className="profile__row-ico"><BarChart3 size={18} /></span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('profile.stats')}</span>
-              <span className="profile__row-sub">{t('profile.statsSub')}</span>
-            </div>
-            <Chevron />
-          </button>
-
+          {/* Subscription / Plan Row */}
           <button
             className="profile__row"
             onClick={() => {
@@ -264,7 +239,9 @@ export default function Profile() {
             }}
             disabled={isPremium}
           >
-            <span className="profile__row-ico"><Star size={18} /></span>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
+              <Star size={16} />
+            </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.plan')}</span>
               <span className="profile__row-sub">
@@ -279,6 +256,7 @@ export default function Profile() {
             {!isPremium && <Chevron />}
           </button>
 
+          {/* Community Reviews Row */}
           <button
             className="profile__row"
             onClick={() => {
@@ -286,7 +264,9 @@ export default function Profile() {
               navigate('reviews');
             }}
           >
-            <span className="profile__row-ico"><MessageSquare size={18} /></span>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
+              <MessageSquare size={16} />
+            </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.reviews')}</span>
               <span className="profile__row-sub">{t('profile.reviewsSub')}</span>
@@ -294,6 +274,7 @@ export default function Profile() {
             <Chevron />
           </button>
 
+          {/* Support Row */}
           <button
             className="profile__row"
             onClick={() => {
@@ -301,7 +282,9 @@ export default function Profile() {
               openSupport();
             }}
           >
-            <span className="profile__row-ico"><LifeBuoy size={18} /></span>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--rose">
+              <LifeBuoy size={16} />
+            </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.support')}</span>
               <span className="profile__row-sub">{t('profile.supportSub')}</span>
@@ -313,7 +296,7 @@ export default function Profile() {
         <div className="profile__footer" />
       </div>
 
-      {/* Level Modal */}
+      {/* Level Selector Modal */}
       {showLevelModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowLevelModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
@@ -348,7 +331,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Gender Modal */}
+      {/* Gender Selector Modal */}
       {showGenderModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowGenderModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
@@ -379,7 +362,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Ratings Modal */}
+      {/* Partner Ratings Modal */}
       {showRatingsModal && (
         <div className="ratings-modal-backdrop" onClick={() => setShowRatingsModal(false)}>
           <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
@@ -465,9 +448,16 @@ export default function Profile() {
           transition: transform 0.15s, border-color 0.15s;
         }
         .profile__stat-box--clickable { cursor: pointer; }
-        .profile__stat-box--clickable:active { transform: scale(0.97); border-color: #f59e0b; }
-        .profile__stat-icon { color: var(--btn-bg); display: flex; align-items: center; justify-content: center; }
-        .profile__stat-icon--star { color: #f59e0b; }
+        .profile__stat-box--clickable:active { transform: scale(0.96); border-color: var(--btn-bg); }
+        .profile__stat-icon {
+          width: 32px; height: 32px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 2px;
+        }
+        .profile__stat-icon--time { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .profile__stat-icon--users { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .profile__stat-icon--star { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+
         .profile__stat-value { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary); }
         .profile__stat-label { font-size: var(--text-xs); color: var(--text-secondary); }
 
@@ -489,20 +479,31 @@ export default function Profile() {
           width: 100%; text-align: left;
           padding: var(--space-3-5) var(--space-4);
           border-bottom: 1px solid var(--border);
-          transition: opacity var(--t);
+          transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
           background: transparent; cursor: pointer;
         }
         .profile__row:last-child { border-bottom: none; }
-        .profile__row:active:not(:disabled) { opacity: 0.6; }
+        .profile__row:active:not(:disabled) { opacity: 0.7; background: rgba(255, 255, 255, 0.03); }
         .profile__row:disabled { cursor: default; }
-        .profile__row-ico { font-size: var(--text-lg); flex-shrink: 0; width: 24px; text-align: center; color: var(--text-primary); }
-        .profile__row-ico--star { color: #f59e0b; }
+
+        .profile__row-icon-wrapper {
+          width: 32px; height: 32px; border-radius: var(--radius-sm, 8px);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .profile__row-icon-wrapper--blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .profile__row-icon-wrapper--purple { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .profile__row-icon-wrapper--green { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+        .profile__row-icon-wrapper--amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .profile__row-icon-wrapper--cyan { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+        .profile__row-icon-wrapper--rose { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
+
         .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile__row-title { font-size: var(--text-base); font-weight: var(--weight-bold); color: var(--text-primary); }
         .profile__row-sub { font-size: var(--text-xs); color: var(--text-secondary); }
         .profile__row-val {
-          font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-secondary);
+          font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--text-secondary);
           white-space: nowrap; flex-shrink: 0;
         }
         .profile__chev { color: var(--text-secondary); flex-shrink: 0; opacity: 0.6; }
