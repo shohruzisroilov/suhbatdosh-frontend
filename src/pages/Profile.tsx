@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { getMe, getMyRatings, updateMe, updateNotifications } from '../api/endpoints';
+import { getMe, getMyRatings, updateMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
-  Bell,
   Check,
   ChevronRight,
   Clock,
@@ -52,7 +51,7 @@ function formatPracticeTime(minutes: number): string {
 function Chevron({ open = false }: { open?: boolean }) {
   return (
     <ChevronRight
-      size={16}
+      size={15}
       className={`profile__chev${open ? ' profile__chev--open' : ''}`}
     />
   );
@@ -118,20 +117,11 @@ export default function Profile() {
     setShowGenderModal(false);
   };
 
-  const toggleNotif = () => {
-    if (!user) return;
-    const nextReminders = user.remindersEnabled === false;
-    selectionHaptic();
-    setUser({ ...user, remindersEnabled: nextReminders });
-    updateNotifications({ remindersEnabled: nextReminders }).catch(() => {});
-  };
-
   const isPremium = !!user?.isPremium;
   const premiumUntil = formatDate(user?.premiumUntil);
 
   const level = user?.level || 1;
   const gender = user?.gender || null;
-  const reminders = user?.remindersEnabled !== false;
 
   const avgRatingNum = Number(stats.avg_rating || 0).toFixed(1);
   const ratingCount = stats.rating_count || 0;
@@ -143,12 +133,12 @@ export default function Profile() {
       <div className="profile__scroll">
         {/* User Hero Header */}
         <div className="profile__hero">
-          <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={84} />
+          <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={64} />
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
           {isPremium && (
             <span className="profile__premium-badge">
-              <Star size={11} fill="currentColor" strokeWidth={0} /> {t('profile.premium')}
+              <Star size={10} fill="currentColor" strokeWidth={0} /> {t('profile.premium')}
             </span>
           )}
         </div>
@@ -163,7 +153,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__stat-icon profile__stat-icon--time">
-              <Clock size={18} />
+              <Clock size={15} />
             </span>
             <span className="profile__stat-value">{formatPracticeTime(totalMinutes)}</span>
             <span className="profile__stat-label">{t('profile.timeTalked')}</span>
@@ -171,7 +161,7 @@ export default function Profile() {
 
           <div className="profile__stat-box">
             <span className="profile__stat-icon profile__stat-icon--users">
-              <Users size={18} />
+              <Users size={15} />
             </span>
             <span className="profile__stat-value">{uniquePartners}</span>
             <span className="profile__stat-label">{t('profile.partners')}</span>
@@ -182,7 +172,7 @@ export default function Profile() {
             onClick={openRatings}
           >
             <span className="profile__stat-icon profile__stat-icon--star">
-              <Star size={18} fill="currentColor" />
+              <Star size={15} fill="currentColor" />
             </span>
             <span className="profile__stat-value">{avgRatingNum} ★</span>
             <span className="profile__stat-label">
@@ -191,13 +181,13 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Settings & Preferences Section */}
+        {/* Settings Section */}
         <div className="profile__section-header">{t('settings.title')}</div>
         <div className="profile__card">
           {/* Level Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowLevelModal(true); }}>
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
-              <Gauge size={16} />
+              <Gauge size={15} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.levelTitle')}</span>
@@ -211,7 +201,7 @@ export default function Profile() {
           {/* Gender Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowGenderModal(true); }}>
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
-              <UserIcon size={16} />
+              <UserIcon size={15} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.genderTitle')}</span>
@@ -221,8 +211,6 @@ export default function Profile() {
             </div>
             <Chevron />
           </button>
-
-
         </div>
 
         {/* Account & Support Section */}
@@ -240,7 +228,7 @@ export default function Profile() {
             disabled={isPremium}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
-              <Star size={16} />
+              <Star size={15} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.plan')}</span>
@@ -265,7 +253,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
-              <MessageSquare size={16} />
+              <MessageSquare size={15} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.reviews')}</span>
@@ -283,7 +271,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--rose">
-              <LifeBuoy size={16} />
+              <LifeBuoy size={15} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.support')}</span>
@@ -303,7 +291,7 @@ export default function Profile() {
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.levelTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowLevelModal(false)}>
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
             <div className="ratings-modal__body">
@@ -338,7 +326,7 @@ export default function Profile() {
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.genderTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowGenderModal(false)}>
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
             <div className="ratings-modal__body">
@@ -373,7 +361,7 @@ export default function Profile() {
                 className="ratings-modal__close"
                 onClick={() => setShowRatingsModal(false)}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
@@ -384,7 +372,7 @@ export default function Profile() {
                 <div className="ratings-modal__list">
                   {ratingsList.map((item) => (
                     <div key={item.id} className="ratings-modal__item">
-                      <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={40} />
+                      <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={36} />
                       <div className="ratings-modal__info">
                         <span className="ratings-modal__name">
                           {item.rater_name || t('common.anonymous')}
@@ -395,7 +383,7 @@ export default function Profile() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            size={14}
+                            size={13}
                             fill={star <= item.score ? '#f59e0b' : 'none'}
                             color={star <= item.score ? '#f59e0b' : 'var(--text-secondary)'}
                           />
@@ -406,7 +394,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="ratings-modal__empty">
-                  <Star size={36} color="var(--text-secondary)" opacity={0.5} />
+                  <Star size={32} color="var(--text-secondary)" opacity={0.5} />
                   <p>{t('profile.noRatingsYet')}</p>
                 </div>
               )}
@@ -419,65 +407,65 @@ export default function Profile() {
         .profile { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
         .profile__scroll {
           flex: 1; overflow-y: auto;
-          padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
-          display: flex; flex-direction: column; gap: var(--space-3);
+          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) calc(80px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: var(--space-2);
         }
 
         .profile__hero {
-          display: flex; flex-direction: column; align-items: center; gap: var(--space-1-5);
-          padding: var(--space-2) 0 var(--space-1);
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          padding: 4px 0 2px;
         }
-        .profile__name { font-size: var(--text-lg); font-weight: var(--weight-heavy); letter-spacing: -0.4px; text-align: center; }
-        .profile__username { font-size: var(--text-sm); color: var(--text-secondary); margin-top: calc(var(--space-0-5) * -1); }
+        .profile__name { font-size: 17px; font-weight: var(--weight-heavy); letter-spacing: -0.3px; text-align: center; }
+        .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -2px; }
         .profile__premium-badge {
-          margin-top: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: var(--radius-full);
+          margin-top: 4px; padding: 2px 10px; border-radius: var(--radius-full);
           background: var(--btn-bg); color: var(--btn-text);
-          font-size: var(--text-sm); font-weight: var(--weight-heavy); letter-spacing: 0.2px;
+          font-size: 11px; font-weight: var(--weight-heavy); letter-spacing: 0.2px;
+          display: inline-flex; align-items: center; gap: 4px;
         }
 
         .profile__stats-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-1);
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2px;
         }
         .profile__stat-box {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md);
-          padding: var(--space-3) var(--space-2);
+          border-radius: var(--radius-md, 12px);
+          padding: 8px 4px;
           display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-          gap: var(--space-1);
+          gap: 2px;
           transition: transform 0.15s, border-color 0.15s;
         }
         .profile__stat-box--clickable { cursor: pointer; }
         .profile__stat-box--clickable:active { transform: scale(0.96); border-color: var(--btn-bg); }
         .profile__stat-icon {
-          width: 32px; height: 32px; border-radius: 50%;
+          width: 26px; height: 26px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          margin-bottom: 2px;
         }
         .profile__stat-icon--time { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
         .profile__stat-icon--users { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
         .profile__stat-icon--star { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 
-        .profile__stat-value { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary); }
-        .profile__stat-label { font-size: var(--text-xs); color: var(--text-secondary); }
+        .profile__stat-value { font-size: 14px; font-weight: var(--weight-heavy); color: var(--text-primary); }
+        .profile__stat-label { font-size: 11px; color: var(--text-secondary); }
 
         .profile__section-header {
-          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          font-size: 11px; font-weight: var(--weight-bold);
           color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px;
-          padding: var(--space-1) var(--space-1) 0;
+          padding: 4px 4px 0;
         }
 
         .profile__card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-md, 12px);
           display: flex; flex-direction: column;
           overflow: hidden;
         }
         .profile__row {
-          display: flex; align-items: center; gap: var(--space-3);
+          display: flex; align-items: center; gap: 10px;
           width: 100%; text-align: left;
-          padding: var(--space-3-5) var(--space-4);
+          padding: 10px 12px;
           border-bottom: 1px solid var(--border);
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
@@ -488,38 +476,25 @@ export default function Profile() {
         .profile__row:disabled { cursor: default; }
 
         .profile__row-icon-wrapper {
-          width: 32px; height: 32px; border-radius: var(--radius-sm, 8px);
+          width: 28px; height: 28px; border-radius: 8px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
         .profile__row-icon-wrapper--blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
         .profile__row-icon-wrapper--purple { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
-        .profile__row-icon-wrapper--green { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
         .profile__row-icon-wrapper--amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
         .profile__row-icon-wrapper--cyan { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
         .profile__row-icon-wrapper--rose { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
 
-        .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .profile__row-title { font-size: var(--text-base); font-weight: var(--weight-bold); color: var(--text-primary); }
-        .profile__row-sub { font-size: var(--text-xs); color: var(--text-secondary); }
+        .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .profile__row-title { font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary); }
+        .profile__row-sub { font-size: 11px; color: var(--text-secondary); }
         .profile__row-val {
-          font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--text-secondary);
+          font-size: 11px; font-weight: var(--weight-bold); color: var(--text-secondary);
           white-space: nowrap; flex-shrink: 0;
         }
         .profile__chev { color: var(--text-secondary); flex-shrink: 0; opacity: 0.6; }
         .profile__footer { padding-bottom: var(--space-2); }
-
-        /* Switch */
-        .switch {
-          width: 44px; height: 24px; border-radius: 12px; background: var(--border);
-          position: relative; transition: background 0.2s; flex-shrink: 0;
-        }
-        .switch::after {
-          content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
-          border-radius: 10px; background: #fff; transition: transform 0.2s; shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .switch--on { background: var(--btn-bg); }
-        .switch--on::after { transform: translateX(20px); }
 
         /* Modals */
         .ratings-modal-backdrop {
@@ -536,7 +511,7 @@ export default function Profile() {
         }
         .ratings-modal__head {
           display: flex; align-items: center; justify-content: space-between;
-          padding: var(--space-4) var(--space-4); border-bottom: 1px solid var(--border);
+          padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border);
         }
         .ratings-modal__title { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary); }
         .ratings-modal__close {
@@ -546,15 +521,15 @@ export default function Profile() {
         }
         .ratings-modal__close:active { opacity: 0.6; }
 
-        .ratings-modal__body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+        .ratings-modal__body { flex: 1; overflow-y: auto; padding: var(--space-3); }
         .ratings-modal__loading { text-align: center; padding: var(--space-6); color: var(--text-secondary); font-size: var(--text-sm); }
-        .ratings-modal__list { display: flex; flex-direction: column; gap: var(--space-3); }
+        .ratings-modal__list { display: flex; flex-direction: column; gap: var(--space-2); }
         .ratings-modal__item {
           display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3); background: var(--bg-secondary);
+          padding: var(--space-2-5, 10px); background: var(--bg-secondary);
           border: 1px solid var(--border); border-radius: var(--radius-md);
         }
-        .ratings-modal__info { flex: 1; display: flex; flex-direction: column; gap: var(--space-0-5); min-width: 0; }
+        .ratings-modal__info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
         .ratings-modal__name { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-primary); }
         .ratings-modal__date { font-size: var(--text-xs); color: var(--text-secondary); }
         .ratings-modal__stars { display: flex; align-items: center; gap: 2px; }
@@ -567,7 +542,7 @@ export default function Profile() {
         .profile__modal-list { display: flex; flex-direction: column; gap: var(--space-2); }
         .profile__modal-option {
           display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3-5) var(--space-4);
+          padding: var(--space-3) var(--space-4);
           background: var(--bg-secondary); border: 1px solid var(--border);
           border-radius: var(--radius-md); cursor: pointer; transition: border-color 0.15s;
         }
@@ -576,7 +551,7 @@ export default function Profile() {
           font-family: monospace; font-weight: var(--weight-heavy);
           color: var(--btn-bg); font-size: var(--text-sm); min-width: 28px; text-align: center;
         }
-        .profile__modal-option-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .profile__modal-option-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
         .profile__modal-option-title { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-primary); }
         .profile__modal-option-sub { font-size: var(--text-xs); color: var(--text-secondary); }
         .profile__modal-check { color: var(--btn-bg); flex-shrink: 0; }
