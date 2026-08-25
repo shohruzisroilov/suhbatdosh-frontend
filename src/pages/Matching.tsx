@@ -157,11 +157,13 @@ export default function Matching() {
           onClick={() => setIsAiModalOpen(true)}
           style={{
             width: '100%',
-            padding: '12px 16px',
+            padding: elapsed >= 6 ? '14px 18px' : '12px 16px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
-            border: '1px solid rgba(0, 198, 255, 0.4)',
-            color: '#00C6FF',
+            background: elapsed >= 6
+              ? 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)'
+              : 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
+            border: elapsed >= 6 ? 'none' : '1px solid rgba(0, 198, 255, 0.4)',
+            color: elapsed >= 6 ? '#ffffff' : '#00C6FF',
             fontSize: '13px',
             fontWeight: 700,
             display: 'flex',
@@ -169,10 +171,12 @@ export default function Matching() {
             justifyContent: 'center',
             gap: '8px',
             cursor: 'pointer',
+            boxShadow: elapsed >= 6 ? '0 4px 20px rgba(0, 198, 255, 0.4)' : 'none',
+            transition: 'all 0.3s ease',
           }}
         >
-          <Sparkles size={16} />
-          <span>Practice speaking with Suhbatdosh AI 🤖</span>
+          <Sparkles size={18} className={elapsed >= 6 ? 'animate-pulse' : ''} />
+          <span>{elapsed >= 6 ? '⚡ Kutib qolmasdan AI bilan hoziroq gaplashish 🤖' : 'Practice speaking with Suhbatdosh AI 🤖'}</span>
         </button>
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>

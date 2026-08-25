@@ -175,7 +175,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           if (!silenceTimerRef.current) {
             silenceTimerRef.current = setTimeout(() => {
               stopRecording();
-            }, 1300);
+            }, 2200);
           }
         }
 
