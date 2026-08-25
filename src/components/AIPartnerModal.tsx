@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Mic, MicOff, PhoneOff, Sparkles, RefreshCw, Volume2, Send } from 'lucide-react';
-import { sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
+import { sendAIPartnerTurn, getTTSAudio, getAiStatus } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import useAppStore from '../store/useAppStore';
 
@@ -30,7 +30,17 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
   useEffect(() => {
     isComponentMounted.current = true;
     if (isOpen) {
-      startRecording();
+      setErrorMsg(null);
+      getAiStatus().then((res) => {
+        if (res && res.enabled === false) {
+          setErrorMsg("Suhbatdosh AI vaqtincha admin tomonidan o'chirilgan.");
+          setStatus('idle');
+        } else {
+          startRecording();
+        }
+      }).catch(() => {
+        startRecording();
+      });
     } else {
       cleanupAudio();
     }

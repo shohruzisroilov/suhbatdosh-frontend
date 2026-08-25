@@ -5,6 +5,8 @@ import { useT } from '../i18n';
 import { Clock, Users, RotateCcw, Star, Sparkles } from 'lucide-react';
 import AIPartnerModal from '../components/AIPartnerModal';
 
+import { getAiStatus } from '../api/endpoints';
+
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
@@ -21,6 +23,13 @@ export default function Matching() {
   const started = useRef(false);
   const [elapsed, setElapsed] = useState(0);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  useEffect(() => {
+    getAiStatus().then((r) => {
+      if (r && typeof r.enabled === 'boolean') setAiEnabled(r.enabled);
+    }).catch(() => {});
+  }, []);
 
   const cancelRef = useRef(cancel);
   cancelRef.current = cancel;
@@ -152,32 +161,34 @@ export default function Matching() {
         </div>
 
         {/* AI Speaking Partner Option Button during search */}
-        <button
-          type="button"
-          onClick={() => setIsAiModalOpen(true)}
-          style={{
-            width: '100%',
-            padding: elapsed >= 6 ? '14px 18px' : '12px 16px',
-            borderRadius: '16px',
-            background: elapsed >= 6
-              ? 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)'
-              : 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
-            border: elapsed >= 6 ? 'none' : '1px solid rgba(0, 198, 255, 0.4)',
-            color: elapsed >= 6 ? '#ffffff' : '#00C6FF',
-            fontSize: '13px',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            boxShadow: elapsed >= 6 ? '0 4px 20px rgba(0, 198, 255, 0.4)' : 'none',
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <Sparkles size={18} className={elapsed >= 6 ? 'animate-pulse' : ''} />
-          <span>{elapsed >= 6 ? '⚡ Kutib qolmasdan AI bilan hoziroq gaplashish 🤖' : 'Practice speaking with Suhbatdosh AI 🤖'}</span>
-        </button>
+        {aiEnabled && (
+          <button
+            type="button"
+            onClick={() => setIsAiModalOpen(true)}
+            style={{
+              width: '100%',
+              padding: elapsed >= 6 ? '14px 18px' : '12px 16px',
+              borderRadius: '16px',
+              background: elapsed >= 6
+                ? 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)'
+                : 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
+              border: elapsed >= 6 ? 'none' : '1px solid rgba(0, 198, 255, 0.4)',
+              color: elapsed >= 6 ? '#ffffff' : '#00C6FF',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: elapsed >= 6 ? '0 4px 20px rgba(0, 198, 255, 0.4)' : 'none',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <Sparkles size={18} className={elapsed >= 6 ? 'animate-pulse' : ''} />
+            <span>{elapsed >= 6 ? '⚡ Kutib qolmasdan AI bilan hoziroq gaplashish 🤖' : 'Practice speaking with Suhbatdosh AI 🤖'}</span>
+          </button>
+        )}
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
       </div>
