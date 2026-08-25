@@ -37,16 +37,16 @@ function Row({ row, index, me, valueText }: { row: any; index: number; me: any; 
 }
 
 const SCOPES = [
-  { key: 'all',     label: 'lb.scopeAll' },
+  { key: 'today',   label: 'lb.scopeToday' },
   { key: 'weekly',  label: 'lb.scopeWeekly' },
-  { key: 'friends', label: 'lb.scopeFriends' },
+  { key: 'monthly', label: 'lb.scopeMonthly' },
 ];
 
 export default function Leaderboard() {
   const { user, leaderboardCache, setLeaderboardScope } = useAppStore();
   const t = useT();
   const [tab, setTab] = useState<'active' | 'rated'>('active');
-  const [scope, setScope] = useState<'all' | 'weekly' | 'friends'>('all');
+  const [scope, setScope] = useState<'today' | 'weekly' | 'monthly'>('today');
 
   const leaderboard = leaderboardCache[scope] || null;
   const loaded = leaderboard != null;
@@ -98,16 +98,20 @@ export default function Leaderboard() {
       {/* Tabs */}
       <div className="lb-tabs">
         <button
+          type="button"
           className={`lb-tab ${tab === 'active' ? 'on' : ''}`}
           onClick={() => { if (tab !== 'active') { selectionHaptic(); setTab('active'); } }}
         >
-          <Flame size={14} /> {t('lb.mostActive')}
+          <Flame size={15} />
+          <span>{t('lb.mostActive')}</span>
         </button>
         <button
+          type="button"
           className={`lb-tab ${tab === 'rated' ? 'on' : ''}`}
           onClick={() => { if (tab !== 'rated') { selectionHaptic(); setTab('rated'); } }}
         >
-          <Star size={14} /> {t('lb.topRated')}
+          <Star size={15} />
+          <span>{t('lb.topRated')}</span>
         </button>
       </div>
 
@@ -200,11 +204,14 @@ export default function Leaderboard() {
           border-radius: var(--radius-md);
         }
         .lb-tab {
-          flex: 1; padding: var(--space-2) var(--space-2);
+          flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5, 6px);
+          padding: var(--space-2-5, 10px) var(--space-2);
           font-size: var(--text-sm); font-weight: var(--weight-bold);
           color: var(--text-secondary);
+          border: none;
           border-radius: calc(var(--radius-md) - 4px);
           transition: all var(--t);
+          cursor: pointer;
         }
         .lb-tab.on {
           background: var(--bg);

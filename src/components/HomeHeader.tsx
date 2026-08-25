@@ -1,21 +1,19 @@
 import React from 'react';
 import Avatar from './Avatar';
 import { useT } from '../i18n';
-import { Settings as SettingsIcon, Flame } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { User } from '../types';
 
 interface HomeHeaderProps {
   user: User | null;
   streak?: number;
   doneToday?: boolean;
-  onSettings?: () => void;
 }
 
 export default function HomeHeader({
   user,
   streak = 0,
   doneToday = false,
-  onSettings,
 }: HomeHeaderProps) {
   const t = useT();
   const level = user?.level || 1;
@@ -23,7 +21,7 @@ export default function HomeHeader({
 
   return (
     <header className="hh">
-      <Avatar name={user?.displayName} avatarUrl={user?.avatarUrl} size={40} />
+      <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={40} />
 
       <div className="hh__info">
         <span className="hh__name">{user?.displayName || t('common.anonymous')}</span>
@@ -38,10 +36,6 @@ export default function HomeHeader({
           <span className="num">{shown}</span>
         </span>
       )}
-
-      <button className="btn-icon" onClick={onSettings} aria-label={t('settings.title')}>
-        <SettingsIcon size={20} />
-      </button>
 
       <style>{`
         .hh {

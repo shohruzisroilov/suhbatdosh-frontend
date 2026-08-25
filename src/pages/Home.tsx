@@ -6,7 +6,6 @@ import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import { Mic, ShieldCheck, Star, ChevronRight } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
-import IeltsCard from '../components/IeltsCard';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
 import DailyProgress from '../components/DailyProgress';
 import SessionRow from '../components/SessionRow';
@@ -38,7 +37,6 @@ export default function Home() {
         user={user}
         streak={stats?.streakCount || 0}
         doneToday={stats?.hasPracticedToday || false}
-        onSettings={() => navigate('settings')}
       />
 
       <div className="home__scroll">
@@ -67,9 +65,6 @@ export default function Home() {
         <div className="home__list stagger">
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
-
-          {/* IELTS mock */}
-          <IeltsCard />
 
           {/* Kunlik hisoblagich */}
           {!user?.isPremium && (

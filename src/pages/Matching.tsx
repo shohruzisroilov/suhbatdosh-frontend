@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import IeltsCard from '../components/IeltsCard';
 import { Clock, Users, RotateCcw, Star } from 'lucide-react';
 
 function fmtElapsed(s: number): string {
@@ -70,8 +69,6 @@ export default function Matching() {
           </button>
           <p className="mt__fine">{t('match.unlimitedDaily')}</p>
 
-          <IeltsCard variant="offer" />
-
           <button className="btn-quiet" onClick={() => navigate('home')}>{t('common.goBack')}</button>
         </div>
         <Styles />
@@ -89,8 +86,6 @@ export default function Matching() {
             <h2 className="mt__title">{t('match.noOne')}</h2>
             <p className="mt__desc">{t('match.noOneDesc')}</p>
           </div>
-
-          <IeltsCard variant="offer" />
 
           <button className="btn-secondary" onClick={startSearch}>
             <RotateCcw size={16} />
@@ -141,8 +136,6 @@ export default function Matching() {
           </div>
           <p className="mt__hint">{others ? t('match.hintMany') : t('match.hintAlone')}</p>
         </div>
-
-        {(elapsed >= MOCK_OFFER_AFTER_SEC || noPartnerYet) && <IeltsCard variant="offer" />}
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
       </div>

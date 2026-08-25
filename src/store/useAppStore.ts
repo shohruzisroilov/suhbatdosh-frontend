@@ -40,7 +40,17 @@ export interface AppState {
   micErrorModal: { isOpen: boolean; errorMsg?: string } | null;
   setMicErrorModal: (modal: { isOpen: boolean; errorMsg?: string } | null) => void;
 
-  stats: { total_sessions: number; total_minutes: number; avg_rating: string; streakCount?: number; streak_count?: number; hasPracticedToday?: boolean; has_practiced_today?: boolean };
+  stats: {
+    total_sessions: number;
+    total_minutes: number;
+    unique_partners?: number;
+    avg_rating: string | number;
+    rating_count?: number;
+    streakCount?: number;
+    streak_count?: number;
+    hasPracticedToday?: boolean;
+    has_practiced_today?: boolean;
+  };
   recentSessions: any[];
   homeLoaded: boolean;
   setStats: (stats: any) => void;
@@ -115,7 +125,7 @@ const useAppStore = create<AppState>((set) => ({
   micErrorModal: null,
   setMicErrorModal: (micErrorModal) => set({ micErrorModal }),
 
-  stats: { total_sessions: 0, total_minutes: 0, avg_rating: '0.0' },
+  stats: { total_sessions: 0, total_minutes: 0, unique_partners: 0, avg_rating: '0.0', rating_count: 0 },
   recentSessions: [],
   homeLoaded: false,
   setStats: (stats) => set({ stats }),

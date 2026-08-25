@@ -24,7 +24,6 @@ import Matching from './pages/Matching.tsx';
 import SessionEnd from './pages/SessionEnd.tsx';
 
 const Chat = lazy(() => import('./pages/Chat.tsx'));
-const IeltsMock = lazy(() => import('./pages/IeltsMock.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {

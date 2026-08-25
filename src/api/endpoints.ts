@@ -12,6 +12,8 @@ export const updateMe = (data: Record<string, any>) => api.put('/me', data).then
 export const updateNotifications = (prefs: Record<string, any>) =>
   api.put('/me/notifications', prefs).then((r) => r.data);
 
+export const getMyRatings = () => api.get('/me/ratings').then((r) => r.data);
+
 // ─── Stats ────────────────────────────────────────────────────────────────────
 export const getActivity = (range = 'week') =>
   api.get(`/stats/activity?range=${range}`).then((r) => r.data);
