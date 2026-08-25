@@ -1,13 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Mic, MicOff, Volume2, Sparkles, RefreshCw, AudioWaveform } from 'lucide-react';
+import { X, Mic, MicOff, PhoneOff, Sparkles, RefreshCw, Volume2 } from 'lucide-react';
 import { sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
-
-interface MessageItem {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 interface AIPartnerModalProps {
   isOpen: boolean;
@@ -15,41 +9,53 @@ interface AIPartnerModalProps {
 }
 
 export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps) {
-  const [messages, setMessages] = useState<MessageItem[]>([
-    {
-      id: 'init-1',
-      role: 'assistant',
-      content: "Hello! I'm Suhbatdosh AI, your Speaking Partner. Tap the microphone below and start speaking in English!",
-    },
-  ]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
+  const [status, setStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+  const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const isComponentMounted = useRef(true);
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+    isComponentMounted.current = true;
+    if (isOpen) {
+      // Auto start recording when opened
+      startRecording();
+    } else {
+      stopRecording();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+    return () => {
+      isComponentMounted.current = false;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  async function speakText(text: string, msgId: string) {
+  async function speakText(text: string) {
+    if (!isComponentMounted.current) return;
+    setStatus('speaking');
     tapHaptic('light');
-    setTtsLoadingId(msgId);
+
     try {
       const res = await getTTSAudio(text);
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
-        audio.play();
-        setTtsLoadingId(null);
+        audio.onended = () => {
+          if (isComponentMounted.current && !isMuted) {
+            startRecording();
+          } else {
+            setStatus('idle');
+          }
+        };
+        await audio.play();
         return;
       }
     } catch {
-      // Fallback to browser SpeechSynthesis
+      // Fallback
     }
 
     if ('speechSynthesis' in window) {
@@ -57,58 +63,57 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
+      utterance.onend = () => {
+        if (isComponentMounted.current && !isMuted) {
+          startRecording();
+        } else {
+          setStatus('idle');
+        }
+      };
       window.speechSynthesis.speak(utterance);
+    } else {
+      if (isComponentMounted.current && !isMuted) startRecording();
     }
-    setTtsLoadingId(null);
   }
 
-  async function handleSendTurn(params: { audioBase64: string; audioMimeType: string }) {
-    if (loading) return;
+  async function handleSendTurn(audioBase64: string, audioMimeType: string) {
+    if (!isComponentMounted.current) return;
+    setStatus('thinking');
     setErrorMsg(null);
-    setLoading(true);
     tapHaptic('medium');
-
-    const historyPayload = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
 
     try {
       const res = await sendAIPartnerTurn({
-        audioBase64: params.audioBase64,
-        audioMimeType: params.audioMimeType,
-        history: historyPayload,
+        audioBase64,
+        audioMimeType,
+        history,
       });
 
       const userText = res.transcription || 'Voice message';
+      const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
 
-      const userMsgItem: MessageItem = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: userText,
-      };
+      setHistory((prev) => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: aiResponse },
+      ]);
 
-      const aiMsgItem: MessageItem = {
-        id: `ai-${Date.now()}`,
-        role: 'assistant',
-        content: res.aiResponse,
-      };
-
-      setMessages((prev) => [...prev, userMsgItem, aiMsgItem]);
-      speakText(res.aiResponse, aiMsgItem.id);
       notifyHaptic('success');
+      speakText(aiResponse);
     } catch (err: any) {
-      console.error('[AI Partner Error]:', err);
-      const msg = err?.response?.data?.error || err?.message || 'Suhbatdosh AI is currently unavailable. Please try again.';
+      console.error('[AI Voice Partner Error]:', err);
+      const msg = err?.response?.data?.error || err?.message || 'Suhbatdosh AI connection issue. Retrying...';
       setErrorMsg(msg);
       notifyHaptic('error');
-    } finally {
-      setLoading(false);
+      setStatus('idle');
     }
   }
 
   async function startRecording() {
-    if (loading) return;
+    if (isMuted) {
+      setStatus('idle');
+      return;
+    }
     try {
       setErrorMsg(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -126,127 +131,172 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach((t) => t.stop());
 
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Data = (reader.result as string).split(',')[1];
-          handleSendTurn({ audioBase64: base64Data, audioMimeType: 'audio/webm' });
-        };
+        if (audioBlob.size > 100) {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            const base64Data = (reader.result as string).split(',')[1];
+            handleSendTurn(base64Data, 'audio/webm');
+          };
+        } else {
+          setStatus('idle');
+        }
       };
 
       mediaRecorder.start();
-      setIsRecording(true);
+      setStatus('listening');
       tapHaptic('heavy');
     } catch {
-      setErrorMsg('Microphone access was denied or is not supported.');
+      setErrorMsg('Microphone access was denied.');
+      setStatus('idle');
     }
   }
 
   function stopRecording() {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      tapHaptic('medium');
     }
   }
 
+  function handleEndSession() {
+    stopRecording();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    onClose();
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md fade-in">
-      <div className="relative w-full max-w-lg h-[88vh] flex flex-col bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl fade-in">
+      <div className="relative w-full max-w-md h-[88vh] flex flex-col justify-between items-center py-8 px-6 bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
         
-        {/* Simple Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-slate-800/90 border-b border-slate-700/80 backdrop-blur-md">
+        {/* Header */}
+        <div className="w-full flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25">
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base leading-tight">Suhbatdosh AI</h3>
-              <p className="text-xs text-cyan-400 font-medium">Speaking Partner</p>
+              <h3 className="font-bold text-white text-lg leading-tight">Suhbatdosh AI</h3>
+              <p className="text-xs text-cyan-400 font-medium">Practice speaking with Suhbatdosh AI</p>
             </div>
           </div>
 
           <button
-            onClick={() => {
-              if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-              onClose();
-            }}
-            className="p-2 text-slate-400 hover:text-white rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+            onClick={handleEndSession}
+            className="p-2 text-slate-400 hover:text-white rounded-full bg-slate-800 hover:bg-slate-700 transition-colors"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Voice Messages / Speech Captions */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg) => (
+        {/* Center: ChatGPT Voice Orb Visualizer */}
+        <div className="relative flex flex-col items-center justify-center my-auto z-10 space-y-8">
+          
+          {/* Animated Glowing Orb Container */}
+          <div className="relative flex items-center justify-center w-48 h-48">
+            
+            {/* Outer Ripple Aura Rings */}
+            {status === 'listening' && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping duration-1000" />
+                <div className="absolute -inset-4 rounded-full border-2 border-emerald-500/40 animate-pulse" />
+              </>
+            )}
+
+            {status === 'speaking' && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-cyan-500/30 animate-ping duration-700" />
+                <div className="absolute -inset-6 rounded-full border-2 border-cyan-400/50 animate-pulse" />
+              </>
+            )}
+
+            {status === 'thinking' && (
+              <div className="absolute -inset-6 rounded-full border-2 border-dashed border-purple-500/60 animate-spin duration-3000" />
+            )}
+
+            {/* Core Orb Center */}
             <div
-              key={msg.id}
-              className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} gap-1`}
+              className={`w-36 h-36 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl ${
+                status === 'listening'
+                  ? 'bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 shadow-emerald-500/50 scale-105'
+                  : status === 'speaking'
+                  ? 'bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 shadow-cyan-500/60 scale-110'
+                  : status === 'thinking'
+                  ? 'bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 shadow-purple-500/50 animate-pulse'
+                  : 'bg-gradient-to-tr from-slate-700 to-slate-800 shadow-slate-900/50'
+              }`}
             >
-              <div
-                className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-tr-none shadow-md shadow-blue-500/10'
-                    : 'bg-slate-800/90 border border-slate-700/80 text-slate-100 rounded-tl-none shadow-sm'
-                }`}
-              >
-                <p>{msg.content}</p>
-
-                {/* Replay AI Voice */}
-                {msg.role === 'assistant' && (
-                  <button
-                    onClick={() => speakText(msg.content, msg.id)}
-                    disabled={ttsLoadingId === msg.id}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-700/70 hover:bg-slate-700 text-xs font-semibold text-cyan-300 transition-colors"
-                  >
-                    {ttsLoadingId === msg.id ? (
-                      <RefreshCw size={12} className="animate-spin text-cyan-400" />
-                    ) : (
-                      <Volume2 size={13} />
-                    )}
-                    <span>Listen Again</span>
-                  </button>
-                )}
-              </div>
+              {status === 'thinking' ? (
+                <RefreshCw size={44} className="text-white animate-spin" />
+              ) : status === 'speaking' ? (
+                <Volume2 size={48} className="text-white animate-bounce" />
+              ) : (
+                <Mic size={48} className={`text-white ${status === 'listening' ? 'animate-pulse' : ''}`} />
+              )}
             </div>
-          ))}
+          </div>
 
-          {loading && (
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 w-fit text-xs font-semibold text-cyan-300">
-              <RefreshCw size={14} className="animate-spin text-cyan-400" />
-              <span>AI Partner is listening & generating voice response...</span>
-            </div>
-          )}
+          {/* Status Headline */}
+          <div className="text-center space-y-1">
+            <h4 className="text-lg font-extrabold text-white tracking-wide">
+              {status === 'listening'
+                ? 'Listening to you...'
+                : status === 'thinking'
+                ? 'Suhbatdosh AI is thinking...'
+                : status === 'speaking'
+                ? 'Suhbatdosh AI is speaking...'
+                : 'Tap Mic to Start Practice'}
+            </h4>
+            <p className="text-xs text-slate-400 font-medium">
+              {status === 'listening'
+                ? 'Speak naturally in English'
+                : status === 'thinking'
+                ? 'Generating intelligent response'
+                : status === 'speaking'
+                ? 'Listen & reply naturally'
+                : 'Voice mode active'}
+            </p>
+          </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-xs text-red-300 font-medium">
+            <div className="px-4 py-2 rounded-xl bg-red-950/50 border border-red-500/40 text-xs text-red-300 font-medium text-center max-w-xs">
               ⚠️ {errorMsg}
             </div>
           )}
-
-          <div ref={chatBottomRef} />
         </div>
 
-        {/* Pure Voice Action Footer */}
-        <div className="p-6 bg-slate-800/90 border-t border-slate-700/80 flex flex-col items-center justify-center space-y-3">
+        {/* Bottom Control Bar */}
+        <div className="w-full flex items-center justify-center gap-6 z-10">
+          {/* Mute/Mic Toggle */}
           <button
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={loading}
-            className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-xl ${
-              isRecording
-                ? 'bg-red-600 text-white shadow-red-600/50 animate-pulse ring-8 ring-red-500/20'
-                : 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-cyan-500/30 hover:scale-105'
+            onClick={() => {
+              if (isMuted) {
+                setIsMuted(false);
+                startRecording();
+              } else {
+                setIsMuted(true);
+                stopRecording();
+                setStatus('idle');
+              }
+              tapHaptic('medium');
+            }}
+            className={`p-4 rounded-full border transition-all ${
+              isMuted
+                ? 'bg-red-500/20 border-red-500 text-red-400'
+                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
             }`}
+            title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
           >
-            {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
+            {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
           </button>
 
-          <div className="text-center">
-            <p className={`text-xs font-bold ${isRecording ? 'text-red-400 animate-pulse' : 'text-slate-200'}`}>
-              {isRecording ? 'Listening... Tap to send' : 'Tap to Speak'}
-            </p>
-          </div>
+          {/* Big Red End Practice Button */}
+          <button
+            onClick={handleEndSession}
+            className="px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-red-600/30 flex items-center gap-2.5 transition-transform active:scale-95"
+          >
+            <PhoneOff size={20} />
+            <span>Tugatish</span>
+          </button>
         </div>
 
       </div>

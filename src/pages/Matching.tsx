@@ -172,7 +172,7 @@ export default function Matching() {
           }}
         >
           <Sparkles size={16} />
-          <span>Sherik kutilmoqdami? AI Partner bilan gaplashing 🤖</span>
+          <span>Practice speaking with Suhbatdosh AI 🤖</span>
         </button>
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
