@@ -336,7 +336,13 @@ h1, h2, h3 {
   flex: 1; height: 100%;
   display: flex; flex-direction: column; overflow: hidden;
 }
-.tab-shell__content { flex: 1; min-height: 0; overflow: hidden; }
+.tab-shell__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
 /* ─── Section Divider ────────────────────────────────────────────────────── */
 .section-label {

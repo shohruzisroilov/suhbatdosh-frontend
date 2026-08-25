@@ -411,11 +411,18 @@ export default function Profile() {
       )}
 
       <style>{`
-        .profile { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
+        .profile {
+          display: flex; flex-direction: column;
+          height: 100%; background: var(--bg);
+          /* overflow: hidden EMAS — scroll kerakli */
+        }
         .profile__scroll {
-          flex: 1; overflow-y: auto;
-          padding: calc(12px + env(safe-area-inset-top, 0px)) var(--space-4) calc(130px + env(safe-area-inset-bottom, 0px));
-          display: flex; flex-direction: column; gap: 14px;
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          padding: var(--space-3) var(--space-4) calc(140px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: 12px;
         }
 
         .profile__hero {
@@ -480,7 +487,8 @@ export default function Profile() {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          overflow: hidden;
+          /* overflow: hidden OLIB TASHLANDI — row clipping muammosi */
+          display: flex; flex-direction: column;
         }
         .profile__row {
           display: flex; align-items: center; gap: 12px;
@@ -490,8 +498,18 @@ export default function Profile() {
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
           background: transparent; cursor: pointer;
+          /* Birinchi va oxirgi row uchun radius */
         }
-        .profile__row:last-child { border-bottom: none; }
+        .profile__row:first-child {
+          border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
+        }
+        .profile__row:last-child {
+          border-bottom: none;
+          border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+        }
+        .profile__row:only-child {
+          border-radius: calc(var(--radius-md) - 1px);
+        }
         .profile__row:active:not(:disabled) { background: var(--surface-2); }
         .profile__row:disabled { cursor: default; opacity: 0.8; }
 

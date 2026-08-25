@@ -158,17 +158,23 @@ export default function Icebreakers() {
             className={`icebreaker-card${isSelected ? ' icebreaker-card--active' : ''}`}
             onClick={() => handleSelectCard(card)}
           >
-            <div className="icebreaker-card__content">
-              <div className="icebreaker-card__header">
-                <span className="icebreaker-card__emoji">{card.icon}</span>
-                <span className="icebreaker-card__prompt">{card.prompt}</span>
-              </div>
-              <p className="icebreaker-card__detail">"{card.detail}"</p>
+            {/* Topic label */}
+            <div className="icebreaker-card__header">
+              <span className="icebreaker-card__emoji">{card.icon}</span>
+              <span className="icebreaker-card__prompt">{card.title}</span>
             </div>
+
+            {/* Big question */}
+            <p className="icebreaker-card__question">{card.prompt}</p>
+
+            {/* Example / detail */}
+            <p className="icebreaker-card__detail">"{card.detail}"</p>
+
+            {/* Picked badge */}
             {isSelected && (
-              <span className="icebreaker-card__badge">
-                <MessageCircle size={12} /> {t('ib.picked')}
-              </span>
+              <div className="icebreaker-card__badge">
+                <MessageCircle size={11} /> {t('ib.picked')}
+              </div>
             )}
           </button>
         )}
@@ -201,94 +207,121 @@ function Styles() {
         gap: var(--space-1-5);
         font-size: var(--text-xs);
         font-weight: var(--weight-bold);
-        color: rgba(255, 255, 255, 0.85);
+        color: rgba(255, 255, 255, 0.6);
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
-      .icebreakers__sparkle {
-        color: #ffc107;
-      }
+      .icebreakers__sparkle { color: #ffc107; }
       .icebreakers__refresh {
         display: flex;
         align-items: center;
         gap: 4px;
         font-size: var(--text-xs);
         font-weight: var(--weight-bold);
-        color: rgba(255, 255, 255, 0.6);
-        background: rgba(255, 255, 255, 0.08);
-        padding: 4px 10px;
+        color: rgba(255, 255, 255, 0.55);
+        background: rgba(255, 255, 255, 0.07);
+        padding: 5px 12px;
         border-radius: var(--radius-full);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         transition: background 0.12s, color 0.12s;
       }
       .icebreakers__refresh:active {
-        background: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.14);
         color: #fff;
       }
       .icebreakers__cards {
         display: flex;
         flex-direction: column;
-        gap: var(--space-2);
       }
+
+      /* ── Main icebreaker card ── */
       .icebreaker-card {
         position: relative;
-        display: flex;
-        align-items: flex-start;
-        gap: var(--space-3);
-        padding: var(--space-3) var(--space-4);
+        width: 100%;
+        padding: 16px 16px 14px;
         background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 18px;
         text-align: left;
-        transition: transform 0.12s var(--ease-out), background 0.12s, border-color 0.12s, box-shadow 0.12s;
+        transition: transform 0.14s var(--ease-out), background 0.14s, border-color 0.14s, box-shadow 0.14s;
+        overflow: hidden;
       }
+      .icebreaker-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(42,171,238,0.6), rgba(120,80,255,0.4));
+        border-radius: 18px 18px 0 0;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .icebreaker-card--active::before { opacity: 1; }
       .icebreaker-card:active {
-        transform: scale(0.98);
-        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0.985);
+        background: rgba(255, 255, 255, 0.09);
       }
       .icebreaker-card--active {
-        background: rgba(42, 171, 238, 0.18);
-        border-color: rgba(42, 171, 238, 0.55);
-        box-shadow: 0 4px 16px rgba(42, 171, 238, 0.22);
+        background: rgba(42, 171, 238, 0.12);
+        border-color: rgba(42, 171, 238, 0.45);
+        box-shadow: 0 6px 20px rgba(42, 171, 238, 0.18);
       }
-      .icebreaker-card__content {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
+
+      /* Topic label row */
       .icebreaker-card__header {
         display: flex;
         align-items: center;
         gap: 6px;
+        margin-bottom: 10px;
       }
       .icebreaker-card__emoji {
-        font-size: 16px;
-        line-height: 1;
-      }
-      .icebreaker-card__prompt {
-        font-size: var(--text-sm);
-        font-weight: var(--weight-bold);
-        color: #fff;
-      }
-      .icebreaker-card__detail {
-        font-size: var(--text-xs);
-        color: rgba(255, 255, 255, 0.7);
-        line-height: 1.35;
-      }
-      .icebreaker-card__badge {
-        position: absolute;
-        top: 8px;
-        right: 10px;
         display: flex;
         align-items: center;
-        gap: 3px;
-        font-size: 10px;
+        justify-content: center;
+        width: 26px; height: 26px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.08);
+        flex-shrink: 0;
+      }
+      .icebreaker-card__prompt {
+        font-size: 11px;
         font-weight: var(--weight-bold);
-        color: var(--btn-bg);
-        background: rgba(42, 171, 238, 0.2);
-        padding: 2px 7px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+
+      /* Big question text */
+      .icebreaker-card__question {
+        font-size: 17px;
+        font-weight: var(--weight-heavy);
+        color: #ffffff;
+        line-height: 1.35;
+        letter-spacing: -0.3px;
+        margin-bottom: 8px;
+      }
+
+      /* Detail / example */
+      .icebreaker-card__detail {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.45;
+        font-style: italic;
+      }
+
+      /* "Picked" badge */
+      .icebreaker-card__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 10px;
+        font-size: 11px;
+        font-weight: var(--weight-bold);
+        color: #2AABEE;
+        background: rgba(42, 171, 238, 0.18);
+        padding: 3px 10px;
         border-radius: 99px;
+        border: 1px solid rgba(42, 171, 238, 0.3);
       }
     `}</style>
   );
