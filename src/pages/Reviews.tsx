@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getReviews, getMyReview, submitReview } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import SkeletonRow from '../components/SkeletonRow';

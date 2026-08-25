@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useSocket } from '../hooks/useSocket';
 import { topicsForPart, findTopic } from '../constants/speakingTopics';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import { Bell, Star } from 'lucide-react';
 import Icebreakers from './Icebreakers';
@@ -159,7 +159,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
   const openSaved = (s: SavedQuestion) => {
     selectionHaptic();
     setPendingPartnerChange(false);
-    applySelection(s.topicId, s.part, s.index ?? 0);
+    if (s.topicId) applySelection(s.topicId, s.part, s.index ?? 0);
     setView('questions');
   };
 
@@ -355,7 +355,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
           <div className="sq-bullets">
             <span className="sq-bullets__label">{t('sq.youShouldSay')}</span>
             <ul>
-              {topic.bullets?.map((b, i) => (
+              {topic.bullets?.map((b: string, i: number) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
@@ -387,7 +387,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
         </div>
       ) : (
         <div className="sq-qlist">
-          {questions.map((q, i) => {
+          {questions.map((q: string, i: number) => {
             const active = i === speakingQuestionIndex;
             const saved = isSaved(speakingPart, topic.id, i);
             return (

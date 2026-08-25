@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useTracks, VideoTrack, useRemoteParticipants, useSpeakingParticipants } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { endSession } from '../api/endpoints';
-import { useSocket } from '../hooks/useSocket.js';
-import useAppStore from '../store/useAppStore.js';
-import CallControls from '../components/CallControls.jsx';
-import ChatOverlay from '../components/ChatOverlay.jsx';
-import EndSessionSheet from '../components/EndSessionSheet.jsx';
-import Avatar from '../components/Avatar.jsx';
-import SpeakingQuestions from '../components/SpeakingQuestions.jsx';
-import { useT } from '../i18n/index.js';
-import { notifyHaptic } from '../utils/haptics.js';
+import { useSocket } from '../hooks/useSocket';
+import useAppStore from '../store/useAppStore';
+import CallControls from '../components/CallControls';
+import ChatOverlay from '../components/ChatOverlay';
+import EndSessionSheet from '../components/EndSessionSheet';
+import Avatar from '../components/Avatar';
+import SpeakingQuestions from '../components/SpeakingQuestions';
+import { useT } from '../i18n';
+import { notifyHaptic } from '../utils/haptics';
 import { AlertCircle, AlertTriangle, X } from 'lucide-react';
 
-function fmt(s) {
+function fmt(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-function MediaController({ micOn, camOn }) {
+function MediaController({ micOn, camOn }: { micOn: boolean; camOn: boolean }) {
   const room = useRoomContext();
   useEffect(() => { room?.localParticipant?.setMicrophoneEnabled(micOn); }, [micOn, room]);
   useEffect(() => { room?.localParticipant?.setCameraEnabled(camOn); }, [camOn, room]);
@@ -25,13 +25,13 @@ function MediaController({ micOn, camOn }) {
 }
 
 // ── Drag hook for PiP window ───────────────────────────────────────────────
-function useDrag(initialPos, onClick) {
+function useDrag(initialPos: { x: number; y: number }, onClick?: () => void) {
   const [pos, setPos] = useState(initialPos);
   const dragging = useRef(false);
   const moved = useRef(false);
   const startRef = useRef({ x: 0, y: 0, px: 0, py: 0 });
 
-  function onPointerDown(e) {
+  function onPointerDown(e: React.PointerEvent) {
     dragging.current = true;
     moved.current = false;
     startRef.current = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y };
@@ -39,7 +39,7 @@ function useDrag(initialPos, onClick) {
     e.stopPropagation();
   }
 
-  function onPointerMove(e) {
+  function onPointerMove(e: React.PointerEvent) {
     if (!dragging.current) return;
     const dx = e.clientX - startRef.current.x;
     const dy = e.clientY - startRef.current.y;
@@ -72,12 +72,11 @@ function useDrag(initialPos, onClick) {
   return { pos, onPointerDown, onPointerMove, onPointerUp };
 }
 
-function VideoGrid({ session }) {
+function VideoGrid({ session }: { session: any }) {
   const tracks = useTracks(
     [{ source: Track.Source.Camera, withPlaceholder: true }],
     { onlySubscribed: false }
   );
-  // Active-speaker — qaysi ishtirokchi gapirayotganini kuzatadi (re-render bilan)
   const speakingIds = new Set(useSpeakingParticipants().map(p => p.identity));
 
   const localTrack  = tracks.find(t => t.participant?.isLocal);
@@ -85,10 +84,8 @@ function VideoGrid({ session }) {
   const hasLocal    = !!localTrack?.publication?.track;
   const hasRemote   = !!remoteTrack?.publication?.track;
 
-  // Swapped: true bo'lsa local to'liq ekran, remote PiP
   const [swapped, setSwapped] = useState(false);
 
-  // Drag hook for PiP. Initial position matches bottom: 130px, right: 14px
   const pip = useDrag({ x: -14, y: -130 }, () => setSwapped(v => !v));
 
   if (!hasLocal && !hasRemote) return null;
@@ -103,20 +100,17 @@ function VideoGrid({ session }) {
   const pipHas      = swapped ? hasRemote    : hasLocal;
   const pipLetter   = swapped ? (session?.partnerName?.[0]?.toUpperCase() || '?') : 'You';
 
-  // Mirror HAR DOIM o'z (local) trekiga ergashadi — main yoki PiP'da bo'lishidan
-  // qat'i nazar. Shu sababli swap qilganda o'z video teskari bo'lib qolmaydi.
-  const mainMirror = swapped;   // swapped bo'lsa main = local
-  const pipMirror  = !swapped;  // aks holda PiP = local
+  const mainMirror = swapped;
+  const pipMirror  = !swapped;
 
   const mainSpeaking = mainTrack?.participant ? speakingIds.has(mainTrack.participant.identity) : false;
   const pipSpeaking  = pipTrack?.participant  ? speakingIds.has(pipTrack.participant.identity)  : false;
 
   return (
     <div className="video-grid">
-      {/* To'liq ekran */}
       <div className={`video-main${mainSpeaking ? ' video-main--speaking' : ''}`}>
-        {mainHas
-          ? <VideoTrack trackRef={mainTrack} style={mainMirror ? { transform: 'scaleX(-1)' } : {}} />
+        {mainHas && mainTrack
+          ? <VideoTrack trackRef={mainTrack as any} style={mainMirror ? { transform: 'scaleX(-1)' } : {}} />
           : <div className="video-avatar"><span>{mainLetter}</span></div>
         }
         <div className="video-scrim" />
@@ -126,7 +120,6 @@ function VideoGrid({ session }) {
         </span>
       </div>
 
-      {/* Picture-in-picture — sudrab yuriladigan va bosganda almashadigan */}
       <div
         className={`video-pip${pipSpeaking ? ' video-pip--speaking' : ''}`}
         style={{
@@ -138,8 +131,8 @@ function VideoGrid({ session }) {
         onPointerMove={pip.onPointerMove}
         onPointerUp={pip.onPointerUp}
       >
-        {pipHas
-          ? <VideoTrack trackRef={pipTrack} style={pipMirror ? { transform: 'scaleX(-1)' } : {}} />
+        {pipHas && pipTrack
+          ? <VideoTrack trackRef={pipTrack as any} style={pipMirror ? { transform: 'scaleX(-1)' } : {}} />
           : <div className="video-avatar video-avatar--pip"><span>{pipLetter}</span></div>
         }
         <span className="video-label video-label--pip">{pipName}</span>
@@ -154,8 +147,7 @@ function VideoGrid({ session }) {
   );
 }
 
-// LiveKit xato xabarini foydalanuvchiga tushunarli qilib ko'rsatish
-function friendlyError(msg, t) {
+function friendlyError(msg: string | null, t: any): string {
   if (!msg) return t('call.err.generic');
   const m = msg.toLowerCase();
   if (m.includes('webrtc') || m.includes('not supported'))
@@ -181,9 +173,7 @@ function ConnectionWatcher() {
   return null;
 }
 
-// Kim gapirayotganini kuzatadi (LiveKit active-speaker) va yuqoriga uzatadi —
-// shu orqali header avatari va mikrofon tugmasi jonli "gapiryapti" holatini ko'rsatadi.
-function SpeakingWatcher({ onChange }) {
+function SpeakingWatcher({ onChange }: { onChange: (you: boolean, partner: boolean) => void }) {
   const speaking = useSpeakingParticipants();
   const youSpeaking = speaking.some((p) => p.isLocal);
   const partnerSpeaking = speaking.some((p) => !p.isLocal);
@@ -212,21 +202,20 @@ export default function Chat() {
   const [ending, setEnding]         = useState(false);
   const [micOn, setMicOn]           = useState(true);
   const [camOn, setCamOn]           = useState(false);
-  // Speaking paneli detail sahifada (parts'dan boshqa) bo'lsa, call tugmalari yashiriladi
   const [speakingDetail, setSpeakingDetail] = useState(false);
-  const [liveKitError, setLiveKitError] = useState(null);
+  const [liveKitError, setLiveKitError] = useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const [connectionTimeout, setConnectionTimeout] = useState(false);
   const [youSpeaking, setYouSpeaking] = useState(false);
   const [partnerSpeaking, setPartnerSpeaking] = useState(false);
 
-  const handleSpeaking = useCallback((you, partner) => {
+  const handleSpeaking = useCallback((you: boolean, partner: boolean) => {
     setYouSpeaking(you);
     setPartnerSpeaking(partner);
   }, []);
 
-  const timerRef = useRef(null);
+  const timerRef = useRef<any>(null);
 
   useEffect(() => {
     if (session?.id) joinSession(session.id);
@@ -238,7 +227,6 @@ export default function Chat() {
     }
     timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
 
-    // 25 soniya ichida sherik ulanmasa, taymaut qilish
     const timeoutId = setTimeout(() => {
       if (!useAppStore.getState().partnerConnected) {
         setConnectionTimeout(true);
@@ -249,7 +237,7 @@ export default function Chat() {
       clearInterval(timerRef.current);
       clearTimeout(timeoutId);
       if (backBtn) {
-        backBtn.offClick(onBack); // handlerni olib tashlaymiz — leak oldini olish
+        backBtn.offClick(onBack);
         backBtn.hide();
       }
     };
@@ -285,7 +273,6 @@ export default function Chat() {
     if (showChat) setLastSeenCount(messages.length);
   }, [showChat, messages.length]);
 
-  // Suhbatdosh ulanganda yengil haptik signal
   useEffect(() => {
     if (partnerConnected) notifyHaptic('success');
   }, [partnerConnected]);
@@ -312,20 +299,22 @@ export default function Chat() {
       {/* LiveKit room */}
       {isCallActive && livekitToken && livekitUrl && (
         <LiveKitRoom
-          token={livekitToken}
-          serverUrl={livekitUrl}
-          connect={true}
-          audio={true}
-          video={camOn}
-          onConnected={() => { setLiveKitError(null); setIsReconnecting(false); }}
-          onDisconnected={() => setCallActive(false)}
-          onReconnecting={() => setIsReconnecting(true)}
-          onReconnected={() => setIsReconnecting(false)}
-          onError={(err) => {
-            console.error('LiveKit error:', err);
-            setLiveKitError(err?.message || 'Connection failed');
-          }}
-          style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+          {...({
+            token: livekitToken,
+            serverUrl: livekitUrl,
+            connect: true,
+            audio: true,
+            video: camOn,
+            onConnected: () => { setLiveKitError(null); setIsReconnecting(false); },
+            onDisconnected: () => setCallActive(false),
+            onReconnecting: () => setIsReconnecting(true),
+            onReconnected: () => setIsReconnecting(false),
+            onError: (err: Error) => {
+              console.error('LiveKit error:', err);
+              setLiveKitError(err?.message || 'Connection failed');
+            },
+            style: { position: 'absolute', inset: 0, zIndex: 0 }
+          } as any)}
         >
           <RoomAudioRenderer />
           <MediaController micOn={micOn} camOn={camOn} />
@@ -342,7 +331,7 @@ export default function Chat() {
         </div>
       )}
 
-      {/* Gradient bg — audio mode only */}
+      {/* Gradient bg */}
       {!camOn && <div className="call-bg-glow" />}
 
       {/* LiveKit error banner */}
@@ -449,10 +438,6 @@ export default function Chat() {
       )}
 
       <style>{`
-        /* ── Screen ── */
-        /* Qo'ng'iroq ekrani har doim qoramtir — Telegram light theme'da ham
-           matn/taglar oq fonda yo'qolib qolmasligi uchun CSS o'zgaruvchilarni
-           shu yuza ichida majburan qoraytirilgan holatga o'rnatamiz. */
         .call-screen {
           --bg: #0e0e12;
           --bg-secondary: rgba(255,255,255,0.08);
@@ -467,7 +452,6 @@ export default function Chat() {
           flex-direction: column;
         }
 
-        /* Background glow */
         .call-bg-glow {
           position: absolute; inset: 0; z-index: 0;
           background:
@@ -476,7 +460,6 @@ export default function Chat() {
           pointer-events: none;
         }
 
-        /* ── Header ── */
         .call-header {
           position: relative; z-index: 10;
           display: flex; align-items: center; gap: var(--space-3);
@@ -485,7 +468,6 @@ export default function Chat() {
           animation: fadeIn 0.2s ease both;
           flex-shrink: 0;
         }
-        /* Sherik "borligi" — avatar atrofidagi gapirish halqasi */
         .call-presence {
           position: relative;
           flex-shrink: 0;
@@ -537,7 +519,6 @@ export default function Chat() {
           background: rgba(255,255,255,0.06);
           font-weight: var(--weight-medium);
         }
-        /* Jonli holat: "Listening" / "Speaking…" */
         .call-status {
           font-size: var(--text-xs); font-weight: var(--weight-semi);
           color: var(--text-secondary);
@@ -573,7 +554,6 @@ export default function Chat() {
           animation: dotPulse 2s ease-in-out infinite;
         }
 
-        /* ── Body (speaking questions area) ── */
         .call-body {
           flex: 1;
           display: flex;
@@ -584,12 +564,10 @@ export default function Chat() {
           -webkit-overflow-scrolling: touch;
           position: relative; z-index: 5;
           padding-top: var(--space-3);
-          /* Bottom padding so content isn't hidden behind controls */
           padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
         }
         .call-body > * { width: 100%; }
 
-        /* Suhbatdosh kutilayotgan paytdagi banner */
         .call-waiting-note {
           display: flex; align-items: center; justify-content: center; gap: var(--space-2);
           margin: var(--space-0-5) var(--space-4) var(--space-1-5);
@@ -607,7 +585,6 @@ export default function Chat() {
           animation: spin 0.8s linear infinite;
         }
 
-        /* ── Camera timer overlay ── */
         .call-cam-timer {
           position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
           display: flex; align-items: center; gap: var(--space-1-5);
@@ -620,7 +597,6 @@ export default function Chat() {
           z-index: 15; pointer-events: none;
         }
 
-        /* ── Error banner ── */
         .call-error-banner {
           position: absolute; top: 12px; left: 12px; right: 12px;
           display: flex; align-items: center; justify-content: space-between;
@@ -636,7 +612,6 @@ export default function Chat() {
           flex-shrink: 0;
         }
 
-        /* ── Video grid ── */
         .video-grid {
           position: absolute; inset: 0;
           background: #000; z-index: 1;
@@ -647,13 +622,11 @@ export default function Chat() {
           background: #111;
         }
         .video-main video { width: 100%; height: 100%; object-fit: cover; }
-        /* Pastki gradient — label/taymer yorqin video ustida ham o'qilsin */
         .video-scrim {
           position: absolute; left: 0; right: 0; bottom: 0; height: 140px;
           background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
           z-index: 1; pointer-events: none;
         }
-        /* Active-speaker — gapirayotgan ishtirokchi oynasi yashil porlaydi */
         .video-main--speaking::after {
           content: '';
           position: absolute; inset: 0;
@@ -697,9 +670,6 @@ export default function Chat() {
           display: flex; align-items: center; justify-content: center;
           background: radial-gradient(circle at 50% 38%, #2a2a45 0%, #14141f 75%);
         }
-        /* Bu ikkitasi shrift shkalasidan tashqarida — matn ierarxiyasi emas,
-           avatar doirasining o'lchamiga proporsional bosh harflar. Shkalaga
-           tortilsa harflar doiraga sig'may qoladi. */
         .video-avatar span { font-size: 52px; font-weight: var(--weight-bold); color: rgba(255,255,255,0.6); }
         .video-avatar--pip span { font-size: 28px; }
         .video-label {
@@ -720,7 +690,6 @@ export default function Chat() {
           padding: var(--space-0-5) var(--space-1-5);
         }
 
-        /* ── Timeout screen ── */
         .timeout-screen {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           gap: var(--space-5); padding: var(--space-7) var(--space-5);

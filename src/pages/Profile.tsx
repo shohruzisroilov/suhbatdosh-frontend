@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { getMe } from '../api/endpoints';
-import useAppStore from '../store/useAppStore.js';
-import { useT } from '../i18n/index.js';
-import { tapHaptic } from '../utils/haptics.js';
-import Avatar        from '../components/Avatar.jsx';
+import useAppStore from '../store/useAppStore';
+import { useT } from '../i18n';
+import { tapHaptic } from '../utils/haptics';
+import Avatar from '../components/Avatar';
 import { BarChart3, ChevronRight, LifeBuoy, MessageSquare, Star } from 'lucide-react';
 
 const SUPPORT_URL = 'https://t.me/Shohruz_Isroilov';
@@ -14,14 +14,14 @@ function openSupport() {
   else window.open(SUPPORT_URL, '_blank', 'noopener');
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr?: string | null): string | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return null;
   return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function Chevron({ open = false }) {
+function Chevron({ open = false }: { open?: boolean }) {
   return (
     <ChevronRight
       size={16}
@@ -31,8 +31,8 @@ function Chevron({ open = false }) {
 }
 
 export default function Profile() {
-  const { user, stats, setStats, setRecentSessions, setUser, navigate,
-          homeLoaded, setHomeLoaded } = useAppStore();
+  const { user, setStats, setRecentSessions, setUser, navigate,
+          setHomeLoaded } = useAppStore();
   const t = useT();
 
   useEffect(() => {
@@ -50,7 +50,6 @@ export default function Profile() {
   return (
     <div className="profile">
       <div className="profile__scroll">
-        {/* Hero */}
         <div className="profile__hero">
           <Avatar name={user?.displayName} avatarUrl={user?.avatarUrl} size={84} />
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
@@ -62,9 +61,7 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Account card */}
         <div className="profile__card">
-          {/* Stats — opens the Statistics page */}
           <button
             className="profile__row"
             onClick={() => { tapHaptic('light'); navigate('statistics', { from: 'profile' }); }}
@@ -77,7 +74,6 @@ export default function Profile() {
             <Chevron />
           </button>
 
-          {/* Plan */}
           <button
             className="profile__row"
             onClick={() => { if (!isPremium) { tapHaptic('light'); navigate('premium', { from: 'profile' }); } }}
@@ -98,7 +94,6 @@ export default function Profile() {
             {!isPremium && <Chevron />}
           </button>
 
-          {/* Reviews */}
           <button
             className="profile__row"
             onClick={() => { tapHaptic('light'); navigate('reviews'); }}
@@ -111,7 +106,6 @@ export default function Profile() {
             <Chevron />
           </button>
 
-          {/* Support — opens the Telegram DM */}
           <button
             className="profile__row"
             onClick={() => { tapHaptic('light'); openSupport(); }}
@@ -136,7 +130,6 @@ export default function Profile() {
           display: flex; flex-direction: column; gap: var(--space-4);
         }
 
-        /* Hero */
         .profile__hero {
           display: flex; flex-direction: column; align-items: center; gap: var(--space-1-5);
           padding: var(--space-2) 0 var(--space-1);
@@ -149,7 +142,6 @@ export default function Profile() {
           font-size: var(--text-sm); font-weight: var(--weight-heavy); letter-spacing: 0.2px;
         }
 
-        /* Card with rows */
         .profile__card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
@@ -183,7 +175,6 @@ export default function Profile() {
           padding: var(--space-0-5) 0;
         }
 
-        /* Recent */
         .profile__section { display: flex; flex-direction: column; gap: var(--space-1-5); margin-top: var(--space-1); }
         .profile__section-title {
           font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-secondary);

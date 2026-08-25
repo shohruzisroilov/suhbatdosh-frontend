@@ -1,25 +1,19 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { getMe } from '../api/endpoints';
-import useAppStore from '../store/useAppStore.js';
-import { useT } from '../i18n/index.js';
-import { tapHaptic, selectionHaptic } from '../utils/haptics.js';
+import useAppStore from '../store/useAppStore';
+import { useT } from '../i18n';
+import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import { Mic, ShieldCheck, Star, ChevronRight } from 'lucide-react';
 
-import HomeHeader    from '../components/HomeHeader.jsx';
-import IeltsCard     from '../components/IeltsCard.jsx';
-import PrimeTimeBanner from '../components/PrimeTimeBanner.jsx';
-import DailyProgress from '../components/DailyProgress.jsx';
-import SessionRow    from '../components/SessionRow.jsx';
-import SkeletonRow   from '../components/SkeletonRow.jsx';
+import HomeHeader from '../components/HomeHeader';
+import IeltsCard from '../components/IeltsCard';
+import PrimeTimeBanner from '../components/PrimeTimeBanner';
+import DailyProgress from '../components/DailyProgress';
+import SessionRow from '../components/SessionRow';
+import SkeletonRow from '../components/SkeletonRow';
 
 /**
  * Bosh sahifa.
- *
- * Bitta ish qiladi: odamni 10 soniya ichida gapirishga olib boradi.
- * Shuning uchun ekranda faqat bitta baland ovozli element bor — hero
- * tugmasi. Qolgani (mock, hisoblagich, premium, tarix) ataylab past
- * kontrastda va bir xil balandlikdagi qatorlar shaklida: ular tanlov,
- * chaqiruv emas.
  */
 export default function Home() {
   const { user, stats, recentSessions, setStats, setRecentSessions, setUser, navigate,
@@ -28,7 +22,7 @@ export default function Home() {
 
   const isFemale  = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
-  const showPremium = !user?.isPremium && user?.dailyLimit > 0;
+  const showPremium = !user?.isPremium && (user?.dailyLimit ?? 0) > 0;
 
   useEffect(() => {
     getMe().then(d => {
@@ -48,17 +42,9 @@ export default function Home() {
       />
 
       <div className="home__scroll">
-        {/* ─── Yagona baland element ───────────────────────────────────────
-            Gradient butun ilovada faqat shu yerda va jonli mikrofon orbida
-            ishlatiladi. Uchinchi joyda paydo bo'lsa urg'u bo'lishdan
-            to'xtaydi. */}
         <section className="hero fade-up">
           <span className="hero__tag">
             <span className="dot-live" />
-            {/* Navbatda kimdir bor bo'lsa — SONI aytiladi. Ilgari bu yorliq
-                hech qachon ko'rinmasdi: server navbat sonini faqat qidirayotgan
-                mijozlarga yuborardi, Home'dagi odam esa qidirmayapti
-                (socketService.js dagi broadcastWaiting'ga qarang). */}
             {waitingCount >= 2
               ? t('home.heroLive', { n: waitingCount })
               : waitingCount === 1
@@ -82,10 +68,10 @@ export default function Home() {
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
 
-          {/* IELTS mock — ikkinchi yo'l, hero bilan raqobatlashmaydi */}
+          {/* IELTS mock */}
           <IeltsCard />
 
-          {/* Kunlik hisoblagich — faqat limiti bor bepul foydalanuvchiga */}
+          {/* Kunlik hisoblagich */}
           {!user?.isPremium && (
             <DailyProgress
               dailyMinutes={user?.dailyMinutes || 0}
@@ -94,7 +80,7 @@ export default function Home() {
             />
           )}
 
-          {/* Xavfsizlik filtri — faqat ayol foydalanuvchilarga ko'rinadi */}
+          {/* Xavfsizlik filtri */}
           {isFemale && (
             <button
               type="button"
@@ -125,7 +111,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* ─── Tarix ─────────────────────────────────────────────────────── */}
+        {/* Tarix */}
         {!homeLoaded ? (
           <section className="home__section">
             <p className="eyebrow">{t('home.recent')}</p>
@@ -133,15 +119,14 @@ export default function Home() {
               {[0, 1, 2].map(i => <SkeletonRow key={i} avatar={40} />)}
             </div>
           </section>
-        ) : recentSessions?.length > 0 ? (
+        ) : (recentSessions?.length ?? 0) > 0 ? (
           <section className="home__section">
             <p className="eyebrow">{t('home.recent')}</p>
             <div className="home__sessions">
-              {recentSessions.slice(0, 5).map(s => <SessionRow key={s.id} session={s} />)}
+              {recentSessions.slice(0, 5).map((s: any) => <SessionRow key={s.id} session={s} />)}
             </div>
           </section>
         ) : (
-          /* Bo'sh ekran — kayfiyat emas, taklif. */
           <section className="home__empty">
             <span className="home__empty-ico"><Mic size={22} /></span>
             <p className="home__empty-title">{t('home.noSessions')}</p>
@@ -161,7 +146,6 @@ export default function Home() {
         }
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
 
-        /* ─── Hero ─── */
         .hero {
           position: relative; overflow: hidden;
           flex-shrink: 0;
@@ -171,8 +155,6 @@ export default function Home() {
           display: flex; flex-direction: column; gap: var(--space-2);
           box-shadow: 0 10px 30px rgba(42, 171, 238, 0.28);
         }
-        /* Yumshoq yorug'lik — koshin sirining yaltirashi. Dekoratsiya, lekin
-           bitta va sokin: gradientning tekisligini buzadi. */
         .hero::after {
           content: ''; position: absolute;
           top: -40%; right: -20%; width: 220px; height: 220px;
@@ -218,7 +200,6 @@ export default function Home() {
         }
         .hero__btn:active { transform: scale(0.98); opacity: 0.92; }
 
-        /* ─── Qatorlar ─── */
         .row--on { border-color: var(--btn-bg); }
         .row__arrow { color: var(--text-secondary); flex-shrink: 0; }
         .switch {
@@ -235,7 +216,6 @@ export default function Home() {
         .switch--on { background: var(--btn-bg); border-color: var(--btn-bg); }
         .switch--on::after { transform: translateX(16px); background: var(--btn-text); }
 
-        /* ─── Bo'limlar ─── */
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
         .home__sessions { display: flex; flex-direction: column; gap: var(--space-1); }
 

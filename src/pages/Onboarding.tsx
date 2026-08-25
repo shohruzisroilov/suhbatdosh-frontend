@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Users, GraduationCap, Check, Loader2 } from 'lucide-react';
 import { updateMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';

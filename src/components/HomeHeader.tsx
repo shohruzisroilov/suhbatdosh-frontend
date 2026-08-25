@@ -1,6 +1,6 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { Settings as SettingsIcon, Flame } from 'lucide-react';
 import { User } from '../types';
 

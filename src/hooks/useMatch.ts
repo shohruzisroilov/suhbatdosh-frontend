@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import useAppStore from '../store/useAppStore';
 import { useSocket } from './useSocket';
-import { translate } from '../i18n/index';
+import { translate } from '../i18n';
 
 const MATCH_TIMEOUT_MS = 180_000;
 
@@ -9,15 +9,15 @@ function micErrorMessage(err: any) {
   switch (err?.name) {
     case 'NotAllowedError':
     case 'SecurityError':
-      return translate(null, 'mic.denied');
+      return translate(undefined, 'mic.denied');
     case 'NotFoundError':
     case 'OverconstrainedError':
-      return translate(null, 'mic.notFound');
+      return translate(undefined, 'mic.notFound');
     case 'NotReadableError':
     case 'AbortError':
-      return translate(null, 'mic.busy');
+      return translate(undefined, 'mic.busy');
     default:
-      return translate(null, 'mic.unsupported');
+      return translate(undefined, 'mic.unsupported');
   }
 }
 

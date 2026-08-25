@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { Message } from '../types';
 
 function msgTime(d: string) {

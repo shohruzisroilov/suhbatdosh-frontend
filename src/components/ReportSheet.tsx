@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { reportSession, blockSession } from '../api/endpoints';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 
 const REASONS = ['inappropriate', 'harassment', 'spam', 'fake', 'other'];

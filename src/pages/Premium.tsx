@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useT, useLang } from '../i18n/index.js';
+import { useState, useEffect, useRef } from 'react';
+import { useT, useLang } from '../i18n';
 import { getPremiumPlans, createStarsInvoice, getMe } from '../api/endpoints';
-import useAppStore from '../store/useAppStore.js';
-import { notifyHaptic, tapHaptic } from '../utils/haptics.js';
+import useAppStore from '../store/useAppStore';
+import { notifyHaptic, tapHaptic } from '../utils/haptics';
 import { ArrowLeft, ArrowRight, Star, Zap, Check, PartyPopper } from 'lucide-react';
 
-// Karta orqali qo'lda to'lov summasi — 1 oylik tarifning so'mdagi ekvivalenti
-// (100 ⭐ ≈ $2). Stars narxi o'zgarsa buni ham yangilash kerak: ikkalasi bir
-// xil narsani sotadi va bir-biridan farq qilsa savol tug'diradi.
-const AMOUNT_BY_LANG = { uz: "25 000 so'm", ru: '25 000 сум', en: "25 000 so'm" };
+const AMOUNT_BY_LANG: Record<string, string> = { uz: "25 000 so'm", ru: '25 000 сум', en: "25 000 so'm" };
 
 export default function Premium() {
   const t = useT();
@@ -17,11 +14,10 @@ export default function Premium() {
   const amount = AMOUNT_BY_LANG[lang] || AMOUNT_BY_LANG.uz;
   const [copied, setCopied] = useState(false);
 
-  const [plans, setPlans] = useState(null);
-  const [busyPlan, setBusyPlan] = useState(null);
+  const [plans, setPlans] = useState<any[] | null>(null);
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
 
-  // Qaysi sahifadan kelgan bo'lsa — o'sha yerga qaytamiz (default: profile)
   const back = () => navigate(screenParams?.from || 'profile');
 
   const backRef = useRef(back);
@@ -31,7 +27,7 @@ export default function Premium() {
     getPremiumPlans().then((d) => setPlans(d.plans || [])).catch(() => setPlans([]));
 
     const backBtn = window.Telegram?.WebApp?.BackButton;
-    let handleBack;
+    let handleBack: (() => void) | undefined;
     if (backBtn) {
       handleBack = () => backRef.current?.();
       backBtn.onClick(handleBack);
@@ -53,7 +49,7 @@ export default function Premium() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handlePayStars(plan) {
+  async function handlePayStars(plan: any) {
     if (busyPlan) return;
     tapHaptic('medium');
     setBusyPlan(plan.id);
@@ -61,7 +57,7 @@ export default function Premium() {
       const { invoiceLink } = await createStarsInvoice(plan.id);
       const wa = window.Telegram?.WebApp;
       if (wa?.openInvoice) {
-        wa.openInvoice(invoiceLink, async (status) => {
+        wa.openInvoice(invoiceLink, async (status: string) => {
           setBusyPlan(null);
           if (status === 'paid') {
             notifyHaptic('success');
@@ -73,7 +69,6 @@ export default function Premium() {
           }
         });
       } else {
-        // Telegram tashqarisida (dev) — havolani ochamiz
         window.open(invoiceLink, '_blank');
         setBusyPlan(null);
       }
@@ -108,8 +103,6 @@ export default function Premium() {
           </div>
         ) : (
           <>
-            {/* Nima o'zgaradi — narxdan OLDIN. Odam nimaga pul to'layotganini
-                bilmasa, narxning arzon yoki qimmatligi ham ma'nosiz. */}
             <div className="premium-compare">
               <div className="premium-compare__col">
                 <p className="premium-compare__head">{t('pm.freeTitle')}</p>
@@ -124,7 +117,6 @@ export default function Premium() {
               </div>
             </div>
 
-            {/* ─── Telegram Stars — asosiy, darhol faollashadi ─── */}
             <div className="premium-stars">
               <div className="premium-stars-head">
                 <span className="premium-stars-title"><Zap size={15} strokeWidth={2.5} /> {t('pm.starsTitle')}</span>
@@ -159,7 +151,6 @@ export default function Premium() {
               )}
             </div>
 
-            {/* ─── Karta orqali (qo'lda, zaxira usul) ─── */}
             <div className="premium-divider"><span>{t('pm.orCard')}</span></div>
 
             <div className="premium-card">
@@ -213,8 +204,6 @@ export default function Premium() {
           height: 100%; background: var(--bg);
         }
 
-        /* Bepul vs Premium — ikki ustun, yonma-yon. Farqni bir qarashda
-           ko'rish uchun jadval emas, aynan qiyoslash kerak. */
         .premium-compare {
           display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2);
         }
@@ -273,7 +262,6 @@ export default function Premium() {
         .premium-hero h2 { font-size: var(--text-lg); font-weight: var(--weight-heavy); letter-spacing: -0.5px; }
         .premium-hero p  { font-size: var(--text-sm); color: var(--text-secondary); text-align: center; }
 
-        /* Stars */
         .premium-stars { display: flex; flex-direction: column; gap: var(--space-2); }
         .premium-stars-head { display: flex; flex-direction: column; gap: var(--space-0-5); padding: 0 var(--space-0-5); }
         .premium-stars-title { font-size: var(--text-base); font-weight: var(--weight-heavy); }
@@ -299,7 +287,6 @@ export default function Premium() {
         }
         .premium-plan-price { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--rating); white-space: nowrap; }
 
-        /* Divider */
         .premium-divider {
           display: flex; align-items: center; text-align: center;
           color: var(--text-secondary); font-size: var(--text-sm); gap: var(--space-3);

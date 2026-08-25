@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { updateMe, updateNotifications } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import { ArrowLeft, ChevronRight, Gauge, User, Bell, Check, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -50,7 +50,7 @@ export default function Settings() {
   });
 
   function pickLevel(v: number) {
-    if (v === level) return;
+    if (!user || v === level) return;
     selectionHaptic();
     setUser({ ...user, level: v }); // optimistic update
     updateProfileMutation.mutate({ level: v });
@@ -58,7 +58,7 @@ export default function Settings() {
 
   function pickGender(v: string) {
     const next = v === 'skip' ? null : v;
-    if (next === gender) return;
+    if (!user || next === gender) return;
     selectionHaptic();
     setUser({ ...user, gender: next }); // optimistic update
     updateProfileMutation.mutate({ gender: next ?? '' });

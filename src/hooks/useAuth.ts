@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { authTelegram, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
-import { translate } from '../i18n/index';
+import { translate } from '../i18n';
 
 // Faqat localhost'da test mode ishlaydi
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -46,7 +46,7 @@ export function useAuth() {
     };
 
     applyTheme();
-    window.Telegram?.WebApp?.onEvent('themeChanged', applyTheme);
+    window.Telegram?.WebApp?.onEvent?.('themeChanged', applyTheme);
 
     async function init() {
       try {
@@ -117,7 +117,7 @@ export function useAuth() {
     init();
 
     return () => {
-      window.Telegram?.WebApp?.offEvent('themeChanged', applyTheme);
+      window.Telegram?.WebApp?.offEvent?.('themeChanged', applyTheme);
     };
   }, []);
 

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { rateSession } from '../api/endpoints';
-import useAppStore from '../store/useAppStore.js';
-import { useT } from '../i18n/index.js';
-import { tapHaptic, selectionHaptic } from '../utils/haptics.js';
-import ReportSheet from '../components/ReportSheet.jsx';
-import ReviewPrompt from '../components/ReviewPrompt.jsx';
+import useAppStore from '../store/useAppStore';
+import { useT } from '../i18n';
+import { tapHaptic, selectionHaptic } from '../utils/haptics';
+import ReportSheet from '../components/ReportSheet';
+import ReviewPrompt from '../components/ReviewPrompt';
 import { Star, Check, Flag, PartyPopper, LogOut } from 'lucide-react';
 
-function Stars({ value, onChange }) {
+function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hov, setHov] = useState(0);
   const active = hov || value;
   return (
@@ -37,7 +37,7 @@ export default function SessionEnd() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading]     = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportDone, setReportDone] = useState(null);
+  const [reportDone, setReportDone] = useState<string | null>(null);
 
   const sessionId   = screenParams?.sessionId || session?.id;
   const partnerName = session?.partnerName || t('common.yourPartner');
@@ -47,14 +47,13 @@ export default function SessionEnd() {
     if (window.Telegram?.WebApp?.BackButton) window.Telegram.WebApp.BackButton.hide();
   }, []);
 
-  // Duration: screenParams.elapsed (from Chat timer) yoki startedAt/endedAt dan
   const dur = (() => {
     if (screenParams?.elapsed) return screenParams.elapsed;
     if (session?.startedAt && session?.endedAt) {
-      return Math.floor((new Date(session.endedAt) - new Date(session.startedAt)) / 1000);
+      return Math.floor((new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()) / 1000);
     }
     if (session?.startedAt) {
-      return Math.floor((Date.now() - new Date(session.startedAt)) / 1000);
+      return Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
     }
     return null;
   })();
@@ -122,9 +121,6 @@ export default function SessionEnd() {
           </div>
         )}
 
-        {/* Ilova haqidagi review — sherikni baholagandan KEYIN.
-            Ikkalasini birga so'rash ikki xil savolni chalkashtiradi:
-            biri sherik haqida, biri ilova haqida. */}
         {submitted && <ReviewPrompt />}
 
         {submitted && (
@@ -134,7 +130,6 @@ export default function SessionEnd() {
           </div>
         )}
 
-        {/* Report / block */}
         {reportDone ? (
           <p className="end-report-done"><Check size={14} /> {reportDone}</p>
         ) : sessionId ? (
@@ -150,7 +145,7 @@ export default function SessionEnd() {
           sessionId={sessionId}
           partnerName={partnerName}
           onClose={() => setReportOpen(false)}
-          onDone={(msg) => { setReportDone(msg); setReportOpen(false); }}
+          onDone={(msg: string) => { setReportDone(msg); setReportOpen(false); }}
         />
       )}
 

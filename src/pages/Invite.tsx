@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getInvite } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { notifyHaptic, tapHaptic } from '../utils/haptics';
 import { Gift, Copy, Check, Trophy, Send, Medal, Award } from 'lucide-react';
 import { Card } from '../components/ui/card';

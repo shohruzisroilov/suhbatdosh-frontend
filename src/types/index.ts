@@ -12,7 +12,7 @@ export interface User {
   native_lang?: string;
   learning_lang?: string;
   level?: number;
-  gender?: string;
+  gender?: string | null;
   gender_preference?: string;
   is_premium?: boolean;
   isPremium?: boolean;
@@ -20,8 +20,12 @@ export interface User {
   premiumUntil?: string | null;
   daily_minutes_left?: number;
   daily_free_minutes?: number;
+  dailyMinutes?: number;
+  dailyLimit?: number;
   primeTimeHour?: number;
   streak_count?: number;
+  streakCount?: number;
+  hasPracticedToday?: boolean;
   total_talk_seconds?: number;
   remindersEnabled?: boolean;
   reminders_enabled?: boolean;
@@ -41,11 +45,17 @@ export interface Session {
     level?: number;
     learning_lang?: string;
   };
+  partnerName?: string;
+  partnerAvatarUrl?: string;
+  partnerLevel?: number;
   livekit_token?: string;
   livekit_room?: string;
   duration_seconds?: number;
   status?: string;
   started_at?: string;
+  startedAt?: string;
+  ended_at?: string;
+  endedAt?: string;
 }
 
 export interface Message {
@@ -124,6 +134,13 @@ declare global {
         onEvent?: (eventType: string, callback: (...args: any[]) => void) => void;
         offEvent?: (eventType: string, callback: (...args: any[]) => void) => void;
         showAlert?: (message: string, callback?: () => void) => void;
+        showConfirm?: (message: string, callback?: (ok: boolean) => void) => void;
+        BackButton?: {
+          show: () => void;
+          hide: () => void;
+          onClick: (cb: () => void) => void;
+          offClick: (cb: () => void) => void;
+        };
         MainButton: {
           text: string;
           show: () => void;

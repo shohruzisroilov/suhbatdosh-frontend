@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, X, RotateCcw, Check, AlertTriangle, GraduationCap, Clock, MicOff, Zap, Award } from 'lucide-react';
-import useAppStore from '../store/useAppStore.js';
-import { useT } from '../i18n/index.js';
-import { useSpeech } from '../hooks/useSpeech.js';
-import { useRecorder } from '../hooks/useRecorder.js';
-import ReviewPrompt from '../components/ReviewPrompt.jsx';
-import BandScale from '../components/BandScale.jsx';
-import CertificateModal from '../components/CertificateModal.jsx';
-import { tapHaptic, selectionHaptic } from '../utils/haptics.js';
+import useAppStore from '../store/useAppStore';
+import { useT } from '../i18n';
+import { useSpeech } from '../hooks/useSpeech';
+import { useRecorder } from '../hooks/useRecorder';
+import ReviewPrompt from '../components/ReviewPrompt';
+import BandScale from '../components/BandScale';
+import CertificateModal from '../components/CertificateModal';
+import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import {
   startIeltsTest,
   getIeltsTest,
@@ -17,46 +17,11 @@ import {
   abandonIeltsTest,
 } from '../api/endpoints';
 
-/**
- * IELTS Speaking mock.
- *
- * Ekran imtihonni O'TKAZMAYDI — u serverdagi skriptni ijro etadi. Har qadamda
- * server bitta savol beradi; ekran uni o'qib beradi, javobni yozib oladi va
- * qaytaradi. Keyingi savol nima bo'lishini ekran bilmaydi.
- *
- * Nega savol matni ko'rsatilmaydi: haqiqiy imtihonda nomzod savolni FAQAT
- * eshitadi. Ekranda matn tursa mashq boshqa narsaga aylanadi — o'qib javob
- * berishga. Yagona istisno — Part 2 cue card: u haqiqiy imtihonda ham
- * qog'ozda beriladi.
- *
- * Vaqt chegaralari serverdan keladi va qat'iy: Part 2 da roppa-rosa 1 daqiqa
- * tayyorgarlik va maksimum 2 daqiqa nutq. Ularni o'tkazib yuborish yo'li yo'q,
- * chunki imtihonda ham yo'q.
- */
-
-const PART_LABEL = { 1: 'Part 1', 2: 'Part 2', 3: 'Part 3' };
-
-/**
- * Kutishning qat'iy shifti.
- *
- * Qayta urinish o'zi foydali, lekin nazoratsiz qoldirilsa zarari foydasidan
- * ko'p: to'rt urinish × bir daqiqalik timeout imtihon o'rtasida odamni yetti
- * daqiqa qimirlamas ekranga mixlab qo'yadi. Aloqa tiklanmasa buni bir daqiqada
- * bilgan va nazoratni o'z qo'liga olgan afzal.
- *
- * Byudjet butun zanjirga tegishli, bitta urinishga emas: har urinishning
- * timeout'i qolgan vaqtga qisqartiriladi va vaqt tugagach yangisi
- * rejalashtirilmaydi. Ya'ni bu raqamlar — ekranda kutib turish vaqtining
- * yuqori chegarasi, taxmin emas.
- */
+const PART_LABEL: Record<number, string> = { 1: 'Part 1', 2: 'Part 2', 3: 'Part 3' };
 const UPLOAD_BUDGET_MS = 75_000;
-
-// Baholash chinakam uzoq ishlaydi — model o'n daqiqalik ovozni tinglaydi —
-// shuning uchun byudjet kattaroq. Bu yerda kutish og'riqsizroq ham: imtihon
-// tugagan, foydalanuvchi natijani kutyapti va javoblari allaqachon serverda.
 const MARK_BUDGET_MS = 240_000;
 
-function fmtClock(ms) {
+function fmtClock(ms: number): string {
   const s = Math.max(Math.floor(ms / 1000), 0);
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
@@ -65,53 +30,32 @@ export default function IeltsMock() {
   const { navigate, ieltsStatus, setIeltsStatus } = useAppStore();
   const t = useT();
 
-  // 'intro' | 'running' | 'marking' | 'report'
-  const [stage, setStage] = useState('intro');
-  // 'examiner' | 'prep' | 'answering' | 'uploading'
-  const [phase, setPhase] = useState('examiner');
+  const [stage, setStage] = useState<'intro' | 'running' | 'marking' | 'report'>('intro');
+  const [phase, setPhase] = useState<'examiner' | 'prep' | 'answering' | 'uploading'>('examiner');
 
-  const [test, setTest] = useState(null);       // { testId, title, total, answerable }
-  const [step, setStep] = useState(null);
+  const [test, setTest] = useState<any>(null);
+  const [step, setStep] = useState<any>(null);
   const [answered, setAnswered] = useState(0);
   const [prepLeft, setPrepLeft] = useState(0);
   const [starting, setStarting] = useState(false);
   const [uploadFailed, setUploadFailed] = useState(false);
-  // Qayta urinilyaptimi — ekranda aytiladi. Jim kutish qotib qolgandan
-  // farq qilmaydi: foydalanuvchi ilova ishlayotganini ko'rishi kerak.
   const [retrying, setRetrying] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  const [fatal, setFatal] = useState(null);     // 'limit' | 'off' | 'short' | 'failed'
-  const [showText, setShowText] = useState(false); // TTS ishlamasa savol matni
-  const [testMode, setTestMode] = useState('quick'); // 'quick' (3 min) | 'full' (14 min)
+  const [feedback, setFeedback] = useState<any>(null);
+  const [fatal, setFatal] = useState<string | null>(null);
+  const [showText, setShowText] = useState(false);
+  const [testMode, setTestMode] = useState<'quick' | 'full'>('quick');
 
-  // useSpeech'dan faqat TTS kerak — savolni ekzaminator ovozida o'qish uchun.
-  // Nutqni matnga o'girish bu yerda ishlatilmaydi: baholovchiga ovozning
-  // o'zi boradi.
   const { speak, cancelSpeech, unlockAudio, ttsSupported } = useSpeech({ lang: 'en-GB' });
   const recorder = useRecorder();
 
-  const testRef = useRef(null);
-  // Yuborilmagan javob — tarmoq uzilsa yozuv yo'qolmasligi kerak.
-  const pendingRef = useRef(null);
+  const testRef = useRef<any>(null);
+  const pendingRef = useRef<any>(null);
   const finishedRef = useRef(false);
-  // Rejalashtirilgan qayta urinish. Bitta ref ikkalasiga yetadi — javob
-  // yuborish va baholash bir vaqtda hech qachon kutmaydi. Ekran yopilganda
-  // tozalanishi shart, aks holda tashlab ketilgan imtihonga so'rov ketadi.
-  const retryTimerRef = useRef(null);
+  const retryTimerRef = useRef<any>(null);
 
-  // ─── Yordamchilar ──────────────────────────────────────────────────────────
-
-  /**
-   * Matnni o'qiydi va tugagach hal bo'ladigan promise qaytaradi.
-   *
-   * Nazorat taymeri bor va u shart: brauzer nutq sintezi ba'zan (ayniqsa
-   * Chrome'da, uzunroq matnda) o'rtasida uzilib qoladi va "o'qib bo'ldim"
-   * signalini umuman bermaydi. Bunda imtihon shu qadamda abadiy muzlab
-   * qolardi. Taymer eng yomon holatda ham keyingi bosqichga o'tkazadi.
-   */
   const say = useCallback(
-    (text) =>
-      new Promise((resolve) => {
+    (text: string) =>
+      new Promise<void>((resolve) => {
         if (!text) { resolve(); return; }
 
         let done = false;
@@ -121,13 +65,9 @@ export default function IeltsMock() {
           clearTimeout(guard);
           resolve();
         };
-        // Taxminiy o'qish vaqti + zaxira. Ingliz nutqi ~14 belgi/soniya.
         const guard = setTimeout(finish, Math.min(6000 + text.length * 90, 60_000));
 
         if (!ttsSupported) {
-          // Ovoz yo'q — savolni yozma ko'rsatishdan boshqa iloj yo'q, aks
-          // holda nomzod nimaga javob berishini bilmaydi. O'qish vaqti
-          // o'rniga uzunlikka mos pauza beramiz.
           setShowText(true);
           clearTimeout(guard);
           setTimeout(resolve, Math.min(2500 + text.length * 45, 15_000));
@@ -138,10 +78,9 @@ export default function IeltsMock() {
     [speak, ttsSupported]
   );
 
-  /** Tayyorgarlik daqiqasi. Bekor qilinsa to'xtaydi. */
   const countdown = useCallback(
-    (seconds, isCancelled) =>
-      new Promise((resolve) => {
+    (seconds: number, isCancelled: () => boolean) =>
+      new Promise<void>((resolve) => {
         let left = seconds;
         setPrepLeft(left);
         const id = setInterval(() => {
@@ -154,15 +93,7 @@ export default function IeltsMock() {
     []
   );
 
-  // ─── Baholash ──────────────────────────────────────────────────────────────
-
-  /**
-   * @param {{attempt?:number, deadline?:number, manual?:boolean}} opts
-   *   `manual` — foydalanuvchi natija ekranidagi tugmani bosdi. Qo'riqchi
-   *   faqat avtomatik chaqiruvga tegishli (u imtihon oqimidan ikki marta
-   *   kelishi mumkin), qo'lda urinishni to'sib qo'ymasligi kerak.
-   */
-  const runMarking = useCallback(async ({ attempt = 0, deadline, manual = false } = {}) => {
+  const runMarking = useCallback(async ({ attempt = 0, deadline, manual = false }: { attempt?: number; deadline?: number; manual?: boolean } = {}) => {
     if (finishedRef.current && attempt === 0 && !manual) return;
     finishedRef.current = true;
     const until = deadline ?? Date.now() + MARK_BUDGET_MS;
@@ -171,25 +102,21 @@ export default function IeltsMock() {
     cancelSpeech();
     setRetrying(attempt > 0);
     setStage('marking');
-    setIeltsStatus(null); // qolgan urinishlar soni o'zgardi
+    setIeltsStatus(null);
 
     try {
       const data = await finishIeltsTest(testRef.current, Math.min(180_000, until - Date.now()));
       setRetrying(false);
       setFeedback(data.feedback);
       setStage('report');
-    } catch (err) {
+    } catch (err: any) {
       const status = err?.response?.status;
       const transient = !status || status >= 500 || status === 429;
-      // 429 — model kvotasi. U daqiqalik oynada tiklanadi, ya'ni ikki
-      // soniyadan keyingi urinish aynan o'sha xatoni qaytaradi va byudjetni
-      // behuda yeydi. Server qancha kutishni `Retry-After` da aytadi.
       const hinted = Number(err?.response?.headers?.['retry-after']) * 1000;
       const delay = status === 429
         ? Math.min(Number.isFinite(hinted) && hinted > 0 ? hinted : 30_000, 90_000)
         : 2000 * (attempt + 1);
-      // Byudjetda mazmunli urinishga joy qolgandagina davom etamiz — 10
-      // soniyadan kam qolganda yangi chaqiruv baribir kesiladi.
+
       if (transient && attempt < 3 && until - Date.now() > delay + 10_000) {
         retryTimerRef.current = setTimeout(() => {
           runMarking({ attempt: attempt + 1, deadline: until });
@@ -200,11 +127,9 @@ export default function IeltsMock() {
       setFatal(status === 400 ? 'short' : status === 503 ? 'off' : 'failed');
       setStage('report');
     }
-  }, [recorder, cancelSpeech]);
+  }, [recorder, cancelSpeech, setIeltsStatus]);
 
-  // ─── Javobni yuborish ──────────────────────────────────────────────────────
-
-  const upload = useCallback(async (answer, { attempt = 0, deadline } = {}) => {
+  const upload = useCallback(async (answer: any, { attempt = 0, deadline }: { attempt?: number; deadline?: number } = {}) => {
     const { stepIndex, blob, ms } = answer;
     pendingRef.current = answer;
     const until = deadline ?? Date.now() + UPLOAD_BUDGET_MS;
@@ -215,7 +140,6 @@ export default function IeltsMock() {
     try {
       const data = await sendIeltsAnswer(
         testRef.current, stepIndex, blob, ms,
-        // Urinish byudjetdan uzun yashay olmaydi — shift shu yerda ushlanadi.
         Math.min(answerTimeout(blob?.size ?? 0), until - Date.now()),
       );
       pendingRef.current = null;
@@ -226,18 +150,13 @@ export default function IeltsMock() {
       } else {
         setStep(data.step);
       }
-    } catch (err) {
+    } catch (err: any) {
       const status = err?.response?.status;
 
-      // 413 — yozuv juda katta. Qayta urinish yordam bermaydi, javobsiz
-      // o'tamiz: bitta savol yo'qolgani butun imtihonni to'xtatishdan afzal.
       if (status === 413) {
         upload({ stepIndex, blob: null, ms: 0 });
         return;
       }
-      // 409 — mijoz va server qadamlari ajralib qolgan (masalan javob
-      // yetib borgan, lekin javob paketi yo'qolgan). Serverning holatiga
-      // qaytamiz: u haqiqat manbasi.
       if (status === 409) {
         try {
           const fresh = await getIeltsTest(testRef.current);
@@ -247,20 +166,11 @@ export default function IeltsMock() {
           setAnswered(fresh.step.i);
           setStep(fresh.step);
           return;
-        } catch { /* pastdagi xato ekraniga tushamiz */ }
+        } catch { /* proceed to fail */ }
       }
 
-      // Qayta urinishga arziydigan xatolar: tarmoq uzilishi yoki timeout
-      // (javob umuman kelmagan, status yo'q), serverning o'tkinchi nosozligi
-      // (5xx — qayta ishga tushish, proxy 502/504) va rate limit (429).
-      // Qolganlari — 400, 401, 404 — takrorlashdan tuzalmaydi, ularda darhol
-      // xatoni ko'rsatgan halolroq.
       const transient = !status || status >= 500 || status === 429;
-      // 429 ning oynasi bir daqiqalik — bir-ikki soniya kutish limitni ochmaydi.
       const delay = status === 429 ? 8000 : 1500 * (attempt + 1);
-      // Byudjetda pauza ustiga hech bo'lmasa besh soniyalik urinish sig'masa,
-      // urinmaymiz: foydalanuvchini yana yarim daqiqa kutdirib, oxirida
-      // baribir shu xatoni ko'rsatish — eng yomon variant.
       if (transient && attempt < 3 && until - Date.now() > delay + 5000) {
         retryTimerRef.current = setTimeout(() => {
           upload(answer, { attempt: attempt + 1, deadline: until });
@@ -275,21 +185,12 @@ export default function IeltsMock() {
 
   const retryUpload = useCallback(() => {
     tapHaptic('medium');
-    // Qo'lda urinish rejalashtirilganini bekor qiladi — ikkitasi birga
-    // ketmasin.
     clearTimeout(retryTimerRef.current);
     if (pendingRef.current) upload(pendingRef.current);
   }, [upload]);
 
-  // Ekran yopilgach kutib turgan urinish ishlamasin: imtihon tashlab
-  // ketilgan bo'ladi va javob endi hech qayerga bormaydi.
   useEffect(() => () => clearTimeout(retryTimerRef.current), []);
 
-  // ─── Qadamni ijro etish ────────────────────────────────────────────────────
-  //
-  // Butun qadam bitta effektda: ekzaminator gapiradi -> (Part 2 da)
-  // tayyorgarlik -> yozib olish -> yuborish. Qadam almashsa yoki ekran
-  // yopilsa `cancelled` orqali oqim uziladi.
   useEffect(() => {
     if (stage !== 'running' || !step) return;
 
@@ -304,8 +205,6 @@ export default function IeltsMock() {
       if (step.kind === 'closing') { runMarking(); return; }
 
       if (step.kind === 'cue') {
-        // Karta ekranda paydo bo'ladi va ekzaminator mavzuni o'qib beradi —
-        // haqiqiy imtihonda ham u kartani berib, mavzuni ovoz chiqarib aytadi.
         await say(step.cardSay);
         if (cancelled) return;
 
@@ -332,28 +231,14 @@ export default function IeltsMock() {
       cancelSpeech();
       recorder.stop();
     };
-    // recorder/say barqaror emas, lekin qadam indeksi o'zgarmasa oqim qayta
-    // ishga tushmasligi kerak — shuning uchun qaramlik faqat qadamga.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, step?.i]);
 
-  // ─── Boshlash ──────────────────────────────────────────────────────────────
-
-  /**
-   * Imtihonni boshlaydi yoki tugallanmaganini davom ettiradi.
-   *
-   * Davom ettirish shart: Telegram Mini App ekrani telefon qo'ng'irog'i yoki
-   * ilova almashtirishda yopilib qolishi oddiy hol. Bunda o'n daqiqalik
-   * mehnat ham, kunlik urinish ham yo'qolib ketmasligi kerak — server qaysi
-   * qadamda to'xtaganini biladi.
-   */
-  const begin = useCallback(async (resumeId, modeOverride) => {
+  const begin = useCallback(async (resumeId?: string, modeOverride?: 'quick' | 'full') => {
     if (starting) return;
     tapHaptic('medium');
     setStarting(true);
 
-    // iOS ovozni ham, mikrofonni ham faqat foydalanuvchi harakati ichida
-    // ochadi — ikkalasini shu bosishda so'raymiz.
     unlockAudio();
     const micReady = await recorder.prime();
     if (!micReady) { setStarting(false); return; }
@@ -362,7 +247,6 @@ export default function IeltsMock() {
       const modeToUse = modeOverride || testMode;
       const data = resumeId ? await getIeltsTest(resumeId) : await startIeltsTest({ mode: modeToUse });
       if (resumeId && (!data.step || data.status !== 'active')) {
-        // Server tomonda allaqachon yopilgan — yangisini boshlaymiz.
         setStarting(false);
         setIeltsStatus({ ...ieltsStatus, active: null });
         return begin();
@@ -373,7 +257,7 @@ export default function IeltsMock() {
       setAnswered(data.step.i);
       setStep(data.step);
       setStage('running');
-    } catch (err) {
+    } catch (err: any) {
       const status = err?.response?.status;
       setFatal(status === 429 ? 'limit' : status === 503 ? 'off' : 'failed');
     } finally {
@@ -381,17 +265,12 @@ export default function IeltsMock() {
     }
   }, [starting, unlockAudio, recorder, ieltsStatus, setIeltsStatus, testMode]);
 
-  // ─── Chiqish ───────────────────────────────────────────────────────────────
-
   const leave = useCallback(() => {
     cancelSpeech();
     recorder.release();
     if (testRef.current && !finishedRef.current) {
       abandonIeltsTest(testRef.current).catch(() => {});
     }
-    // Keshdagi holat endi eskirgan: qolgan urinishlar soni ham, tugallanmagan
-    // imtihon ham o'zgardi. null qo'yamiz — karta keyingi ochilishida qayta
-    // so'raydi.
     setIeltsStatus(null);
     navigate('home');
   }, [cancelSpeech, recorder, navigate, setIeltsStatus]);
@@ -401,7 +280,7 @@ export default function IeltsMock() {
     const message = t('ielts.quitConfirm');
     const tg = window.Telegram?.WebApp;
     if (tg?.showConfirm) {
-      tg.showConfirm(message, (ok) => { if (ok) leave(); });
+      tg.showConfirm(message, (ok: boolean) => { if (ok) leave(); });
     } else if (window.confirm(message)) {
       leave();
     }
@@ -422,26 +301,17 @@ export default function IeltsMock() {
     };
   }, []);
 
-  // Mikrofon rad etilgan bo'lsa imtihonni boshlashning ma'nosi yo'q.
   const micDenied = recorder.error === 'denied';
   const micBroken = !recorder.supported || recorder.error === 'failed';
-  // Tugallanmagan imtihon — Home/Matching allaqachon holatni yuklab qo'ygan.
   const resumeId = ieltsStatus?.active?.testId ?? null;
   const resumeMode = ieltsStatus?.active?.mode ?? null;
 
-  // Davom ettiriladigan imtihon bor bo'lsa, kirish ekrani AYNAN o'sha
-  // imtihonni tasvirlashi kerak. Aks holda ekran "3 daqiqa, faqat Part 1"
-  // deb turadi-yu, "Davom ettirish" tugmasi to'liq mockni ochadi.
   useEffect(() => {
     if (resumeMode === 'quick' || resumeMode === 'full') setTestMode(resumeMode);
   }, [resumeMode]);
 
-  // ─── Xato ekranlari ────────────────────────────────────────────────────────
-
   if (fatal && stage !== 'report') {
     const isLimit = fatal === 'limit';
-    // Limitga urilgan bepul foydalanuvchiga Premium taklif qilinadi; boshqa
-    // barcha holatda faqat uyga qaytish tugmasi bo'ladi.
     const upsell = isLimit && !ieltsStatus?.isPremium;
     return (
       <Shell onClose={() => navigate('home')} title={t('ielts.title')}>
@@ -463,8 +333,6 @@ export default function IeltsMock() {
       </Shell>
     );
   }
-
-  // ─── Kirish ekrani ─────────────────────────────────────────────────────────
 
   if (stage === 'intro') {
     return (
@@ -506,9 +374,6 @@ export default function IeltsMock() {
             </div>
           </div>
 
-          {/* Qadamlar ro'yxati faqat to'liq mockka tegishli. Quick rejimda
-              Part 2 va Part 3 umuman yo'q — ularni baribir ko'rsatish
-              foydalanuvchiga bo'lmaydigan narsani va'da qilish bo'lardi. */}
           {testMode === 'full' ? (
             <ol className="im-steps">
               <li><b>{t('ielts.p1Name')}</b> — {t('ielts.p1Desc')}</li>
@@ -563,8 +428,6 @@ export default function IeltsMock() {
     );
   }
 
-  // ─── Baholanmoqda ──────────────────────────────────────────────────────────
-
   if (stage === 'marking') {
     return (
       <Shell title={t('ielts.title')}>
@@ -577,18 +440,12 @@ export default function IeltsMock() {
     );
   }
 
-  // ─── Natija ────────────────────────────────────────────────────────────────
-
   if (stage === 'report') {
     return (
       <Report
         t={t}
         feedback={feedback}
         error={fatal}
-        // Baholash uzilib qolgan bo'lsa qayta so'rash deyarli bepul: model
-        // ishlab bo'lgan bo'lsa natija serverda saqlangan va darhol qaytadi.
-        // Busiz tayyor hisobot yetib bo'lmas joyda qolib ketardi — urinish
-        // esa allaqachon sarflangan.
         onRetryMark={
           fatal === 'short' || fatal === 'off'
             ? null
@@ -612,18 +469,10 @@ export default function IeltsMock() {
     );
   }
 
-  // ─── Imtihon ───────────────────────────────────────────────────────────────
-
   const isCue = step?.kind === 'cue';
   const timeLeftMs = phase === 'answering' && step ? step.maxSec * 1000 - recorder.elapsedMs : 0;
-  // Part 2 da qolgan vaqt haqiqiy imtihondagidek muhim — nomzod 2 daqiqani
-  // to'ldirishi kerak. Part 1/3 da esa taymer ko'rsatilmaydi: u nomzodni
-  // shoshiradi va ekzaminator ham vaqtni ko'rsatmaydi.
   const showTimer = isCue && phase === 'answering';
 
-  // Yuborilmay qolganda `phase` hamon 'uploading' — yozuv hali qo'limizda va
-  // qayta urinilishi mumkin. Lekin ekranda "yuborilmoqda" deb turishi yolg'on
-  // bo'lardi: pastda ayni paytda "yuborilmadi" yozuvi turadi.
   const stateLabel =
     uploadFailed ? t('ielts.sendHeld')
     : phase === 'uploading' && retrying ? t('ielts.retrying')
@@ -645,12 +494,11 @@ export default function IeltsMock() {
 
       <div className="im-stage">
         {isCue && step.card && (
-          /* Cue card — haqiqiy imtihonda ham yozma beriladi. */
           <div className="im-card">
             <p className="im-card__cue">{step.card.cue}</p>
             <p className="im-card__lead">{t('ielts.cardLead')}</p>
             <ul className="im-card__list">
-              {step.card.bullets.map((b, i) => <li key={i}>{b}</li>)}
+              {step.card.bullets.map((b: string, i: number) => <li key={i}>{b}</li>)}
             </ul>
           </div>
         )}
@@ -661,8 +509,6 @@ export default function IeltsMock() {
           </div>
         )}
 
-        {/* TTS ishlamaydigan qurilmada savol matni — aks holda nomzod
-            nimaga javob berishini bilmaydi. */}
         {showText && step && phase !== 'prep' && (
           <p className="im-question">{step.say}</p>
         )}
@@ -710,9 +556,7 @@ export default function IeltsMock() {
   );
 }
 
-/* ─── Natija ekrani ───────────────────────────────────────────────────────── */
-
-function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
+function Report({ t, feedback, error, onHome, onAgain, onRetryMark }: any) {
   const { user } = useAppStore();
   const [showCert, setShowCert] = useState(false);
 
@@ -724,8 +568,6 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
           <span className="im-glyph">{short ? <MicOff size={28} /> : <AlertTriangle size={28} />}</span>
           <h2 className="im-h2">{t(short ? 'ielts.shortTitle' : 'ielts.markFailTitle')}</h2>
           <p className="im-p">{t(short ? 'ielts.shortDesc' : 'ielts.markFailDesc')}</p>
-          {/* Hisobotni tiklash yangi imtihondan ustun turadi: javoblar
-              berib bo'lingan, kerak bo'lgani — faqat natijani olish. */}
           {onRetryMark && (
             <button className="im-btn im-btn--primary" onClick={onRetryMark}>
               <RotateCcw size={16} /> {t('ielts.markRetry')}
@@ -756,9 +598,6 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
   return (
     <Shell onClose={onHome} title={t('ielts.reportTitle')}>
       <div className="im-scroll">
-        {/* Umumiy ball — sahifadagi yagona ulkan raqam, va u chizg'ich
-            ustida turadi. Yalang'och "6.5" 9 dan qanchaligini ko'rsatmaydi;
-            shkala ko'rsatadi. */}
         <div className="im-band">
           <span className="eyebrow">{t('ielts.overall')}</span>
           <span className="im-band__value num">{feedback.overall}</span>
@@ -783,9 +622,6 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
           />
         )}
 
-        {/* To'rt mezon — bir xil shkalada, ya'ni qaysi biri orqada
-            qolayotgani bir qarashda ko'rinadi. Alohida raqam kartochkalari
-            buni ko'rsatmasdi. */}
         <section className="im-block">
           <h3 className="eyebrow">{t('ielts.byCriteria')}</h3>
           <div className="im-crits">
@@ -814,7 +650,7 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
         {feedback.fixes?.length > 0 && (
           <section className="im-block">
             <h3 className="im-block__title">{t('ielts.fixes')}</h3>
-            {feedback.fixes.map((f, i) => (
+            {feedback.fixes.map((f: any, i: number) => (
               <div key={i} className="im-fix">
                 <p className="im-fix__said">{f.said}</p>
                 <p className="im-fix__better">{f.better}</p>
@@ -832,9 +668,6 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
         )}
 
         <p className="im-note">{t('ielts.reportDisclaimer')}</p>
-
-        {/* Ball chiqqan lahza — odam mahsulotdan aynan nima olganini endigina
-            ko'rdi. Review so'rash uchun eng to'g'ri payt shu. */}
         <ReviewPrompt />
       </div>
 
@@ -847,9 +680,7 @@ function Report({ t, feedback, error, onHome, onAgain, onRetryMark }) {
   );
 }
 
-/* ─── Umumiy karkas ───────────────────────────────────────────────────────── */
-
-function Shell({ title, onClose, children }) {
+function Shell({ title, onClose, children }: { title: string; onClose?: () => void; children: React.ReactNode }) {
   return (
     <div className="im-screen">
       <header className="im-head">
@@ -866,9 +697,6 @@ function Shell({ title, onClose, children }) {
   );
 }
 
-// Yozib olish paytida ovoz darajasi soniyasiga 10 marta yangilanadi va
-// butun ekranni qayta chizadi. Uslublar bunga aloqasi yo'q — memo ularni
-// har tikda qayta qurishdan saqlaydi.
 const Styles = React.memo(function Styles() {
   return (
     <style>{`
@@ -907,7 +735,6 @@ const Styles = React.memo(function Styles() {
       }
       .im-p  { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.6; max-width: 300px; }
 
-      /* ─── Kirish ─── */
       .im-hero { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; padding: var(--space-4) 0 var(--space-2); }
       .im-hero__ico {
         width: 56px; height: 56px; border-radius: var(--radius-full);
@@ -920,7 +747,6 @@ const Styles = React.memo(function Styles() {
       }
       .im-hero__sub { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6; max-width: 300px; }
 
-      /* ─── Mode Select ─── */
       .im-mode-select {
         display: flex; flex-direction: column; gap: var(--space-2);
         margin: var(--space-1) 0;
@@ -998,7 +824,6 @@ const Styles = React.memo(function Styles() {
       }
       .im-rules p { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; }
 
-      /* ─── Imtihon ─── */
       .im-progress { padding: var(--space-3) var(--space-4) 0; flex-shrink: 0; }
       .im-progress__bar {
         height: 4px; border-radius: var(--radius-full);
@@ -1026,8 +851,6 @@ const Styles = React.memo(function Styles() {
         color: var(--text-secondary);
         transition: border-color var(--t), background var(--t);
       }
-      /* Mikrofon yoniqligi hech qachon shubhali bo'lmasligi kerak —
-         bu maxfiylik masalasi, shuning uchun eng ko'zga tashlanadigan holat. */
       .im-orb--listen {
         border-color: var(--danger); color: var(--danger);
         background: color-mix(in srgb, var(--danger) 12%, transparent);
@@ -1073,7 +896,6 @@ const Styles = React.memo(function Styles() {
         transition: transform 0.1s linear;
       }
 
-      /* ─── Cue card ─── */
       .im-card {
         width: 100%; max-width: 340px;
         padding: var(--space-4); border-radius: var(--radius-lg);
@@ -1091,7 +913,6 @@ const Styles = React.memo(function Styles() {
         content: '•'; position: absolute; left: 0; color: var(--text-secondary);
       }
 
-      /* ─── Natija ─── */
       .im-band {
         display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
         padding: var(--space-5) var(--space-4);
@@ -1132,7 +953,6 @@ const Styles = React.memo(function Styles() {
       .im-fix__better { font-size: var(--text-sm); color: var(--success, #34c759); line-height: 1.5; font-weight: var(--weight-semi); }
       .im-fix__why    { font-size: var(--text-xs); color: var(--text-secondary); }
 
-      /* ─── Pastki panel ─── */
       .im-foot {
         flex-shrink: 0; border-top: 1px solid var(--border);
         padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));

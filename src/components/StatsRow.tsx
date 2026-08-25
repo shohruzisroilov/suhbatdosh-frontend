@@ -1,5 +1,5 @@
 import React from 'react';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import Skeleton from './Skeleton';
 
 interface StatsRowProps {

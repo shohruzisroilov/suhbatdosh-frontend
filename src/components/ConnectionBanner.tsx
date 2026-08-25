@@ -1,6 +1,6 @@
 import React from 'react';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 
 export default function ConnectionBanner() {
   const isConnected = useAppStore((s) => s.isConnected);

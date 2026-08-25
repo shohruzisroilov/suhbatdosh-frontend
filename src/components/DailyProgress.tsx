@@ -1,5 +1,5 @@
 import React from 'react';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { ChevronRight } from 'lucide-react';
 
 interface DailyProgressProps {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, RefreshCw, MessageCircle, Home, Film, Plane, Coffee, Utensils, Music, Gamepad2, Briefcase } from 'lucide-react';
 import useAppStore from '../store/useAppStore';
 import { useSocket } from '../hooks/useSocket';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 
 interface IcebreakerItem {

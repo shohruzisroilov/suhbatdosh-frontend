@@ -1,6 +1,6 @@
 import React from 'react';
 import Avatar from './Avatar';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 
 function duration(startedAt?: string, endedAt?: string) {
   if (!startedAt || !endedAt) return null;

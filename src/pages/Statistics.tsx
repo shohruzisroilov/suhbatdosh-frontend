@@ -1,22 +1,20 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getActivity } from '../api/endpoints';
-import useAppStore from '../store/useAppStore.js';
-import { useT, useLang } from '../i18n/index.js';
-import StatsRow from '../components/StatsRow.jsx';
+import useAppStore from '../store/useAppStore';
+import { useT, useLang } from '../i18n';
+import StatsRow from '../components/StatsRow';
 import { ArrowLeft } from 'lucide-react';
 
 const RANGES = ['week', 'month', 'all'];
 
-// 'YYYY-MM-DD' yoki 'YYYY-MM' → local Date (timezone siljishisiz)
-function parseKey(key) {
+function parseKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d || 1);
 }
 
-// Daqiqani "45m" / "3h" / "1h 20m" ko'rinishida
 function useTimeFmt() {
   const t = useT();
-  return (totalMinutes) => {
+  return (totalMinutes: number) => {
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
     if (h === 0) return t('lb.minutesShort', { n: m });
@@ -32,13 +30,11 @@ export default function Statistics() {
   const { stats, homeLoaded, navigate, screenParams } = useAppStore();
 
   const [range, setRange] = useState('week');
-  // { week: [...], month: [...], all: [...] } — yuklangan davrlar keshlanadi
-  const [cache, setCache] = useState({});
-  const [granByRange, setGranByRange] = useState({});
+  const [cache, setCache] = useState<Record<string, any[]>>({});
+  const [granByRange, setGranByRange] = useState<Record<string, string>>({});
 
   const back = () => navigate(screenParams?.from || 'profile');
 
-  // Tanlangan davr keshda bo'lmasa — yuklab olamiz
   useEffect(() => {
     if (cache[range]) return;
     let alive = true;
@@ -61,7 +57,7 @@ export default function Statistics() {
 
   useEffect(() => {
     const backBtn = window.Telegram?.WebApp?.BackButton;
-    let handleBack;
+    let handleBack: (() => void) | undefined;
     if (backBtn) {
       handleBack = () => backRef.current?.();
       backBtn.onClick(handleBack);
@@ -76,7 +72,7 @@ export default function Statistics() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buckets = cache[range] || null; // null = yuklanmoqda
+  const buckets = cache[range] || null;
   const granularity = granByRange[range] || 'day';
   const list = buckets || [];
   const dense = list.length > 10;
@@ -85,19 +81,17 @@ export default function Statistics() {
   const totalSessions = list.reduce((s, b) => s + b.sessions, 0);
   const isEmpty = buckets !== null && totalMinutes === 0 && totalSessions === 0;
 
-  // Grafik doim vaqtni (daqiqa) ko'rsatadi — sodda va bir ma'noli
-  const valOf = (b) => b.minutes;
+  const valOf = (b: any) => b.minutes;
   const maxVal = Math.max(1, ...list.map(valOf));
   const lastKey = list.length ? list[list.length - 1].key : null;
 
-  // x o'qi yorlig'i: davr/granularityga qarab
   const labelStep = dense ? Math.ceil(list.length / 6) : 1;
-  const xLabel = (b, i) => {
+  const xLabel = (b: any, i: number) => {
     if (dense && i % labelStep !== 0 && i !== list.length - 1) return '';
     const date = parseKey(b.key);
     if (granularity === 'month') return date.toLocaleDateString([lang], { month: 'short' });
-    if (range === 'month') return String(date.getDate()); // kun raqami
-    return date.toLocaleDateString([lang], { weekday: 'short' }); // hafta kuni
+    if (range === 'month') return String(date.getDate());
+    return date.toLocaleDateString([lang], { weekday: 'short' });
   };
 
   return (
@@ -109,10 +103,8 @@ export default function Statistics() {
       </div>
 
       <div className="stx-scroll">
-        {/* Umumiy ko'rsatkichlar */}
         <StatsRow stats={stats} loaded={homeLoaded} />
 
-        {/* Faollik grafigi (davr tanlanadigan) */}
         <div className="stx-card">
           <div className="stx-card-head">
             <div>
@@ -121,7 +113,6 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Davr tanlash */}
           <div className="stx-seg">
             {RANGES.map((r) => (
               <button
@@ -134,7 +125,6 @@ export default function Statistics() {
             ))}
           </div>
 
-          {/* Davr yig'indisi — bitta toza qator */}
           {buckets !== null && !isEmpty && (
             <div className="stx-summary">
               <span className="stx-summary-val">{fmtTime(totalMinutes)}</span>
@@ -155,7 +145,7 @@ export default function Statistics() {
             <p className="stx-empty">{t('stats.noActivity')}</p>
           ) : (
             <div className={`stx-chart${dense ? ' stx-chart--dense' : ''}`}>
-              {list.map((b, i) => {
+              {list.map((b: any, i: number) => {
                 const v = valOf(b);
                 const pct = Math.round((v / maxVal) * 100);
                 const isLast = b.key === lastKey;
@@ -211,7 +201,6 @@ export default function Statistics() {
         .stx-card-title { font-size: var(--text-md); font-weight: var(--weight-heavy); letter-spacing: -0.3px; }
         .stx-card-sub { font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-0-5); }
 
-        /* Davr tanlash (segment) */
         .stx-seg {
           display: flex; gap: var(--space-1); padding: var(--space-1);
           background: var(--bg); border: 1px solid var(--border);
@@ -224,14 +213,12 @@ export default function Statistics() {
         }
         .stx-seg-btn--on { background: var(--btn-bg); color: var(--btn-text, #fff); }
 
-        /* Davr yig'indisi — bitta qator */
         .stx-summary {
           display: flex; align-items: center; justify-content: center; gap: var(--space-3);
           font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary);
         }
         .stx-summary-sep { color: var(--text-secondary); font-weight: var(--weight-semi); }
 
-        /* Chart */
         .stx-chart {
           display: flex; align-items: flex-end; justify-content: space-between;
           gap: var(--space-1-5); height: 150px;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { getMyReview, submitReview } from '../api/endpoints';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import { Star } from 'lucide-react';

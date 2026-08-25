@@ -12,10 +12,12 @@
 //   • jonli sherik bilan ingliz tilida gaplashish
 //   • to'liq IELTS Speaking mock topshirib, band ball olish
 
-export const SUPPORTED_LANGS = ['en'];
+export const SUPPORTED_LANGS = ['en'] as const;
 export const DEFAULT_LANG = 'en';
 
-export const TRANSLATIONS = {
+export type TranslationKey = string;
+
+export const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
     'lang.en': 'English',
     'level.1': 'A1',
@@ -48,9 +50,6 @@ export const TRANSLATIONS = {
     'ob.saving': 'Saving…',
     'ob.error': 'Something went wrong',
     'ob.chooseLevel': 'What is your English level?',
-    // Onboardingda so'raladi, chunki keyin so'ralmaydi: Sozlamalarga kirish
-    // uchun sabab bo'lmasa hech kim kirmaydi va jins NULL bo'lib qoladi —
-    // shunda "faqat ayollar" filtri hech kimni topa olmaydi.
     'ob.chooseGender': 'Your gender',
     'ob.chooseGenderSub': 'Women can choose to talk only with women. That is the only thing this is used for.',
     'ob.level1.sub': 'Basic words & easy phrases',
@@ -90,8 +89,6 @@ export const TRANSLATIONS = {
     'settings.levelTitle': 'Your level',
     'settings.levelSub': 'Choose the level that fits you best',
     'settings.genderTitle': 'Gender',
-    // Nega so'ralayotgani AYTILADI. Sabab aytilmagan shaxsiy savol javobsiz
-    // qoladi — jins esa "faqat ayollar bilan" filtri ishlashi uchun shart.
     'settings.genderSub': 'Women can choose to talk only with women. That is the only thing this is used for.',
     'settings.genderNotSet': 'Not set',
     'settings.notifNone': 'All off',
@@ -100,9 +97,6 @@ export const TRANSLATIONS = {
     'gender.notSay': 'Prefer not to say',
     'settings.notifTitle': 'Notifications',
     'settings.notifSub': 'Choose what the bot can send you',
-    // "Match alerts" olib tashlandi: bunday xabar endi umuman yuborilmaydi
-    // (backend/src/services/notificationService.js dagi izohga qarang), ya'ni
-    // tugma hech narsani boshqarmasdi.
     'settings.notifReminders': 'Reminders',
     'settings.notifRemindersSub': 'Weekly summary and reminders to come back',
     'settings.notifAllOn': 'On',
@@ -179,14 +173,6 @@ export const TRANSLATIONS = {
     'match.getPremium': 'Get Premium',
     'match.noOne': 'Nobody is free now',
     'match.noOneDesc': 'Try again in a moment, or take a mock test while you wait.',
-    // Sherik topilmaganda taklif qilinadigan alternativa. Ataylab asosiy
-    // tugma emas: jonli suhbat har doim afzal, mock esa bo'sh navbatni
-    // foydali daqiqaga aylantiradi.
-    //
-    // DIQQAT: bu yerda "AI tutor", "AI partner" kabi so'zlar ISHLATILMAYDI.
-    // Ilovada suhbatlashadigan AI yo'q — yagona narsa IELTS mock, ya'ni
-    // skript bo'yicha savol beradigan imtihon. Boshqacha nomlash odamni
-    // aldash bo'lardi: u chat kutib, imtihonga tushib qoladi.
     'match.mockBadge': 'While you wait',
     'match.mockTitle': 'Nobody is free right now',
     'match.mockDesc': 'Take an IELTS Speaking mock instead. Answer out loud and get a band score.',
@@ -253,15 +239,11 @@ export const TRANSLATIONS = {
     'ielts.markRetry': 'Get my result',
     'ielts.limitTitle': 'No mock tests left today',
     'ielts.trialTitle': 'You have used your free tests',
-    // Bepul foydalanuvchiga chiqish yo'li ko'rsatiladi, Premium'ga esa —
-    // to'g'ri gap: u allaqachon to'lagan, unga yana sotishning ma'nosi yo'q.
     'ielts.limitDesc': 'Get Premium for 5 tests a day — and talking with no daily limit.',
     'ielts.limitDescPremium': 'You have used all your tests for today. Come back tomorrow.',
     'ielts.getPremium': 'Get Premium',
     'ielts.offTitle': 'Mock test is off',
     'ielts.offDesc': 'The IELTS mock is switched off right now. Try again later.',
-    // Rejim tanlash — kirish ekrani. Ikkala karta ham nima va qancha
-    // vaqt olishini aytadi; "ommabop", "tezkor" kabi sifatlar yo'q.
     'ielts.modeTitle': 'Choose your test',
     'ielts.modeQuickName': 'Quick test',
     'ielts.modeQuickDesc': 'Part 1 only. 3 questions, about 3 minutes.',
@@ -283,10 +265,6 @@ export const TRANSLATIONS = {
     'call.err.webrtc': "Your browser doesn't support voice calls. Please use the Telegram app.",
     'call.err.permission': 'Microphone access denied. Allow it in your browser settings.',
 
-    // Qidiruv boshlanishidan oldingi mikrofon tekshiruvi (useMatch.js).
-    // Sabablar ajratilgan: "sozlamalardan ruxsat bering" maslahati faqat
-    // haqiqatan ruxsat rad etilganda mantiqiy — Telegram Desktop mikrofonni
-    // umuman bermasa, foydalanuvchi sozlamalardan hech narsa tuzata olmaydi.
     'mic.denied': 'Please turn on your microphone in settings to speak with your partner.',
     'mic.notFound': 'No microphone found. Please connect a mic and try again.',
     'mic.busy': 'Your mic is used by another app. Close it and try again.',
@@ -322,7 +300,6 @@ export const TRANSLATIONS = {
     'sq.savedEmpty': 'No saved questions yet. Tap the star on a question to save it.',
     'sq.savedCount': '{n} saved',
 
-    // Suhbat ekranidagi "nimadan boshlash" kartasi.
     'ib.title': 'Something to talk about',
     'ib.new': 'Another',
     'ib.newAria': 'Show another question',
@@ -426,9 +403,6 @@ export const TRANSLATIONS = {
     'rm.rate.4': 'Great',
     'rm.rate.5': 'Amazing!',
 
-    // Ilova haqidagi review — suhbat yoki mockdan keyin so'raladi.
-    // Nega aynan o'sha payt: odam qiymatni endigina his qildi, ya'ni
-    // fikri ham eng samimiy va eng aniq bo'ladi.
     'rp.title': 'One quick question',
     'rp.sub': 'How is Suhbatdosh for you so far?',
     'rp.placeholder': 'Say a bit more (optional)',
@@ -437,12 +411,6 @@ export const TRANSLATIONS = {
     'rp.later': 'Not now',
     'rp.thanks': 'Thank you! Your review shows up after we check it.',
 
-    // Prime time — kunlik "hamma birga mashq qiladi" chaqirig'i.
-    //
-    // Matn hech narsa VA'DA QILMAYDI. Ilgari bu yerda "Everyone is online now"
-    // va "Match in ~3 seconds" turardi; navbat bo'sh bo'lsa ikkalasi ham
-    // yolg'on edi va odam buni birinchi bosishda ko'rardi. Endi banner faqat
-    // rost narsani aytadi: soat va navbatdagi jonli son.
     'pt.liveBadge': 'Live now',
     'pt.soonBadge': 'Every day at {time}',
     'pt.liveTitle': 'Prime time is on',

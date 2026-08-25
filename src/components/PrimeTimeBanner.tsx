@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Zap, Clock, ChevronRight } from 'lucide-react';
 import useAppStore from '../store/useAppStore';
-import { useT } from '../i18n/index';
+import { useT } from '../i18n';
 import { tapHaptic } from '../utils/haptics';
 
 const DEFAULT_PRIME_HOUR = 20;

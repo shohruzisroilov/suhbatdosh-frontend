@@ -38,7 +38,7 @@ export interface AppState {
   appError: string | null;
   setAppError: (error: string | null) => void;
 
-  stats: { total_sessions: number; total_minutes: number; avg_rating: string };
+  stats: { total_sessions: number; total_minutes: number; avg_rating: string; streakCount?: number; streak_count?: number; hasPracticedToday?: boolean; has_practiced_today?: boolean };
   recentSessions: any[];
   homeLoaded: boolean;
   setStats: (stats: any) => void;
