@@ -265,10 +265,18 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'call.err.webrtc': "Your browser doesn't support voice calls. Please use the Telegram app.",
     'call.err.permission': 'Microphone access denied. Allow it in your browser settings.',
 
+    'mic.modalTitle': 'Microphone access required',
+    'mic.modalDesc': 'Please turn on your microphone in settings to speak with your partner.',
     'mic.denied': 'Please turn on your microphone in settings to speak with your partner.',
     'mic.notFound': 'No microphone found. Please connect a mic and try again.',
     'mic.busy': 'Your mic is used by another app. Close it and try again.',
     'mic.unsupported': "Voice doesn't work in Telegram Desktop. Please open Suhbatdosh on your phone.",
+    'mic.instructionsTitle': 'Permission instructions:',
+    'mic.step1': 'Go to Telegram settings ⚙️ Privacy & Security.',
+    'mic.step2': 'Turn on microphone permission.',
+    'mic.tryAgain': 'Try again',
+    'mic.close': 'Close',
+    'mic.checking': 'Checking…',
     'call.err.network': 'Connection problem. Check your network and try again.',
 
     'cc.mute': 'Mute',

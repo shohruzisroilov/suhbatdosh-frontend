@@ -144,7 +144,7 @@ export default function MicPermissionModal() {
         >
           {permissionGranted
             ? 'Mikrofon ulandi!'
-            : t('mic.modal.title') || 'Mikrofon ruxsati zarur'}
+            : (t('mic.modalTitle') !== 'mic.modalTitle' ? t('mic.modalTitle') : 'Mikrofon ruxsati zarur')}
         </h3>
 
         {/* Description */}
