@@ -113,22 +113,22 @@ function Styles() {
     <style>{`
       .pt-banner {
         position: relative;
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
         border-radius: var(--radius-lg, 16px);
         padding: 14px 16px;
         cursor: pointer;
         overflow: hidden;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow-sm);
       }
       .pt-banner:active {
         transform: scale(0.98);
       }
       .pt-banner--live {
-        background: linear-gradient(135deg, rgba(225, 29, 72, 0.2), rgba(124, 58, 237, 0.25));
-        border-color: rgba(244, 63, 94, 0.4);
-        box-shadow: 0 4px 24px rgba(225, 29, 72, 0.25);
+        background: linear-gradient(135deg, rgba(225, 29, 72, 0.15), rgba(124, 58, 237, 0.18));
+        border-color: rgba(244, 63, 94, 0.35);
+        box-shadow: 0 4px 24px rgba(225, 29, 72, 0.15);
       }
 
       .pt-banner__header {
@@ -146,12 +146,12 @@ function Styles() {
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.3px;
-        background: rgba(255, 255, 255, 0.1);
-        color: #f1f5f9;
+        background: var(--surface-2);
+        color: var(--text-secondary);
       }
       .pt-banner--live .pt-banner__badge {
-        background: rgba(244, 63, 94, 0.25);
-        color: #fecdd3;
+        background: rgba(244, 63, 94, 0.2);
+        color: var(--danger);
       }
       .pt-banner__live-dot {
         width: 7px;
@@ -171,10 +171,10 @@ function Styles() {
         font-family: var(--font-mono, monospace);
         font-size: 12px;
         font-weight: 700;
-        color: #38bdf8;
+        color: var(--btn-bg);
       }
       .pt-banner--live .pt-banner__timer {
-        color: #fb7185;
+        color: var(--danger);
       }
 
       .pt-banner__body {
@@ -186,8 +186,8 @@ function Styles() {
         width: 40px;
         height: 40px;
         border-radius: 12px;
-        background: rgba(56, 189, 248, 0.15);
-        color: #38bdf8;
+        background: var(--btn-bg-soft);
+        color: var(--btn-bg);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -213,28 +213,28 @@ function Styles() {
       .pt-banner__title {
         font-size: 14px;
         font-weight: 700;
-        color: #f8fafc;
+        color: var(--text-primary);
         margin: 0;
         line-height: 1.3;
       }
       .pt-banner__sub {
         font-size: 11px;
-        color: #94a3b8;
+        color: var(--text-secondary);
         margin: 2px 0 0 0;
         line-height: 1.35;
       }
       .pt-banner--live .pt-banner__sub {
-        color: #e2e8f0;
+        color: var(--text-primary);
       }
 
       .pt-banner__arrow {
-        color: #64748b;
+        color: var(--text-secondary);
         flex-shrink: 0;
         transition: transform 0.2s;
       }
       .pt-banner:hover .pt-banner__arrow {
         transform: translateX(3px);
-        color: #f8fafc;
+        color: var(--text-primary);
       }
     `}</style>
   );
