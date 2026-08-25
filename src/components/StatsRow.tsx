@@ -23,11 +23,9 @@ export default function StatsRow({ stats, loaded = true }: StatsRowProps) {
       : m === 0
       ? t('lb.hoursShort', { n: h })
       : t('lb.hm', { h, m });
-  const ratingNum = parseFloat(String(stats?.avg_rating ?? 0));
   const items = [
     { label: t('stat.practice'), value: sessions },
     { label: t('stat.time'), value: timeDisplay },
-    { label: t('stat.rating'), value: ratingNum > 0 ? ratingNum.toFixed(1) : '—' },
   ];
 
   return (
