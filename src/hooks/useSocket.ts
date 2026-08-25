@@ -4,12 +4,11 @@ import useAppStore from '../store/useAppStore';
 import { getSession } from '../api/endpoints';
 
 function resolveSocketUrl() {
-  const raw = import.meta.env.VITE_API_URL;
-  if (!raw) return '';
+  const raw = import.meta.env.VITE_API_URL || 'https://suhbatdosh.shohruzisroilov.uz';
   try {
     return new URL(raw, window.location.origin).origin;
   } catch {
-    return '';
+    return 'https://suhbatdosh.shohruzisroilov.uz';
   }
 }
 

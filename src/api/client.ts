@@ -1,7 +1,8 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import useAppStore from '../store/useAppStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Dev'da proxy ishlatamiz, production'da to'g'ridan-to'g'ri backend URL
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://suhbatdosh.shohruzisroilov.uz';
 
 const api = axios.create({
   baseURL: BASE_URL,
