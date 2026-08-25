@@ -8,7 +8,7 @@ const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hos
 const IS_PROD = import.meta.env.PROD;
 
 /** Telegram WebApp.initData bo'sh kelsa bir oz kuting */
-function waitForInitData(timeoutMs = 2000): Promise<string> {
+function waitForInitData(timeoutMs = 5000): Promise<string> {
   return new Promise((resolve) => {
     const data = window.Telegram?.WebApp?.initData;
     if (data) {
@@ -56,7 +56,7 @@ export function useAuth() {
         const urlParams = new URLSearchParams(window.location.search);
 
         // initData yuklanishini kutamiz (iOS da kechikishi mumkin)
-        let initData = await waitForInitData(2000);
+        let initData = await waitForInitData(5000);
 
         let startParam =
           window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
@@ -76,7 +76,7 @@ export function useAuth() {
             initData = `test:${userId}`;
           } else {
             // Production: Telegram initData topilmadi
-            throw new Error('Telegram ilovasi aniqlanmadi. Iltimos, ilovani Telegram bot (@suhbatdosh_bot) orqali oching.');
+            throw new Error('Telegram ilovasi aniqlanmadi. Iltimos, ilovani Telegram bot (@suhbatdosh_app_bot) orqali oching.');
           }
         }
 
