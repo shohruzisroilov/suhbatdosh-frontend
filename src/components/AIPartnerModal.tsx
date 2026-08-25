@@ -19,7 +19,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
     {
       id: 'init-1',
       role: 'assistant',
-      content: "Hello! I'm your AI Speaking Partner. Tap the microphone below and start speaking in English!",
+      content: "Hello! I'm Suhbatdosh AI, your Speaking Partner. Tap the microphone below and start speaking in English!",
     },
   ]);
   const [isRecording, setIsRecording] = useState(false);
@@ -161,8 +161,8 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base leading-tight">AI Voice Partner</h3>
-              <p className="text-xs text-cyan-400 font-medium">100% Voice Speaking Practice</p>
+              <h3 className="font-bold text-white text-base leading-tight">Suhbatdosh AI</h3>
+              <p className="text-xs text-cyan-400 font-medium">Speaking Partner</p>
             </div>
           </div>
 
