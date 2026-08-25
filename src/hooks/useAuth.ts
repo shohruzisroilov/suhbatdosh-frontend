@@ -3,9 +3,11 @@ import { authTelegram, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { translate } from '../i18n/index';
 
-const IS_DEV = import.meta.env.DEV;
+// Vite production build'da import.meta.env.PROD = true, DEV = false
+// Lekin ishonchli bo'lishi uchun VITE_APP_ENV ni ham tekshiramiz
+const IS_PROD = import.meta.env.PROD === true;
 
-/** Telegram WebApp.initData bo'sh kelsa bir oz kuting, keyin qayta urinib ko'ring */
+/** Telegram WebApp.initData bo'sh kelsa bir oz kuting */
 function waitForInitData(timeoutMs = 2000): Promise<string> {
   return new Promise((resolve) => {
     const data = window.Telegram?.WebApp?.initData;
@@ -13,7 +15,6 @@ function waitForInitData(timeoutMs = 2000): Promise<string> {
       resolve(data);
       return;
     }
-    // Ba'zida iOS da initData biroz kechikib keladi — polling
     const start = Date.now();
     const interval = setInterval(() => {
       const d = window.Telegram?.WebApp?.initData;
@@ -68,7 +69,7 @@ export function useAuth() {
         if (startParam === 'match' || startParam === 'mock') startParam = null;
 
         if (!initData) {
-          if (IS_DEV) {
+          if (!IS_PROD) {
             // Development: test user bilan ishlash
             const userId = urlParams.get('user') || '1';
             initData = `test:${userId}`;
@@ -79,7 +80,7 @@ export function useAuth() {
         }
 
         // Debug: initData holati
-        console.log('[Auth] initData length:', initData?.length, 'isDev:', IS_DEV);
+        console.log('[Auth] initData length:', initData?.length, 'isProd:', IS_PROD);
         if (initData && !initData.startsWith('test')) {
           const p = new URLSearchParams(initData);
           console.log('[Auth] hash present:', !!p.get('hash'), 'auth_date:', p.get('auth_date'));
