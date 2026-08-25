@@ -44,7 +44,7 @@ export default function Home() {
         <section className="hero fade-up">
           <div className="hero__glow" />
 
-          <div className="hero__top">
+          <div className="hero__header">
             <span className="hero__tag">
               <span className="dot-live" />
               {waitingCount >= 2
@@ -55,18 +55,20 @@ export default function Home() {
             </span>
           </div>
 
-          <h1 className="hero__title">{t('home.ctaTitle')}</h1>
-          <p className="hero__sub">{t('home.ctaSub')}</p>
+          <div className="hero__main">
+            <div className="hero__info">
+              <h1 className="hero__title">{t('home.ctaTitle')}</h1>
+              <p className="hero__sub">{t('home.ctaSub')}</p>
+            </div>
 
-          <button
-            className="hero__btn"
-            onClick={() => { tapHaptic('medium'); navigate('matching'); }}
-          >
-            <span className="hero__btn-icon">
-              <Mic size={22} strokeWidth={2.5} />
-            </span>
-            <span className="hero__btn-text">{t('home.start')}</span>
-          </button>
+            <button
+              className="hero__btn"
+              onClick={() => { tapHaptic('medium'); navigate('matching'); }}
+            >
+              <Mic size={18} strokeWidth={2.5} />
+              <span>{t('home.start')}</span>
+            </button>
+          </div>
         </section>
 
         <div className="home__list stagger">
@@ -146,119 +148,61 @@ export default function Home() {
           padding: var(--space-3) var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: var(--space-3);
         }
-        .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
-
-        .hero {
+        .home__list { display: flex; flex-direction: column; gap: var(--space-2); }        .hero {
           position: relative; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(145deg, #0A2540 0%, #001220 100%);
+          background: linear-gradient(135deg, #0D2137 0%, #071526 100%);
           border: 1px solid rgba(0, 168, 255, 0.28);
-          border-radius: var(--radius-lg);
-          padding: 10px 12px 10px;
-          display: flex; flex-direction: column; gap: 4px;
-          box-shadow: 0 6px 20px rgba(0, 168, 255, 0.14);
+          border-radius: var(--radius-lg, 20px);
+          padding: 12px 14px;
+          display: flex; flex-direction: column; gap: 8px;
+          box-shadow: 0 6px 20px rgba(0, 168, 255, 0.12);
         }
         .hero__glow {
-          position: absolute; top: -50%; right: -25%; width: 200px; height: 200px;
+          position: absolute; top: -50px; right: -50px; width: 140px; height: 140px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 168, 255, 0.35), transparent 70%);
+          background: radial-gradient(circle, rgba(0, 168, 255, 0.3), transparent 70%);
           pointer-events: none;
         }
         .hero > * { position: relative; z-index: 1; }
 
-        /* Hero Graphic Header */
-        .hero__visual {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 4px 10px; margin-bottom: 0px;
-          background: rgba(0, 168, 255, 0.06);
-          border-radius: var(--radius-md);
-          border: 1px dashed rgba(0, 168, 255, 0.2);
-        }
-        .hero__node { position: relative; display: flex; align-items: center; justify-content: center; }
-        .hero__node-glow {
-          position: absolute; inset: -2px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 168, 255, 0.4), transparent 70%);
-          pointer-events: none;
-        }
-        .hero__partner-avatar {
-          width: 28px; height: 28px; border-radius: 50%;
-          background: rgba(0, 168, 255, 0.15); border: 1px solid rgba(0, 168, 255, 0.4);
-          color: #38BDF8; display: flex; align-items: center; justify-content: center;
-        }
-        .hero__node-pulse {
-          position: absolute; inset: -3px; border-radius: 50%;
-          border: 1px solid rgba(0, 168, 255, 0.6);
-          animation: radarRipple 2s ease-out infinite;
-          pointer-events: none;
-        }
-        .hero__connector {
-          display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center;
-          padding: 0 6px;
-        }
-        .hero__mic-core {
-          width: 24px; height: 24px; border-radius: 50%;
-          background: var(--grad-primary); color: #FFF;
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 0 10px rgba(0, 168, 255, 0.6);
-          flex-shrink: 0;
-        }
-        .hero__soundwave {
-          display: flex; align-items: center; gap: 2px; height: 12px;
-        }
-        .sw-bar {
-          width: 2px; height: 100%; background: #00A8FF; border-radius: 2px;
-          animation: waveBlink 1.2s ease-in-out infinite alternate;
-        }
-        .bar-1 { height: 40%; animation-delay: 0.1s; }
-        .bar-2 { height: 80%; animation-delay: 0.3s; }
-        .bar-3 { height: 100%; animation-delay: 0.2s; }
-        .bar-4 { height: 60%; animation-delay: 0.4s; }
-        .bar-5 { height: 30%; animation-delay: 0.5s; }
-
-        @keyframes waveBlink {
-          0% { transform: scaleY(0.3); opacity: 0.4; }
-          100% { transform: scaleY(1); opacity: 1; }
-        }
-
+        .hero__header { display: flex; align-items: center; justify-content: space-between; }
         .hero__tag {
           display: inline-flex; align-items: center; gap: 5px;
-          align-self: flex-start;
           padding: 2px 8px;
           border-radius: var(--radius-full);
-          background: rgba(0, 168, 255, 0.18);
+          background: rgba(0, 168, 255, 0.15);
           border: 1px solid rgba(0, 168, 255, 0.3);
           color: #38BDF8;
           font-size: 10px; font-weight: var(--weight-bold);
           letter-spacing: 0.02em;
         }
+
+        .hero__main {
+          display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+        .hero__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 16px; font-weight: var(--weight-heavy);
-          color: #FFFFFF; letter-spacing: -0.02em;
-          margin-top: 1px;
+          font-size: 15px; font-weight: var(--weight-heavy);
+          color: #FFFFFF; letter-spacing: -0.01em;
           line-height: 1.2;
         }
         .hero__sub {
-          font-size: 11px; line-height: 1.35;
-          color: rgba(255, 255, 255, 0.82);
-          margin-top: 0px;
+          font-size: 11px; line-height: 1.3;
+          color: rgba(255, 255, 255, 0.75);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .hero__btn {
           display: flex; align-items: center; justify-content: center; gap: 6px;
-          width: 100%; min-height: 40px; margin-top: 2px;
+          padding: 0 14px; min-height: 38px; flex-shrink: 0;
           background: var(--grad-primary); color: #FFFFFF;
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-md, 12px);
           font-size: 13px; font-weight: var(--weight-heavy);
-          letter-spacing: -0.01em;
           box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
-          transition: transform var(--t), opacity var(--t), box-shadow var(--t);
+          transition: transform var(--t), opacity var(--t);
         }
-        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3); }
-        .hero__btn-icon {
-          display: flex; align-items: center; justify-content: center;
-          width: 24px; height: 24px; border-radius: 50%;
-          background: rgba(255, 255, 255, 0.2);
-        }
+        .hero__btn:active { transform: scale(0.96); opacity: 0.92; } }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
         .home__section-head { display: flex; align-items: center; justify-content: space-between; }
