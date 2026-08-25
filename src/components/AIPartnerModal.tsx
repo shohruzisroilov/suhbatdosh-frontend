@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Mic, MicOff, PhoneOff, Sparkles, RefreshCw, Volume2 } from 'lucide-react';
+import { X, Mic, MicOff, PhoneOff, Sparkles, RefreshCw, Volume2, Send } from 'lucide-react';
 import { sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import useAppStore from '../store/useAppStore';
@@ -15,27 +15,42 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
   const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const isComponentMounted = useRef(true);
 
+  // Silence Detection Refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSpokenRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
+
   useEffect(() => {
     isComponentMounted.current = true;
     if (isOpen) {
-      // Auto start recording when opened
       startRecording();
     } else {
-      stopRecording();
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      cleanupAudio();
     }
     return () => {
       isComponentMounted.current = false;
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      cleanupAudio();
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  function cleanupAudio() {
+    stopRecording();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {});
+    }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
 
   async function speakText(text: string) {
     if (!isComponentMounted.current) return;
@@ -105,7 +120,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
       speakText(aiResponse);
     } catch (err: any) {
       console.error('[AI Voice Partner Error]:', err);
-      const msg = err?.response?.data?.error || err?.message || 'Suhbatdosh AI connection issue. Retrying...';
+      const msg = err?.response?.data?.error || err?.message || 'Suhbatdosh AI unavailable. Try speaking again.';
       setErrorMsg(msg);
       notifyHaptic('error');
       setStatus('idle');
@@ -113,16 +128,61 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
   }
 
   async function startRecording() {
-    if (isMuted) {
+    if (isMuted || !isComponentMounted.current) {
       setStatus('idle');
       return;
     }
     try {
       setErrorMsg(null);
+      hasSpokenRef.current = false;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+
+      // Setup Web Audio API Silence Detection
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      audioContextRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const checkSilence = () => {
+        if (!isComponentMounted.current || mediaRecorder.state === 'inactive') return;
+        analyser.getByteFrequencyData(dataArray);
+
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const averageVolume = sum / bufferLength;
+        setVolumeLevel(Math.min(100, Math.round(averageVolume * 2)));
+
+        // Speech detection threshold
+        if (averageVolume > 15) {
+          hasSpokenRef.current = true;
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+        } else if (hasSpokenRef.current) {
+          // If user was speaking and now silent for 1.3 seconds, automatically stop & send!
+          if (!silenceTimerRef.current) {
+            silenceTimerRef.current = setTimeout(() => {
+              stopRecording();
+            }, 1300);
+          }
+        }
+
+        animationFrameRef.current = requestAnimationFrame(checkSilence);
+      };
+
+      checkSilence();
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -131,10 +191,13 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         stream.getTracks().forEach((t) => t.stop());
 
-        if (audioBlob.size > 100) {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+        if (audioBlob.size > 200 && hasSpokenRef.current) {
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
@@ -150,7 +213,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
       setStatus('listening');
       tapHaptic('heavy');
     } catch {
-      setErrorMsg('Microphone access was denied.');
+      setErrorMsg('Microphone access was denied or is not supported.');
       setStatus('idle');
     }
   }
@@ -161,9 +224,17 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
     }
   }
 
+  function handleOrbClick() {
+    if (status === 'listening') {
+      // Tap orb to manually send immediately!
+      stopRecording();
+    } else if (status === 'idle') {
+      startRecording();
+    }
+  }
+
   function handleEndSession() {
-    stopRecording();
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    cleanupAudio();
     onClose();
   }
 
@@ -191,16 +262,23 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           </button>
         </div>
 
-        {/* Center: ChatGPT Voice Orb Visualizer */}
+        {/* Center: Interactive Glowing Voice Orb */}
         <div className="relative flex flex-col items-center justify-center my-auto z-10 space-y-8">
           
-          {/* Animated Glowing Orb Container */}
-          <div className="relative flex items-center justify-center w-48 h-48">
+          {/* Animated Glowing Orb Container - Clickable to Send Immediately */}
+          <button
+            onClick={handleOrbClick}
+            disabled={status === 'thinking'}
+            className="relative flex items-center justify-center w-52 h-52 outline-none group cursor-pointer"
+          >
             
             {/* Outer Ripple Aura Rings */}
             {status === 'listening' && (
               <>
-                <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping duration-1000" />
+                <div
+                  className="absolute inset-0 rounded-full bg-emerald-500/25 animate-ping duration-1000"
+                  style={{ transform: `scale(${1 + volumeLevel / 150})` }}
+                />
                 <div className="absolute -inset-4 rounded-full border-2 border-emerald-500/40 animate-pulse" />
               </>
             )}
@@ -218,44 +296,49 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
 
             {/* Core Orb Center */}
             <div
-              className={`w-36 h-36 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl ${
+              className={`w-36 h-36 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
                 status === 'listening'
-                  ? 'bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 shadow-emerald-500/50 scale-105'
+                  ? 'bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 shadow-emerald-500/50 scale-105 group-hover:scale-110'
                   : status === 'speaking'
                   ? 'bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 shadow-cyan-500/60 scale-110'
                   : status === 'thinking'
                   ? 'bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 shadow-purple-500/50 animate-pulse'
-                  : 'bg-gradient-to-tr from-slate-700 to-slate-800 shadow-slate-900/50'
+                  : 'bg-gradient-to-tr from-slate-700 to-slate-800 shadow-slate-900/50 group-hover:scale-105'
               }`}
             >
               {status === 'thinking' ? (
                 <RefreshCw size={44} className="text-white animate-spin" />
               ) : status === 'speaking' ? (
                 <Volume2 size={48} className="text-white animate-bounce" />
+              ) : status === 'listening' ? (
+                <div className="flex flex-col items-center gap-1">
+                  <Mic size={40} className="text-white animate-pulse" />
+                  <span className="text-[10px] text-emerald-100 font-bold uppercase tracking-wider">Tap to Send</span>
+                </div>
               ) : (
-                <Mic size={48} className={`text-white ${status === 'listening' ? 'animate-pulse' : ''}`} />
+                <Mic size={44} className="text-white" />
               )}
             </div>
-          </div>
+          </button>
 
           {/* Status Headline */}
           <div className="text-center space-y-1">
             <h4 className="text-lg font-extrabold text-white tracking-wide">
               {status === 'listening'
-                ? 'Listening to you...'
+                ? 'Listening... Speak naturally'
                 : status === 'thinking'
                 ? 'Suhbatdosh AI is thinking...'
                 : status === 'speaking'
                 ? 'Suhbatdosh AI is speaking...'
-                : 'Tap Mic to Start Practice'}
+                : 'Tap Orb to Start Practice'}
             </h4>
             <p className="text-xs text-slate-400 font-medium">
               {status === 'listening'
-                ? 'Speak naturally in English'
+                ? 'Stops automatically when you finish speaking'
                 : status === 'thinking'
-                ? 'Generating intelligent response'
+                ? 'Preparing your level-adapted response'
                 : status === 'speaking'
-                ? 'Listen & reply naturally'
+                ? 'Listening after AI finishes'
                 : 'Voice mode active'}
             </p>
           </div>
@@ -291,6 +374,17 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           >
             {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
           </button>
+
+          {/* Instant Send Button when listening */}
+          {status === 'listening' && (
+            <button
+              onClick={() => stopRecording()}
+              className="p-4 rounded-full bg-cyan-600 text-white font-bold hover:bg-cyan-500 shadow-lg shadow-cyan-600/30 transition-transform active:scale-95 flex items-center justify-center"
+              title="Send speech immediately"
+            >
+              <Send size={24} />
+            </button>
+          )}
 
           {/* Big Red End Practice Button */}
           <button
