@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Clock, TrendingUp } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -23,6 +23,14 @@ export default function Home() {
   const womenOnly = isFemale && partnerPref === 'female';
   const showPremium = !user?.isPremium && (user?.dailyLimit ?? 0) > 0;
 
+  const totalMinutes = Math.round(stats?.total_minutes ?? 0);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  const timeDisplay = h === 0 ? `${m}m` : m === 0 ? `${h}h` : `${h}h ${m}m`;
+  const totalSessions = stats?.total_sessions ?? 0;
+
+  const hasActivity = totalSessions > 0 || totalMinutes > 0;
+
   useEffect(() => {
     getMe().then(d => {
       setStats(d.stats);
@@ -40,34 +48,90 @@ export default function Home() {
       />
 
       <div className="home__scroll">
-        {/* Main Conversation-First Hero */}
-        <section className="hero fade-up">
-          <div className="hero__glow" />
 
-          <div className="hero__top-row">
-            <span className="hero__tag">
-              <span className="dot-live" />
-              {waitingCount >= 2
-                ? t('home.heroLive', { n: waitingCount })
-                : waitingCount === 1
-                  ? t('home.heroLiveOne')
-                  : t('home.heroTag')}
-            </span>
+        {/* ── Find Partner Hero Card ── */}
+        <section className="hero fade-up" onClick={() => { tapHaptic('medium'); navigate('matching'); }}>
+          {/* Animated background orbs */}
+          <div className="hero__orb hero__orb--1" />
+          <div className="hero__orb hero__orb--2" />
+          <div className="hero__orb hero__orb--3" />
+
+          <div className="hero__inner">
+            {/* Live badge */}
+            <div className="hero__top-row">
+              <span className="hero__tag">
+                <span className="hero__live-dot" />
+                {waitingCount >= 2
+                  ? t('home.heroLive', { n: waitingCount })
+                  : waitingCount === 1
+                    ? t('home.heroLiveOne')
+                    : t('home.heroTag')}
+              </span>
+              {waitingCount > 0 && (
+                <span className="hero__online-pill">
+                  <Users size={11} />
+                  <span>{waitingCount} online</span>
+                </span>
+              )}
+            </div>
+
+            {/* Title & description */}
+            <div className="hero__content">
+              <h1 className="hero__title">{t('home.ctaTitle')}</h1>
+              <p className="hero__sub">{t('home.ctaSub')}</p>
+            </div>
+
+            {/* Mic icon + CTA */}
+            <div className="hero__cta-row">
+              <div className="hero__mic-ring">
+                <div className="hero__mic-pulse" />
+                <div className="hero__mic-icon">
+                  <Mic size={22} strokeWidth={2.5} />
+                </div>
+              </div>
+              <button
+                className="hero__btn"
+                onClick={(e) => { e.stopPropagation(); tapHaptic('medium'); navigate('matching'); }}
+              >
+                <span>{t('home.start')}</span>
+                <ChevronRight size={18} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
-
-          <div className="hero__content">
-            <h1 className="hero__title">{t('home.ctaTitle')}</h1>
-            <p className="hero__sub">{t('home.ctaSub')}</p>
-          </div>
-
-          <button
-            className="hero__btn"
-            onClick={() => { tapHaptic('medium'); navigate('matching'); }}
-          >
-            <Mic size={20} strokeWidth={2.5} />
-            <span>{t('home.start')}</span>
-          </button>
         </section>
+
+        {/* ── Mini Stats Row ── */}
+        {homeLoaded && hasActivity && (
+          <div className="mini-stats fade-up">
+            <div className="mini-stat">
+              <span className="mini-stat__ico mini-stat__ico--blue"><Clock size={14} /></span>
+              <div className="mini-stat__info">
+                <span className="mini-stat__val num">{timeDisplay}</span>
+                <span className="mini-stat__lbl">{t('stat.time')}</span>
+              </div>
+            </div>
+            <div className="mini-stat__divider" />
+            <div className="mini-stat">
+              <span className="mini-stat__ico mini-stat__ico--green"><TrendingUp size={14} /></span>
+              <div className="mini-stat__info">
+                <span className="mini-stat__val num">{totalSessions}</span>
+                <span className="mini-stat__lbl">{t('stat.practice')}</span>
+              </div>
+            </div>
+            {(stats?.avg_rating && Number(stats.avg_rating) > 0) ? (
+              <>
+                <div className="mini-stat__divider" />
+                <div className="mini-stat">
+                  <span className="mini-stat__ico mini-stat__ico--gold">⭐</span>
+                  <div className="mini-stat__info">
+                    <span className="mini-stat__val num">{Number(stats.avg_rating).toFixed(1)}</span>
+                    <span className="mini-stat__lbl">{t('stat.rating')}</span>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
 
         <div className="home__list stagger">
           {/* Prime Time Event Banner */}
@@ -140,6 +204,7 @@ export default function Home() {
       </div>
 
       <style>{`
+        /* ── Page Shell ── */
         .home { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
         .home__scroll {
           flex: 1; overflow-y: auto;
@@ -148,90 +213,189 @@ export default function Home() {
         }
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
 
+        /* ── Hero / Find Partner Card ── */
         .hero {
           position: relative; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
-          border: 1px solid rgba(255, 255, 255, 0.35);
-          border-radius: var(--radius-lg, 18px);
-          padding: 12px 14px;
-          display: flex; flex-direction: column; gap: 8px;
-          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25);
+          background: linear-gradient(145deg, #0369A1 0%, #0EA5E9 45%, #38BDF8 100%);
+          border: 1px solid rgba(255, 255, 255, 0.20);
+          border-radius: var(--radius-lg, 20px);
+          padding: 18px 16px 16px;
+          display: flex; flex-direction: column;
+          box-shadow: 0 8px 32px rgba(3, 105, 161, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+          transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
+          -webkit-tap-highlight-color: transparent;
         }
-        .hero__glow {
-          position: absolute; top: -30px; right: -30px; width: 130px; height: 130px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 70%);
-          pointer-events: none;
+        .hero:active {
+          transform: scale(0.985);
+          box-shadow: 0 4px 16px rgba(3, 105, 161, 0.35), 0 1px 4px rgba(0, 0, 0, 0.15);
         }
-        .hero > * { position: relative; z-index: 1; }
 
+        /* Animated background orbs */
+        .hero__orb {
+          position: absolute; border-radius: 50%; pointer-events: none;
+        }
+        .hero__orb--1 {
+          width: 180px; height: 180px;
+          top: -60px; right: -40px;
+          background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+          animation: orbFloat1 6s ease-in-out infinite;
+        }
+        .hero__orb--2 {
+          width: 100px; height: 100px;
+          bottom: -30px; left: 20px;
+          background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+          animation: orbFloat2 8s ease-in-out infinite;
+        }
+        .hero__orb--3 {
+          width: 60px; height: 60px;
+          top: 30px; right: 60px;
+          background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, transparent 70%);
+          animation: orbFloat3 5s ease-in-out infinite;
+        }
+        @keyframes orbFloat1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-10px,8px) scale(1.05); } }
+        @keyframes orbFloat2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
+        @keyframes orbFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5px,5px) scale(0.95); } }
+
+        .hero__inner { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
+
+        /* Top row: live badge + online count */
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }
         .hero__tag {
-          display: inline-flex; align-items: center; gap: 5px;
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 4px 10px;
+          border-radius: var(--radius-full);
+          background: rgba(255, 255, 255, 0.20);
+          border: 1px solid rgba(255, 255, 255, 0.30);
+          color: #FFFFFF;
+          font-size: 11px; font-weight: var(--weight-bold);
+          letter-spacing: 0.02em;
+          backdrop-filter: blur(4px);
+        }
+        .hero__live-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #86EFAC;
+          box-shadow: 0 0 6px #86EFAC;
+          animation: livePulse 1.8s ease-in-out infinite;
+          flex-shrink: 0;
+        }
+        @keyframes livePulse {
+          0%,100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.7; }
+        }
+        .hero__online-pill {
+          display: inline-flex; align-items: center; gap: 4px;
           padding: 3px 8px;
           border-radius: var(--radius-full);
-          background: rgba(255, 255, 255, 0.22);
-          border: 1px solid rgba(255, 255, 255, 0.35);
-          color: #FFFFFF;
+          background: rgba(134, 239, 172, 0.20);
+          border: 1px solid rgba(134, 239, 172, 0.35);
+          color: #86EFAC;
           font-size: 10px; font-weight: var(--weight-bold);
-          letter-spacing: 0.02em;
         }
 
-        .hero__content { display: flex; flex-direction: column; gap: 2px; }
+        /* Title & sub */
+        .hero__content { display: flex; flex-direction: column; gap: 4px; }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 16px; font-weight: var(--weight-heavy);
-          color: #FFFFFF; letter-spacing: -0.01em;
-          line-height: 1.2;
+          font-size: 20px; font-weight: var(--weight-heavy);
+          color: #FFFFFF; letter-spacing: -0.02em;
+          line-height: 1.15;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
         .hero__sub {
-          font-size: 12px; line-height: 1.35;
-          color: rgba(255, 255, 255, 0.92);
+          font-size: 13px; line-height: 1.4;
+          color: rgba(255, 255, 255, 0.85);
         }
 
+        /* Mic ring + CTA button row */
+        .hero__cta-row {
+          display: flex; align-items: center; gap: 12px;
+          margin-top: 2px;
+        }
+        .hero__mic-ring {
+          position: relative; flex-shrink: 0;
+          width: 48px; height: 48px;
+        }
+        .hero__mic-pulse {
+          position: absolute; inset: -4px;
+          border-radius: 50%;
+          border: 2px solid rgba(255,255,255,0.4);
+          animation: micRingPulse 2s ease-out infinite;
+        }
+        .hero__mic-pulse::after {
+          content: '';
+          position: absolute; inset: -6px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(255,255,255,0.2);
+          animation: micRingPulse 2s ease-out 0.6s infinite;
+        }
+        @keyframes micRingPulse {
+          0% { transform: scale(0.85); opacity: 0.9; }
+          100% { transform: scale(1.35); opacity: 0; }
+        }
+        .hero__mic-icon {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.22);
+          border: 1.5px solid rgba(255,255,255,0.45);
+          border-radius: 50%;
+          color: #FFFFFF;
+          backdrop-filter: blur(4px);
+        }
         .hero__btn {
+          flex: 1;
           display: flex; align-items: center; justify-content: center; gap: 6px;
-          width: 100%; min-height: 40px;
+          min-height: 48px;
           background: #FFFFFF;
-          color: #0284C7;
-          border-radius: var(--radius-md, 12px);
-          font-size: 14px; font-weight: var(--weight-heavy);
+          color: #0369A1;
+          border-radius: var(--radius-md, 14px);
+          font-size: 15px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-          transition: transform var(--t), opacity var(--t), box-shadow var(--t);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
           cursor: pointer;
         }
-        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-
-        .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
-        .home__section-head { display: flex; align-items: center; justify-content: space-between; }
-
-        .topics-carousel {
-          display: flex; gap: var(--space-2.5, 10px);
-          overflow-x: auto; scrollbar-width: none;
-          padding-bottom: 4px;
-          margin: 0 calc(var(--space-4) * -1);
-          padding-left: var(--space-4); padding-right: var(--space-4);
+        .hero__btn:active {
+          transform: scale(0.97);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         }
-        .topics-carousel::-webkit-scrollbar { display: none; }
 
-        .topic-card {
-          flex: 0 0 160px;
+        /* ── Mini Stats Row ── */
+        .mini-stats {
+          display: flex; align-items: center;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          padding: 12px 14px;
-          display: flex; flex-direction: column; gap: 8px;
-          cursor: pointer;
-          transition: border-color var(--t), transform var(--t);
+          padding: 12px 16px;
+          gap: 0;
         }
-        .topic-card:active { transform: scale(0.96); border-color: var(--btn-bg); }
-        .topic-card__emoji { font-size: 24px; line-height: 1; }
-        .topic-card__content { display: flex; flex-direction: column; gap: 2px; }
-        .topic-card__title { font-size: 13px; font-weight: var(--weight-bold); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .topic-card__desc { font-size: 10px; color: var(--text-secondary); line-height: 1.3; height: 26px; overflow: hidden; }
+        .mini-stat {
+          flex: 1; display: flex; align-items: center; gap: 10px;
+        }
+        .mini-stat__divider {
+          width: 1px; height: 32px;
+          background: var(--border);
+          flex-shrink: 0;
+          margin: 0 4px;
+        }
+        .mini-stat__ico {
+          width: 30px; height: 30px; border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; font-size: 14px;
+        }
+        .mini-stat__ico--blue  { background: rgba(0, 168, 255, 0.14); color: var(--btn-bg); }
+        .mini-stat__ico--green { background: rgba(16, 185, 129, 0.14); color: var(--success); }
+        .mini-stat__ico--gold  { background: var(--rating-bg); }
+        .mini-stat__info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .mini-stat__val  { font-size: 15px; font-weight: var(--weight-heavy); color: var(--text-primary); letter-spacing: -0.3px; }
+        .mini-stat__lbl  { font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
 
+        /* ── Sections ── */
+        .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
+        .home__section-head { display: flex; align-items: center; justify-content: space-between; }
+
+        /* ── Toggle Row extras ── */
         .row--on { border-color: var(--btn-bg); }
         .row__arrow { color: var(--text-secondary); flex-shrink: 0; }
         .switch {
@@ -248,8 +412,10 @@ export default function Home() {
         .switch--on { background: var(--btn-bg); border-color: var(--btn-bg); }
         .switch--on::after { transform: translateX(16px); background: var(--btn-text); }
 
+        /* ── Sessions list ── */
         .home__sessions { display: flex; flex-direction: column; gap: var(--space-1-5); }
 
+        /* ── Empty state ── */
         .home__empty {
           display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
           padding: var(--space-6) var(--space-5); text-align: center;
