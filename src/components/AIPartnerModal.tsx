@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Mic, Send, Volume2, Sparkles, RefreshCw } from 'lucide-react';
+import { X, Mic, MicOff, Volume2, Sparkles, RefreshCw, AudioWaveform } from 'lucide-react';
 import { sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 
@@ -19,10 +19,9 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
     {
       id: 'init-1',
       role: 'assistant',
-      content: "Hello! I'm your AI Speaking Partner. Let's have a friendly conversation to practice your English! How are you doing today?",
+      content: "Hello! I'm your AI Speaking Partner. Tap the microphone below and start speaking in English!",
     },
   ]);
-  const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
@@ -63,7 +62,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
     setTtsLoadingId(null);
   }
 
-  async function handleSendTurn(params: { text?: string; audioBase64?: string; audioMimeType?: string }) {
+  async function handleSendTurn(params: { audioBase64: string; audioMimeType: string }) {
     if (loading) return;
     setErrorMsg(null);
     setLoading(true);
@@ -76,13 +75,12 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
 
     try {
       const res = await sendAIPartnerTurn({
-        text: params.text,
         audioBase64: params.audioBase64,
         audioMimeType: params.audioMimeType,
         history: historyPayload,
       });
 
-      const userText = res.transcription || params.text || 'Audio message';
+      const userText = res.transcription || 'Voice message';
 
       const userMsgItem: MessageItem = {
         id: `user-${Date.now()}`,
@@ -106,11 +104,11 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
       notifyHaptic('error');
     } finally {
       setLoading(false);
-      setInputText('');
     }
   }
 
   async function startRecording() {
+    if (loading) return;
     try {
       setErrorMsg(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -153,7 +151,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md fade-in">
       <div className="relative w-full max-w-lg h-[88vh] flex flex-col bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl">
         
         {/* Simple Header */}
@@ -163,8 +161,8 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base leading-tight">AI Speaking Partner</h3>
-              <p className="text-xs text-cyan-400 font-medium">Natural Conversation Practice</p>
+              <h3 className="font-bold text-white text-base leading-tight">AI Voice Partner</h3>
+              <p className="text-xs text-cyan-400 font-medium">100% Voice Speaking Practice</p>
             </div>
           </div>
 
@@ -179,7 +177,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           </button>
         </div>
 
-        {/* Clean Messages List */}
+        {/* Voice Messages / Speech Captions */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((msg) => (
             <div
@@ -195,7 +193,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
               >
                 <p>{msg.content}</p>
 
-                {/* Listen Voice button for AI */}
+                {/* Replay AI Voice */}
                 {msg.role === 'assistant' && (
                   <button
                     onClick={() => speakText(msg.content, msg.id)}
@@ -207,7 +205,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
                     ) : (
                       <Volume2 size={13} />
                     )}
-                    <span>Listen Voice</span>
+                    <span>Listen Again</span>
                   </button>
                 )}
               </div>
@@ -217,7 +215,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           {loading && (
             <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 w-fit text-xs font-semibold text-cyan-300">
               <RefreshCw size={14} className="animate-spin text-cyan-400" />
-              <span>AI is thinking & listening...</span>
+              <span>AI Partner is listening & generating voice response...</span>
             </div>
           )}
 
@@ -230,44 +228,27 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           <div ref={chatBottomRef} />
         </div>
 
-        {/* Simple Controls / Inputs Footer */}
-        <div className="p-4 bg-slate-800/90 border-t border-slate-700/80 space-y-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Type in English or tap microphone..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && inputText.trim()) {
-                  handleSendTurn({ text: inputText.trim() });
-                }
-              }}
-              disabled={loading || isRecording}
-              className="flex-1 h-11 px-4 text-xs text-white bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 transition-colors"
-            />
-            {inputText.trim() ? (
-              <button
-                onClick={() => handleSendTurn({ text: inputText.trim() })}
-                disabled={loading}
-                className="h-11 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-xl flex items-center justify-center transition-transform active:scale-95 shadow-md shadow-cyan-500/20"
-              >
-                <Send size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={loading}
-                className={`h-11 px-4 font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
-                  isRecording
-                    ? 'bg-red-600 hover:bg-red-500 text-white animate-pulse shadow-lg shadow-red-600/30'
-                    : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/20'
-                }`}
-              >
-                <Mic size={16} />
-                <span>{isRecording ? 'Recording...' : 'Voice Practice'}</span>
-              </button>
-            )}
+        {/* Pure Voice Action Footer */}
+        <div className="p-6 bg-slate-800/90 border-t border-slate-700/80 flex flex-col items-center justify-center space-y-3">
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={loading}
+            className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-xl ${
+              isRecording
+                ? 'bg-red-600 text-white shadow-red-600/50 animate-pulse ring-8 ring-red-500/20'
+                : 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-cyan-500/30 hover:scale-105'
+            }`}
+          >
+            {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
+          </button>
+
+          <div className="text-center">
+            <p className={`text-xs font-bold ${isRecording ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
+              {isRecording ? 'Listening to your speech... Tap to finish' : 'Tap Microphone to Speak'}
+            </p>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              Practice real spoken English naturally
+            </p>
           </div>
         </div>
 
