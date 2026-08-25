@@ -90,8 +90,7 @@ export const sendAIPartnerTurn = (payload: {
   audioBase64?: string;
   audioMimeType?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  topic?: string;
-  speakingMode?: string;
+  userLevel?: string;
 }) => api.post('/ai-partner/chat', payload).then((r) => r.data);
 
 export const saveVocabularyItem = (payload: {

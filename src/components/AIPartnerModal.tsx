@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Mic, MicOff, PhoneOff, Sparkles, RefreshCw, Volume2 } from 'lucide-react';
 import { sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
+import useAppStore from '../store/useAppStore';
 
 interface AIPartnerModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface AIPartnerModalProps {
 }
 
 export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps) {
+  const { user } = useAppStore();
   const [status, setStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -87,6 +89,7 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
         audioBase64,
         audioMimeType,
         history,
+        userLevel: user?.level ? String(user.level) : undefined,
       });
 
       const userText = res.transcription || 'Voice message';
