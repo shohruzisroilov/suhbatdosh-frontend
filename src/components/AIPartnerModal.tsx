@@ -243,11 +243,8 @@ export default function AIPartnerModal({ isOpen, onClose }: AIPartnerModalProps)
           </button>
 
           <div className="text-center">
-            <p className={`text-xs font-bold ${isRecording ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
-              {isRecording ? 'Listening to your speech... Tap to finish' : 'Tap Microphone to Speak'}
-            </p>
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-              Practice real spoken English naturally
+            <p className={`text-xs font-bold ${isRecording ? 'text-red-400 animate-pulse' : 'text-slate-200'}`}>
+              {isRecording ? 'Listening... Tap to send' : 'Tap to Speak'}
             </p>
           </div>
         </div>
