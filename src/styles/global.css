@@ -30,10 +30,11 @@
    "sizni o'lchaydigan hamma narsa — bo'linmali shkala".
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Display shrift — faqat sarlavha va raqamlar uchun (weight 600..800).
-   `display=swap`: shrift kelguncha tizim shrifti ko'rinadi, matn hech
-   qachon ko'rinmas holatda turmaydi. */
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* ─── Rang: qorong'i tema (standart) ─────────────────────────────────────
