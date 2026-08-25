@@ -40,6 +40,9 @@ export interface AppState {
   micErrorModal: { isOpen: boolean; errorMsg?: string } | null;
   setMicErrorModal: (modal: { isOpen: boolean; errorMsg?: string } | null) => void;
 
+  isSubscribed: boolean;
+  setIsSubscribed: (val: boolean) => void;
+
   stats: {
     total_sessions: number;
     total_minutes: number;
@@ -124,6 +127,9 @@ const useAppStore = create<AppState>((set) => ({
   setAppError: (appError) => set({ appError }),
   micErrorModal: null,
   setMicErrorModal: (micErrorModal) => set({ micErrorModal }),
+
+  isSubscribed: true,
+  setIsSubscribed: (isSubscribed) => set({ isSubscribed }),
 
   stats: { total_sessions: 0, total_minutes: 0, unique_partners: 0, avg_rating: '0.0', rating_count: 0 },
   recentSessions: [],

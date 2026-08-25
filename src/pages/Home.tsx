@@ -223,12 +223,12 @@ export default function Home() {
           background: linear-gradient(145deg, #0A2540 0%, #001220 100%);
           border: 1px solid rgba(0, 168, 255, 0.28);
           border-radius: var(--radius-lg);
-          padding: 16px 16px 16px;
-          display: flex; flex-direction: column; gap: 8px;
-          box-shadow: 0 8px 28px rgba(0, 168, 255, 0.16);
+          padding: 10px 12px 10px;
+          display: flex; flex-direction: column; gap: 4px;
+          box-shadow: 0 6px 20px rgba(0, 168, 255, 0.14);
         }
         .hero__glow {
-          position: absolute; top: -50%; right: -25%; width: 240px; height: 240px;
+          position: absolute; top: -50%; right: -25%; width: 200px; height: 200px;
           border-radius: 50%;
           background: radial-gradient(circle, rgba(0, 168, 255, 0.35), transparent 70%);
           pointer-events: none;
@@ -238,41 +238,41 @@ export default function Home() {
         /* Hero Graphic Header */
         .hero__visual {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 6px 12px 10px; margin-bottom: 2px;
+          padding: 4px 10px; margin-bottom: 0px;
           background: rgba(0, 168, 255, 0.06);
           border-radius: var(--radius-md);
           border: 1px dashed rgba(0, 168, 255, 0.2);
         }
         .hero__node { position: relative; display: flex; align-items: center; justify-content: center; }
         .hero__node-glow {
-          position: absolute; inset: -3px; border-radius: 50%;
+          position: absolute; inset: -2px; border-radius: 50%;
           background: radial-gradient(circle, rgba(0, 168, 255, 0.4), transparent 70%);
           pointer-events: none;
         }
         .hero__partner-avatar {
-          width: 36px; height: 36px; border-radius: 50%;
+          width: 28px; height: 28px; border-radius: 50%;
           background: rgba(0, 168, 255, 0.15); border: 1px solid rgba(0, 168, 255, 0.4);
           color: #38BDF8; display: flex; align-items: center; justify-content: center;
         }
         .hero__node-pulse {
-          position: absolute; inset: -4px; border-radius: 50%;
+          position: absolute; inset: -3px; border-radius: 50%;
           border: 1px solid rgba(0, 168, 255, 0.6);
           animation: radarRipple 2s ease-out infinite;
           pointer-events: none;
         }
         .hero__connector {
-          display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center;
-          padding: 0 10px;
+          display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center;
+          padding: 0 6px;
         }
         .hero__mic-core {
-          width: 30px; height: 30px; border-radius: 50%;
+          width: 24px; height: 24px; border-radius: 50%;
           background: var(--grad-primary); color: #FFF;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
+          box-shadow: 0 0 10px rgba(0, 168, 255, 0.6);
           flex-shrink: 0;
         }
         .hero__soundwave {
-          display: flex; align-items: center; gap: 2px; height: 16px;
+          display: flex; align-items: center; gap: 2px; height: 12px;
         }
         .sw-bar {
           width: 2px; height: 100%; background: #00A8FF; border-radius: 2px;
@@ -290,42 +290,42 @@ export default function Home() {
         }
 
         .hero__tag {
-          display: inline-flex; align-items: center; gap: 6px;
+          display: inline-flex; align-items: center; gap: 5px;
           align-self: flex-start;
-          padding: 3px 10px;
+          padding: 2px 8px;
           border-radius: var(--radius-full);
           background: rgba(0, 168, 255, 0.18);
           border: 1px solid rgba(0, 168, 255, 0.3);
           color: #38BDF8;
-          font-size: 11px; font-weight: var(--weight-bold);
+          font-size: 10px; font-weight: var(--weight-bold);
           letter-spacing: 0.02em;
         }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 19px; font-weight: var(--weight-heavy);
+          font-size: 16px; font-weight: var(--weight-heavy);
           color: #FFFFFF; letter-spacing: -0.02em;
-          margin-top: 2px;
-          line-height: 1.25;
+          margin-top: 1px;
+          line-height: 1.2;
         }
         .hero__sub {
-          font-size: 12px; line-height: 1.4;
-          color: rgba(255, 255, 255, 0.85);
+          font-size: 11px; line-height: 1.35;
+          color: rgba(255, 255, 255, 0.82);
           margin-top: 0px;
         }
         .hero__btn {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          width: 100%; min-height: 46px; margin-top: 6px;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          width: 100%; min-height: 40px; margin-top: 2px;
           background: var(--grad-primary); color: #FFFFFF;
           border-radius: var(--radius-md);
-          font-size: 14px; font-weight: var(--weight-heavy);
+          font-size: 13px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
-          box-shadow: 0 4px 18px rgba(0, 168, 255, 0.4);
+          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
           transition: transform var(--t), opacity var(--t), box-shadow var(--t);
         }
-        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3); }
+        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3); }
         .hero__btn-icon {
           display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 28px; border-radius: 50%;
+          width: 24px; height: 24px; border-radius: 50%;
           background: rgba(255, 255, 255, 0.2);
         }
 

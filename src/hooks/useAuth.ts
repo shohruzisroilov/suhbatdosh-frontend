@@ -32,7 +32,7 @@ function waitForInitData(timeoutMs = 5000): Promise<string> {
 }
 
 export function useAuth() {
-  const { token, user, setToken, setUser, setAuthLoading, setStats, setRecentSessions, navigate, setAppError } =
+  const { token, user, setToken, setUser, setAuthLoading, setStats, setRecentSessions, navigate, setAppError, setIsSubscribed } =
     useAppStore();
 
   useEffect(() => {
@@ -112,6 +112,9 @@ export function useAuth() {
 
         setToken(authResult.token);
         setUser(authResult.user);
+        if (typeof authResult.isSubscribed === 'boolean') {
+          setIsSubscribed(authResult.isSubscribed);
+        }
 
         let meData;
         try {

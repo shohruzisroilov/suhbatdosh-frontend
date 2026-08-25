@@ -10,6 +10,7 @@ import ConnectionBanner from './components/ConnectionBanner';
 import Toast from './components/Toast';
 import BottomNav from './components/BottomNav';
 import MicPermissionModal from './components/MicPermissionModal';
+import ChannelSubscribeModal from './components/ChannelSubscribeModal';
 
 import Onboarding from './pages/Onboarding.tsx';
 import Home from './pages/Home.tsx';
@@ -93,7 +94,7 @@ function AuthErrorScreen({ message }: { message: string }) {
 }
 
 function TelegramApp() {
-  const { screen, isAuthLoading, appError, user } = useAppStore();
+  const { screen, isAuthLoading, appError, user, isSubscribed, setIsSubscribed } = useAppStore();
   useAuth();
   useSocket();
 
@@ -110,6 +111,11 @@ function TelegramApp() {
       <ConnectionBanner />
       <Toast />
       <MicPermissionModal />
+      <ChannelSubscribeModal
+        isOpen={!isSubscribed}
+        onSubscribed={() => setIsSubscribed(true)}
+        telegramId={user?.telegramId || window.Telegram?.WebApp?.initDataUnsafe?.user?.id}
+      />
       <ErrorBoundary>
         <Suspense fallback={<LoadingScreen />}>
           {showTabs ? (
