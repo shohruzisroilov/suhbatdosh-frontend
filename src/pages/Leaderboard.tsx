@@ -8,10 +8,12 @@ import SkeletonRow from '../components/SkeletonRow';
 import { Flame, Star } from 'lucide-react';
 
 const LEVEL_CODE: Record<number, string> = { 1: 'A1', 2: 'A2', 3: 'B1', 4: 'B2', 5: 'C1', 6: 'C2' };
-const TOP3 = ['lb-rank--1', 'lb-rank--2', 'lb-rank--3'];
-
 function Rank({ i }: { i: number }) {
-  return <span className={`lb-rank ${TOP3[i] || ''}`}>{i + 1}</span>;
+  const rank = i + 1;
+  if (rank === 1) return <span className="lb-rank lb-rank--1">🥇 1</span>;
+  if (rank === 2) return <span className="lb-rank lb-rank--2">🥈 2</span>;
+  if (rank === 3) return <span className="lb-rank lb-rank--3">🥉 3</span>;
+  return <span className="lb-rank">#{rank}</span>;
 }
 
 function Row({ row, index, me, valueText }: { row: any; index: number; me: any; valueText: React.ReactNode }) {
@@ -238,8 +240,32 @@ export default function Leaderboard() {
         }
         .lb-row.me { border-color: var(--btn-bg); }
         .lb-rank {
-          min-width: 24px; text-align: center;
-          font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-secondary);
+          min-width: 36px; height: 28px;
+          display: flex; align-items: center; justify-content: center; gap: 3px;
+          font-size: var(--text-xs); font-weight: var(--weight-heavy);
+          color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm, 8px);
+          flex-shrink: 0;
+        }
+        .lb-rank--1 {
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          border-color: #f59e0b;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+        }
+        .lb-rank--2 {
+          background: linear-gradient(135deg, #9ca3af, #6b7280);
+          border-color: #9ca3af;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(156, 163, 175, 0.3);
+        }
+        .lb-rank--3 {
+          background: linear-gradient(135deg, #b45309, #78350f);
+          border-color: #b45309;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(180, 83, 9, 0.3);
         }
         .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: var(--space-0-5); min-width: 0; }
         .lb-row__name {
