@@ -44,7 +44,7 @@ export default function Home() {
         <section className="hero fade-up">
           <div className="hero__glow" />
 
-          <div className="hero__header">
+          <div className="hero__top-row">
             <span className="hero__tag">
               <span className="dot-live" />
               {waitingCount >= 2
@@ -55,20 +55,18 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="hero__main">
-            <div className="hero__info">
-              <h1 className="hero__title">{t('home.ctaTitle')}</h1>
-              <p className="hero__sub">{t('home.ctaSub')}</p>
-            </div>
-
-            <button
-              className="hero__btn"
-              onClick={() => { tapHaptic('medium'); navigate('matching'); }}
-            >
-              <Mic size={18} strokeWidth={2.5} />
-              <span>{t('home.start')}</span>
-            </button>
+          <div className="hero__content">
+            <h1 className="hero__title">{t('home.ctaTitle')}</h1>
+            <p className="hero__sub">{t('home.ctaSub')}</p>
           </div>
+
+          <button
+            className="hero__btn"
+            onClick={() => { tapHaptic('medium'); navigate('matching'); }}
+          >
+            <Mic size={20} strokeWidth={2.5} />
+            <span>{t('home.start')}</span>
+          </button>
         </section>
 
         <div className="home__list stagger">
@@ -148,61 +146,63 @@ export default function Home() {
           padding: var(--space-3) var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: var(--space-3);
         }
-        .home__list { display: flex; flex-direction: column; gap: var(--space-2); }        .hero {
+        .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
+
+        .hero {
           position: relative; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(135deg, #0D2137 0%, #071526 100%);
-          border: 1px solid rgba(0, 168, 255, 0.28);
+          background: linear-gradient(135deg, #0A3A6B 0%, #001F3F 100%);
+          border: 1px solid rgba(0, 168, 255, 0.4);
           border-radius: var(--radius-lg, 20px);
-          padding: 12px 14px;
-          display: flex; flex-direction: column; gap: 8px;
-          box-shadow: 0 6px 20px rgba(0, 168, 255, 0.12);
+          padding: 16px 18px;
+          display: flex; flex-direction: column; gap: 12px;
+          box-shadow: 0 8px 25px rgba(0, 168, 255, 0.2);
         }
         .hero__glow {
-          position: absolute; top: -50px; right: -50px; width: 140px; height: 140px;
+          position: absolute; top: -40px; right: -40px; width: 160px; height: 160px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 168, 255, 0.3), transparent 70%);
+          background: radial-gradient(circle, rgba(0, 200, 255, 0.35), transparent 70%);
           pointer-events: none;
         }
         .hero > * { position: relative; z-index: 1; }
 
-        .hero__header { display: flex; align-items: center; justify-content: space-between; }
+        .hero__top-row { display: flex; align-items: center; justify-content: space-between; }
         .hero__tag {
-          display: inline-flex; align-items: center; gap: 5px;
-          padding: 2px 8px;
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 4px 10px;
           border-radius: var(--radius-full);
-          background: rgba(0, 168, 255, 0.15);
-          border: 1px solid rgba(0, 168, 255, 0.3);
+          background: rgba(0, 168, 255, 0.22);
+          border: 1px solid rgba(0, 168, 255, 0.4);
           color: #38BDF8;
-          font-size: 10px; font-weight: var(--weight-bold);
+          font-size: 11px; font-weight: var(--weight-bold);
           letter-spacing: 0.02em;
         }
 
-        .hero__main {
-          display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        }
-        .hero__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .hero__content { display: flex; flex-direction: column; gap: 4px; }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 15px; font-weight: var(--weight-heavy);
+          font-size: 18px; font-weight: var(--weight-heavy);
           color: #FFFFFF; letter-spacing: -0.01em;
-          line-height: 1.2;
+          line-height: 1.25;
         }
         .hero__sub {
-          font-size: 11px; line-height: 1.3;
-          color: rgba(255, 255, 255, 0.75);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          font-size: 13px; line-height: 1.4;
+          color: rgba(255, 255, 255, 0.85);
         }
+
         .hero__btn {
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 0 14px; min-height: 38px; flex-shrink: 0;
-          background: var(--grad-primary); color: #FFFFFF;
-          border-radius: var(--radius-md, 12px);
-          font-size: 13px; font-weight: var(--weight-heavy);
-          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
-          transition: transform var(--t), opacity var(--t);
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; min-height: 48px;
+          background: linear-gradient(135deg, #00A8FF 0%, #0066FF 100%);
+          color: #FFFFFF;
+          border-radius: var(--radius-md, 14px);
+          font-size: 15px; font-weight: var(--weight-heavy);
+          letter-spacing: -0.01em;
+          box-shadow: 0 4px 18px rgba(0, 168, 255, 0.45);
+          transition: transform var(--t), opacity var(--t), box-shadow var(--t);
+          cursor: pointer;
         }
-        .hero__btn:active { transform: scale(0.96); opacity: 0.92; } }
+        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3); }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
         .home__section-head { display: flex; align-items: center; justify-content: space-between; }
