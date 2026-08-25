@@ -33,9 +33,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="home relative overflow-hidden">
-      <div className="ambient-glow-1" />
-      <div className="ambient-glow-2" />
+    <div className="home">
       <HomeHeader
         user={user}
         streak={stats?.streakCount || 0}
@@ -43,8 +41,8 @@ export default function Home() {
         onSettings={() => navigate('settings')}
       />
 
-      <div className="home__scroll relative z-10">
-        <section className="hero fade-up glass-card-accent">
+      <div className="home__scroll">
+        <section className="hero fade-up">
           <span className="hero__tag">
             <span className="dot-live" />
             {waitingCount >= 2
