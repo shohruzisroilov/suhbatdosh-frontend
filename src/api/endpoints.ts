@@ -1,8 +1,8 @@
 import api from './client';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
-export const authTelegram = (initData: string, startParam?: string) =>
-  api.post('/auth/telegram', { initData, startParam }).then((r) => r.data);
+export const authTelegram = (initData: string, startParam?: string | null) =>
+  api.post('/auth/telegram', { initData, startParam: startParam || undefined }).then((r) => r.data);
 
 // ─── User ─────────────────────────────────────────────────────────────────
 export const getMe = () => api.get('/me').then((r) => r.data);
