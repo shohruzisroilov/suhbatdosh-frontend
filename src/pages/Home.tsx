@@ -49,6 +49,26 @@ export default function Home() {
 
       <div className="home__scroll">
 
+        {/* Xavfsizlik filtri (Ayollar / Girls uchun eng tepada) */}
+        {isFemale && (
+          <button
+            type="button"
+            className={`row${womenOnly ? ' row--on' : ''} fade-up`}
+            onClick={() => { selectionHaptic(); setPartnerPref(womenOnly ? 'any' : 'female'); }}
+            aria-pressed={womenOnly}
+            style={{ marginBottom: '12px' }}
+          >
+            <span className={`row__ico${womenOnly ? ' row__ico--primary' : ''}`}>
+              <ShieldCheck size={18} />
+            </span>
+            <span className="row__text">
+              <span className="row__title">{t('match.pref.womenOnly')}</span>
+              <span className="row__sub">{t('match.pref.womenOnlyHint')}</span>
+            </span>
+            <span className={`switch${womenOnly ? ' switch--on' : ''}`} />
+          </button>
+        )}
+
         {/* ── Find Partner Hero Card ── */}
         <section className="hero fade-up" onClick={() => { tapHaptic('medium'); navigate('matching'); }}>
           {/* Animated background orbs */}
@@ -146,24 +166,7 @@ export default function Home() {
             />
           )}
 
-          {/* Xavfsizlik filtri */}
-          {isFemale && (
-            <button
-              type="button"
-              className={`row${womenOnly ? ' row--on' : ''}`}
-              onClick={() => { selectionHaptic(); setPartnerPref(womenOnly ? 'any' : 'female'); }}
-              aria-pressed={womenOnly}
-            >
-              <span className={`row__ico${womenOnly ? ' row__ico--primary' : ''}`}>
-                <ShieldCheck size={18} />
-              </span>
-              <span className="row__text">
-                <span className="row__title">{t('match.pref.womenOnly')}</span>
-                <span className="row__sub">{t('match.pref.womenOnlyHint')}</span>
-              </span>
-              <span className={`switch${womenOnly ? ' switch--on' : ''}`} />
-            </button>
-          )}
+
 
           {showPremium && (
             <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
