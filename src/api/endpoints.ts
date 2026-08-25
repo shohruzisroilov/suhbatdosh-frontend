@@ -90,4 +90,22 @@ export const sendAIPartnerTurn = (payload: {
   audioBase64?: string;
   audioMimeType?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  topic?: string;
+  speakingMode?: string;
 }) => api.post('/ai-partner/chat', payload).then((r) => r.data);
+
+export const saveVocabularyItem = (payload: {
+  word: string;
+  meaning?: string;
+  example?: string;
+  category?: string;
+}) => api.post('/ai-partner/vocabulary', payload).then((r) => r.data);
+
+export const getVocabularyItems = () =>
+  api.get('/ai-partner/vocabulary').then((r) => r.data);
+
+export const deleteVocabularyItem = (id: number) =>
+  api.delete(`/ai-partner/vocabulary/${id}`).then((r) => r.data);
+
+export const getTTSAudio = (text: string) =>
+  api.post('/ai-partner/tts', { text }).then((r) => r.data);
