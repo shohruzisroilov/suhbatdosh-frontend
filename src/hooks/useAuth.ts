@@ -78,6 +78,13 @@ export function useAuth() {
           }
         }
 
+        // Debug: initData holati
+        console.log('[Auth] initData length:', initData?.length, 'isDev:', IS_DEV);
+        if (initData && !initData.startsWith('test')) {
+          const p = new URLSearchParams(initData);
+          console.log('[Auth] hash present:', !!p.get('hash'), 'auth_date:', p.get('auth_date'));
+        }
+
         const authResult = await authTelegram(initData, startParam);
         setToken(authResult.token);
         setUser(authResult.user);
@@ -93,9 +100,13 @@ export function useAuth() {
         else if (wantsMatch) navigate('matching');
         else if (wantsMock) navigate('ielts');
         else navigate('home');
-      } catch (err) {
+      } catch (err: any) {
         console.error('Auth error:', err);
         const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
+        // HTTP status kodni ko'rsatish uchun (debug)
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        console.error('[Auth] HTTP status:', status, 'server error:', serverMsg);
         setAppError(translate(tgLang, 'auth.error'));
       } finally {
         setAuthLoading(false);
