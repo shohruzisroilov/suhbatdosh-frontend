@@ -38,11 +38,7 @@ export function useMatch() {
     } catch (err: any) {
       console.warn('Mikrofon xatosi:', err?.name, err?.message);
       const errMsg = micErrorMessage(err);
-      if (window.Telegram?.WebApp?.showAlert) {
-        window.Telegram.WebApp.showAlert(errMsg);
-      } else {
-        alert(errMsg);
-      }
+      useAppStore.getState().setMicErrorModal({ isOpen: true, errorMsg: errMsg });
       return;
     }
 

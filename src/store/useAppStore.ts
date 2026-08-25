@@ -37,6 +37,8 @@ export interface AppState {
   setConnected: (connected: boolean) => void;
   appError: string | null;
   setAppError: (error: string | null) => void;
+  micErrorModal: { isOpen: boolean; errorMsg?: string } | null;
+  setMicErrorModal: (modal: { isOpen: boolean; errorMsg?: string } | null) => void;
 
   stats: { total_sessions: number; total_minutes: number; avg_rating: string; streakCount?: number; streak_count?: number; hasPracticedToday?: boolean; has_practiced_today?: boolean };
   recentSessions: any[];
@@ -110,6 +112,8 @@ const useAppStore = create<AppState>((set) => ({
   setConnected: (isConnected) => set({ isConnected }),
   appError: null,
   setAppError: (appError) => set({ appError }),
+  micErrorModal: null,
+  setMicErrorModal: (micErrorModal) => set({ micErrorModal }),
 
   stats: { total_sessions: 0, total_minutes: 0, avg_rating: '0.0' },
   recentSessions: [],

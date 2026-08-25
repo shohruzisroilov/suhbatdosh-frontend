@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ConnectionBanner from './components/ConnectionBanner';
 import Toast from './components/Toast';
 import BottomNav from './components/BottomNav';
+import MicPermissionModal from './components/MicPermissionModal';
 
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
@@ -109,6 +110,7 @@ function TelegramApp() {
     <>
       <ConnectionBanner />
       <Toast />
+      <MicPermissionModal />
       <ErrorBoundary>
         <Suspense fallback={<LoadingScreen />}>
           {showTabs ? (
