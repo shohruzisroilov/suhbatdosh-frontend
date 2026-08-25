@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Clock, TrendingUp } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -22,14 +22,6 @@ export default function Home() {
   const isFemale  = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
   const showPremium = !user?.isPremium && (user?.dailyLimit ?? 0) > 0;
-
-  const totalMinutes = Math.round(stats?.total_minutes ?? 0);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  const timeDisplay = h === 0 ? `${m}m` : m === 0 ? `${h}h` : `${h}h ${m}m`;
-  const totalSessions = stats?.total_sessions ?? 0;
-
-  const hasActivity = totalSessions > 0 || totalMinutes > 0;
 
   useEffect(() => {
     getMe().then(d => {
@@ -120,38 +112,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Mini Stats Row ── */}
-        {homeLoaded && hasActivity && (
-          <div className="mini-stats fade-up">
-            <div className="mini-stat">
-              <span className="mini-stat__ico mini-stat__ico--blue"><Clock size={14} /></span>
-              <div className="mini-stat__info">
-                <span className="mini-stat__val num">{timeDisplay}</span>
-                <span className="mini-stat__lbl">{t('stat.time')}</span>
-              </div>
-            </div>
-            <div className="mini-stat__divider" />
-            <div className="mini-stat">
-              <span className="mini-stat__ico mini-stat__ico--green"><TrendingUp size={14} /></span>
-              <div className="mini-stat__info">
-                <span className="mini-stat__val num">{totalSessions}</span>
-                <span className="mini-stat__lbl">{t('stat.practice')}</span>
-              </div>
-            </div>
-            {(stats?.avg_rating && Number(stats.avg_rating) > 0) ? (
-              <>
-                <div className="mini-stat__divider" />
-                <div className="mini-stat">
-                  <span className="mini-stat__ico mini-stat__ico--gold">⭐</span>
-                  <div className="mini-stat__info">
-                    <span className="mini-stat__val num">{Number(stats.avg_rating).toFixed(1)}</span>
-                    <span className="mini-stat__lbl">{t('stat.rating')}</span>
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </div>
-        )}
+
 
         <div className="home__list stagger">
           {/* Prime Time Event Banner */}
