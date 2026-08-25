@@ -53,12 +53,54 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
 
 const TAB_SCREENS = ['home', 'leaderboard', 'invite', 'profile'];
 
+function AuthErrorScreen({ message }: { message: string }) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        gap: '16px',
+        background: 'var(--bg, #fff)',
+        color: 'var(--text-primary, #000)',
+        textAlign: 'center',
+        minHeight: '100dvh',
+      }}
+    >
+      <div style={{ fontSize: 48 }}>⚠️</div>
+      <p style={{ fontSize: 16, lineHeight: 1.5, maxWidth: 280 }}>{message}</p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          marginTop: 8,
+          padding: '12px 28px',
+          borderRadius: 12,
+          border: 'none',
+          background: 'var(--accent, #0088cc)',
+          color: '#fff',
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
 function TelegramApp() {
-  const { screen, isAuthLoading } = useAppStore();
+  const { screen, isAuthLoading, appError, user } = useAppStore();
   useAuth();
   useSocket();
 
   if (isAuthLoading) return <LoadingScreen />;
+
+  // Auth xato bo'ldi va user yo'q — retry screen ko'rsat
+  if (appError && !user) return <AuthErrorScreen message={appError} />;
 
   const ScreenComponent = SCREENS[screen] || Home;
   const showTabs = TAB_SCREENS.includes(screen);
