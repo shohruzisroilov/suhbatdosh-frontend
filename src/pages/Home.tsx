@@ -151,58 +151,58 @@ export default function Home() {
         .hero {
           position: relative; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(135deg, #0A3A6B 0%, #001F3F 100%);
-          border: 1px solid rgba(0, 168, 255, 0.4);
-          border-radius: var(--radius-lg, 20px);
-          padding: 16px 18px;
-          display: flex; flex-direction: column; gap: 12px;
-          box-shadow: 0 8px 25px rgba(0, 168, 255, 0.2);
+          background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          border-radius: var(--radius-lg, 18px);
+          padding: 12px 14px;
+          display: flex; flex-direction: column; gap: 8px;
+          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25);
         }
         .hero__glow {
-          position: absolute; top: -40px; right: -40px; width: 160px; height: 160px;
+          position: absolute; top: -30px; right: -30px; width: 130px; height: 130px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 200, 255, 0.35), transparent 70%);
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent 70%);
           pointer-events: none;
         }
         .hero > * { position: relative; z-index: 1; }
 
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }
         .hero__tag {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 4px 10px;
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 3px 8px;
           border-radius: var(--radius-full);
-          background: rgba(0, 168, 255, 0.22);
-          border: 1px solid rgba(0, 168, 255, 0.4);
-          color: #38BDF8;
-          font-size: 11px; font-weight: var(--weight-bold);
+          background: rgba(255, 255, 255, 0.22);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          color: #FFFFFF;
+          font-size: 10px; font-weight: var(--weight-bold);
           letter-spacing: 0.02em;
         }
 
-        .hero__content { display: flex; flex-direction: column; gap: 4px; }
+        .hero__content { display: flex; flex-direction: column; gap: 2px; }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 18px; font-weight: var(--weight-heavy);
+          font-size: 16px; font-weight: var(--weight-heavy);
           color: #FFFFFF; letter-spacing: -0.01em;
-          line-height: 1.25;
+          line-height: 1.2;
         }
         .hero__sub {
-          font-size: 13px; line-height: 1.4;
-          color: rgba(255, 255, 255, 0.85);
+          font-size: 12px; line-height: 1.35;
+          color: rgba(255, 255, 255, 0.92);
         }
 
         .hero__btn {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          width: 100%; min-height: 48px;
-          background: linear-gradient(135deg, #00A8FF 0%, #0066FF 100%);
-          color: #FFFFFF;
-          border-radius: var(--radius-md, 14px);
-          font-size: 15px; font-weight: var(--weight-heavy);
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          width: 100%; min-height: 40px;
+          background: #FFFFFF;
+          color: #0284C7;
+          border-radius: var(--radius-md, 12px);
+          font-size: 14px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
-          box-shadow: 0 4px 18px rgba(0, 168, 255, 0.45);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
           transition: transform var(--t), opacity var(--t), box-shadow var(--t);
           cursor: pointer;
         }
-        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3); }
+        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
         .home__section-head { display: flex; align-items: center; justify-content: space-between; }
