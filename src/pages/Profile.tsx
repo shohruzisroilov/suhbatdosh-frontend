@@ -51,7 +51,7 @@ function formatPracticeTime(minutes: number): string {
 function Chevron({ open = false }: { open?: boolean }) {
   return (
     <ChevronRight
-      size={15}
+      size={14}
       className={`profile__chev${open ? ' profile__chev--open' : ''}`}
     />
   );
@@ -133,12 +133,12 @@ export default function Profile() {
       <div className="profile__scroll">
         {/* User Hero Header */}
         <div className="profile__hero">
-          <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={64} />
+          <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={54} />
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
           {isPremium && (
             <span className="profile__premium-badge">
-              <Star size={10} fill="currentColor" strokeWidth={0} /> {t('profile.premium')}
+              <Star size={9} fill="currentColor" strokeWidth={0} /> {t('profile.premium')}
             </span>
           )}
         </div>
@@ -153,7 +153,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__stat-icon profile__stat-icon--time">
-              <Clock size={15} />
+              <Clock size={13} />
             </span>
             <span className="profile__stat-value">{formatPracticeTime(totalMinutes)}</span>
             <span className="profile__stat-label">{t('profile.timeTalked')}</span>
@@ -161,7 +161,7 @@ export default function Profile() {
 
           <div className="profile__stat-box">
             <span className="profile__stat-icon profile__stat-icon--users">
-              <Users size={15} />
+              <Users size={13} />
             </span>
             <span className="profile__stat-value">{uniquePartners}</span>
             <span className="profile__stat-label">{t('profile.partners')}</span>
@@ -172,7 +172,7 @@ export default function Profile() {
             onClick={openRatings}
           >
             <span className="profile__stat-icon profile__stat-icon--star">
-              <Star size={15} fill="currentColor" />
+              <Star size={13} fill="currentColor" />
             </span>
             <span className="profile__stat-value">{avgRatingNum} ★</span>
             <span className="profile__stat-label">
@@ -187,7 +187,7 @@ export default function Profile() {
           {/* Level Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowLevelModal(true); }}>
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
-              <Gauge size={15} />
+              <Gauge size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.levelTitle')}</span>
@@ -201,7 +201,7 @@ export default function Profile() {
           {/* Gender Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowGenderModal(true); }}>
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
-              <UserIcon size={15} />
+              <UserIcon size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.genderTitle')}</span>
@@ -228,7 +228,7 @@ export default function Profile() {
             disabled={isPremium}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
-              <Star size={15} />
+              <Star size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.plan')}</span>
@@ -253,7 +253,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
-              <MessageSquare size={15} />
+              <MessageSquare size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.reviews')}</span>
@@ -271,7 +271,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--rose">
-              <LifeBuoy size={15} />
+              <LifeBuoy size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.support')}</span>
@@ -291,7 +291,7 @@ export default function Profile() {
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.levelTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowLevelModal(false)}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
             <div className="ratings-modal__body">
@@ -309,7 +309,7 @@ export default function Profile() {
                         <span className="profile__modal-option-title">{t(`levelName.${lv}`)}</span>
                         <span className="profile__modal-option-sub">{t(`ob.level${lv}.sub`)}</span>
                       </div>
-                      {selected && <Check size={18} className="profile__modal-check" />}
+                      {selected && <Check size={16} className="profile__modal-check" />}
                     </div>
                   );
                 })}
@@ -326,7 +326,7 @@ export default function Profile() {
             <div className="ratings-modal__head">
               <h2 className="ratings-modal__title">{t('settings.genderTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowGenderModal(false)}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
             <div className="ratings-modal__body">
@@ -340,7 +340,7 @@ export default function Profile() {
                       onClick={() => pickGender(g.v)}
                     >
                       <span className="profile__modal-option-title">{t(g.key)}</span>
-                      {selected && <Check size={18} className="profile__modal-check" />}
+                      {selected && <Check size={16} className="profile__modal-check" />}
                     </div>
                   );
                 })}
@@ -361,7 +361,7 @@ export default function Profile() {
                 className="ratings-modal__close"
                 onClick={() => setShowRatingsModal(false)}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
@@ -372,7 +372,7 @@ export default function Profile() {
                 <div className="ratings-modal__list">
                   {ratingsList.map((item) => (
                     <div key={item.id} className="ratings-modal__item">
-                      <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={36} />
+                      <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={34} />
                       <div className="ratings-modal__info">
                         <span className="ratings-modal__name">
                           {item.rater_name || t('common.anonymous')}
@@ -383,7 +383,7 @@ export default function Profile() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            size={13}
+                            size={12}
                             fill={star <= item.score ? '#f59e0b' : 'none'}
                             color={star <= item.score ? '#f59e0b' : 'var(--text-secondary)'}
                           />
@@ -394,7 +394,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="ratings-modal__empty">
-                  <Star size={32} color="var(--text-secondary)" opacity={0.5} />
+                  <Star size={28} color="var(--text-secondary)" opacity={0.5} />
                   <p>{t('profile.noRatingsYet')}</p>
                 </div>
               )}
@@ -407,65 +407,65 @@ export default function Profile() {
         .profile { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
         .profile__scroll {
           flex: 1; overflow-y: auto;
-          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) calc(80px + env(safe-area-inset-bottom, 0px));
-          display: flex; flex-direction: column; gap: var(--space-2);
+          padding: calc(var(--space-2) + env(safe-area-inset-top, 0px)) var(--space-3) calc(110px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: var(--space-1-5);
         }
 
         .profile__hero {
-          display: flex; flex-direction: column; align-items: center; gap: 4px;
-          padding: 4px 0 2px;
+          display: flex; flex-direction: column; align-items: center; gap: 2px;
+          padding: 2px 0;
         }
-        .profile__name { font-size: 17px; font-weight: var(--weight-heavy); letter-spacing: -0.3px; text-align: center; }
-        .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -2px; }
+        .profile__name { font-size: 16px; font-weight: var(--weight-heavy); letter-spacing: -0.3px; text-align: center; }
+        .profile__username { font-size: 11px; color: var(--text-secondary); margin-top: -2px; }
         .profile__premium-badge {
-          margin-top: 4px; padding: 2px 10px; border-radius: var(--radius-full);
+          margin-top: 2px; padding: 2px 8px; border-radius: var(--radius-full);
           background: var(--btn-bg); color: var(--btn-text);
-          font-size: 11px; font-weight: var(--weight-heavy); letter-spacing: 0.2px;
-          display: inline-flex; align-items: center; gap: 4px;
+          font-size: 10px; font-weight: var(--weight-heavy); letter-spacing: 0.2px;
+          display: inline-flex; align-items: center; gap: 3px;
         }
 
         .profile__stats-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2px;
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 2px;
         }
         .profile__stat-box {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md, 12px);
-          padding: 8px 4px;
+          border-radius: var(--radius-md, 10px);
+          padding: 6px 4px;
           display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-          gap: 2px;
+          gap: 1px;
           transition: transform 0.15s, border-color 0.15s;
         }
         .profile__stat-box--clickable { cursor: pointer; }
         .profile__stat-box--clickable:active { transform: scale(0.96); border-color: var(--btn-bg); }
         .profile__stat-icon {
-          width: 26px; height: 26px; border-radius: 50%;
+          width: 22px; height: 22px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
         }
         .profile__stat-icon--time { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
         .profile__stat-icon--users { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
         .profile__stat-icon--star { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 
-        .profile__stat-value { font-size: 14px; font-weight: var(--weight-heavy); color: var(--text-primary); }
-        .profile__stat-label { font-size: 11px; color: var(--text-secondary); }
+        .profile__stat-value { font-size: 13px; font-weight: var(--weight-heavy); color: var(--text-primary); }
+        .profile__stat-label { font-size: 10px; color: var(--text-secondary); }
 
         .profile__section-header {
-          font-size: 11px; font-weight: var(--weight-bold);
+          font-size: 10px; font-weight: var(--weight-bold);
           color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px;
-          padding: 4px 4px 0;
+          padding: 2px 4px 0;
         }
 
         .profile__card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md, 12px);
+          border-radius: var(--radius-md, 10px);
           display: flex; flex-direction: column;
           overflow: hidden;
         }
         .profile__row {
-          display: flex; align-items: center; gap: 10px;
+          display: flex; align-items: center; gap: 8px;
           width: 100%; text-align: left;
-          padding: 10px 12px;
+          padding: 8px 10px;
           border-bottom: 1px solid var(--border);
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
@@ -476,7 +476,7 @@ export default function Profile() {
         .profile__row:disabled { cursor: default; }
 
         .profile__row-icon-wrapper {
-          width: 28px; height: 28px; border-radius: 8px;
+          width: 26px; height: 26px; border-radius: 6px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
@@ -487,14 +487,14 @@ export default function Profile() {
         .profile__row-icon-wrapper--rose { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
 
         .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .profile__row-title { font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary); }
-        .profile__row-sub { font-size: 11px; color: var(--text-secondary); }
+        .profile__row-title { font-size: 13px; font-weight: var(--weight-bold); color: var(--text-primary); }
+        .profile__row-sub { font-size: 10px; color: var(--text-secondary); }
         .profile__row-val {
-          font-size: 11px; font-weight: var(--weight-bold); color: var(--text-secondary);
+          font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary);
           white-space: nowrap; flex-shrink: 0;
         }
         .profile__chev { color: var(--text-secondary); flex-shrink: 0; opacity: 0.6; }
-        .profile__footer { padding-bottom: var(--space-2); }
+        .profile__footer { height: 30px; }
 
         /* Modals */
         .ratings-modal-backdrop {

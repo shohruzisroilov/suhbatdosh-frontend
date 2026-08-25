@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const COLORS = ['#2481cc', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5856d6'];
 
@@ -9,6 +9,8 @@ interface AvatarProps {
 }
 
 export default function Avatar({ name, avatarUrl, size = 40 }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = name
     ? name
         .split(' ')
@@ -31,15 +33,13 @@ export default function Avatar({ name, avatarUrl, size = 40 }: AvatarProps) {
     overflow: 'hidden',
   };
 
-  if (avatarUrl) {
+  if (avatarUrl && !imgError) {
     return (
       <img
         src={avatarUrl}
-        alt={name}
+        alt={name || 'Avatar'}
         style={{ ...baseStyle, objectFit: 'cover' }}
-        onError={(e) => {
-          e.currentTarget.style.display = 'none';
-        }}
+        onError={() => setImgError(true)}
       />
     );
   }
