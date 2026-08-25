@@ -83,3 +83,11 @@ export const getReviews = (page = 1, limit = 10) =>
 export const getMyReview = () => api.get('/reviews/me').then((r) => r.data);
 export const submitReview = (rating: number, comment: string) =>
   api.post('/reviews', { rating, comment }).then((r) => r.data);
+
+// ─── AI Speaking Partner ───────────────────────────────────────────────────
+export const sendAIPartnerTurn = (payload: {
+  text?: string;
+  audioBase64?: string;
+  audioMimeType?: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}) => api.post('/ai-partner/chat', payload).then((r) => r.data);

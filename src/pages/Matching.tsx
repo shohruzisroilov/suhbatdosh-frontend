@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { Clock, Users, RotateCcw, Star } from 'lucide-react';
+import { Clock, Users, RotateCcw, Star, Sparkles } from 'lucide-react';
+import AIPartnerModal from '../components/AIPartnerModal';
 
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -19,6 +20,7 @@ export default function Matching() {
   const t = useT();
   const started = useRef(false);
   const [elapsed, setElapsed] = useState(0);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const cancelRef = useRef(cancel);
   cancelRef.current = cancel;
@@ -83,9 +85,18 @@ export default function Matching() {
           <span className="mt__glyph"><Users size={30} /></span>
 
           <div className="mt__copy">
-            <h2 className="mt__title">{t('match.noOne')}</h2>
-            <p className="mt__desc">{t('match.noOneDesc')}</p>
+            <h2 className="mt__title">Hozircha bo'sh sherik yo'q</h2>
+            <p className="mt__desc">Kutib qolmaslik uchun AI Partner bilan speaking nutqingizni oshirishingiz va xatolaringizni tekshirishingiz mumkin!</p>
           </div>
+
+          <button
+            className="btn-primary flex items-center justify-center gap-2"
+            onClick={() => setIsAiModalOpen(true)}
+            style={{ background: 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)' }}
+          >
+            <Sparkles size={18} />
+            <span>AI Partner bilan mashq qilish</span>
+          </button>
 
           <button className="btn-secondary" onClick={startSearch}>
             <RotateCcw size={16} />
@@ -93,6 +104,7 @@ export default function Matching() {
           </button>
           <button className="btn-quiet" onClick={() => navigate('home')}>{t('common.goBack')}</button>
         </div>
+        <AIPartnerModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
         <Styles />
       </div>
     );
@@ -139,8 +151,34 @@ export default function Matching() {
           <p className="mt__hint">{others ? t('match.hintMany') : t('match.hintAlone')}</p>
         </div>
 
+        {/* AI Speaking Partner Option Button during search */}
+        <button
+          type="button"
+          onClick={() => setIsAiModalOpen(true)}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
+            border: '1px solid rgba(0, 198, 255, 0.4)',
+            color: '#00C6FF',
+            fontSize: '13px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+          }}
+        >
+          <Sparkles size={16} />
+          <span>Sherik kutilmoqdami? AI Partner bilan gaplashing 🤖</span>
+        </button>
+
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
       </div>
+
+      <AIPartnerModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
       <Styles />
     </div>
   );
