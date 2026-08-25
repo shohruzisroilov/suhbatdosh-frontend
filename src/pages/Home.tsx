@@ -3,9 +3,10 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, Compass, MessageSquare } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, Compass, MessageSquare, Users } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
+import Avatar from '../components/Avatar';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
 import DailyProgress from '../components/DailyProgress';
 import SessionRow from '../components/SessionRow';
@@ -50,6 +51,41 @@ export default function Home() {
         {/* Main Conversation-First Hero */}
         <section className="hero fade-up">
           <div className="hero__glow" />
+
+          {/* Animated 3D/Vector Audio Connection Graphic */}
+          <div className="hero__visual">
+            <div className="hero__node">
+              <Avatar name={user?.displayName || 'You'} avatarUrl={user?.avatarUrl || undefined} size={36} />
+              <span className="hero__node-glow" />
+            </div>
+
+            <div className="hero__connector">
+              <div className="hero__soundwave">
+                <span className="sw-bar bar-1" />
+                <span className="sw-bar bar-2" />
+                <span className="sw-bar bar-3" />
+                <span className="sw-bar bar-4" />
+                <span className="sw-bar bar-5" />
+              </div>
+              <div className="hero__mic-core">
+                <Mic size={16} strokeWidth={2.4} />
+              </div>
+              <div className="hero__soundwave">
+                <span className="sw-bar bar-5" />
+                <span className="sw-bar bar-4" />
+                <span className="sw-bar bar-3" />
+                <span className="sw-bar bar-2" />
+                <span className="sw-bar bar-1" />
+              </div>
+            </div>
+
+            <div className="hero__node hero__node--partner">
+              <div className="hero__partner-avatar">
+                <Users size={18} />
+              </div>
+              <span className="hero__node-pulse" />
+            </div>
+          </div>
 
           <div className="hero__top">
             <span className="hero__tag">
@@ -176,8 +212,8 @@ export default function Home() {
         .home { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
         .home__scroll {
           flex: 1; overflow-y: auto;
-          padding: var(--space-4) var(--space-4) calc(90px + env(safe-area-inset-bottom, 0px));
-          display: flex; flex-direction: column; gap: var(--space-4);
+          padding: var(--space-3) var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: var(--space-3);
         }
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
 
@@ -185,57 +221,111 @@ export default function Home() {
           position: relative; overflow: hidden;
           flex-shrink: 0;
           background: linear-gradient(145deg, #0A2540 0%, #001220 100%);
-          border: 1px solid rgba(0, 168, 255, 0.25);
-          border-radius: var(--radius-xl);
-          padding: var(--space-5) var(--space-4) var(--space-5);
-          display: flex; flex-direction: column; gap: var(--space-2);
-          box-shadow: 0 12px 36px rgba(0, 168, 255, 0.18);
+          border: 1px solid rgba(0, 168, 255, 0.28);
+          border-radius: var(--radius-lg);
+          padding: 16px 16px 16px;
+          display: flex; flex-direction: column; gap: 8px;
+          box-shadow: 0 8px 28px rgba(0, 168, 255, 0.16);
         }
         .hero__glow {
-          position: absolute; top: -50%; right: -25%; width: 280px; height: 280px;
+          position: absolute; top: -50%; right: -25%; width: 240px; height: 240px;
           border-radius: 50%;
           background: radial-gradient(circle, rgba(0, 168, 255, 0.35), transparent 70%);
           pointer-events: none;
         }
         .hero > * { position: relative; z-index: 1; }
 
+        /* Hero Graphic Header */
+        .hero__visual {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 6px 12px 10px; margin-bottom: 2px;
+          background: rgba(0, 168, 255, 0.06);
+          border-radius: var(--radius-md);
+          border: 1px dashed rgba(0, 168, 255, 0.2);
+        }
+        .hero__node { position: relative; display: flex; align-items: center; justify-content: center; }
+        .hero__node-glow {
+          position: absolute; inset: -3px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(0, 168, 255, 0.4), transparent 70%);
+          pointer-events: none;
+        }
+        .hero__partner-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: rgba(0, 168, 255, 0.15); border: 1px solid rgba(0, 168, 255, 0.4);
+          color: #38BDF8; display: flex; align-items: center; justify-content: center;
+        }
+        .hero__node-pulse {
+          position: absolute; inset: -4px; border-radius: 50%;
+          border: 1px solid rgba(0, 168, 255, 0.6);
+          animation: radarRipple 2s ease-out infinite;
+          pointer-events: none;
+        }
+        .hero__connector {
+          display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center;
+          padding: 0 10px;
+        }
+        .hero__mic-core {
+          width: 30px; height: 30px; border-radius: 50%;
+          background: var(--grad-primary); color: #FFF;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
+          flex-shrink: 0;
+        }
+        .hero__soundwave {
+          display: flex; align-items: center; gap: 2px; height: 16px;
+        }
+        .sw-bar {
+          width: 2px; height: 100%; background: #00A8FF; border-radius: 2px;
+          animation: waveBlink 1.2s ease-in-out infinite alternate;
+        }
+        .bar-1 { height: 40%; animation-delay: 0.1s; }
+        .bar-2 { height: 80%; animation-delay: 0.3s; }
+        .bar-3 { height: 100%; animation-delay: 0.2s; }
+        .bar-4 { height: 60%; animation-delay: 0.4s; }
+        .bar-5 { height: 30%; animation-delay: 0.5s; }
+
+        @keyframes waveBlink {
+          0% { transform: scaleY(0.3); opacity: 0.4; }
+          100% { transform: scaleY(1); opacity: 1; }
+        }
+
         .hero__tag {
-          display: inline-flex; align-items: center; gap: var(--space-2);
+          display: inline-flex; align-items: center; gap: 6px;
           align-self: flex-start;
-          padding: 4px 12px;
+          padding: 3px 10px;
           border-radius: var(--radius-full);
           background: rgba(0, 168, 255, 0.18);
           border: 1px solid rgba(0, 168, 255, 0.3);
           color: #38BDF8;
-          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          font-size: 11px; font-weight: var(--weight-bold);
           letter-spacing: 0.02em;
         }
         .hero__title {
           font-family: var(--font-display);
-          font-size: 22px; font-weight: var(--weight-heavy);
+          font-size: 19px; font-weight: var(--weight-heavy);
           color: #FFFFFF; letter-spacing: -0.02em;
-          margin-top: 4px;
+          margin-top: 2px;
           line-height: 1.25;
         }
         .hero__sub {
-          font-size: var(--text-sm); line-height: 1.45;
+          font-size: 12px; line-height: 1.4;
           color: rgba(255, 255, 255, 0.85);
           margin-top: 0px;
         }
         .hero__btn {
-          display: flex; align-items: center; justify-content: center; gap: var(--space-3);
-          width: 100%; min-height: 54px; margin-top: var(--space-3);
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; min-height: 46px; margin-top: 6px;
           background: var(--grad-primary); color: #FFFFFF;
           border-radius: var(--radius-md);
-          font-size: var(--text-base); font-weight: var(--weight-heavy);
+          font-size: 14px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
-          box-shadow: 0 6px 24px rgba(0, 168, 255, 0.45);
+          box-shadow: 0 4px 18px rgba(0, 168, 255, 0.4);
           transition: transform var(--t), opacity var(--t), box-shadow var(--t);
         }
-        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 3px 12px rgba(0, 168, 255, 0.3); }
+        .hero__btn:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3); }
         .hero__btn-icon {
           display: flex; align-items: center; justify-content: center;
-          width: 32px; height: 32px; border-radius: 50%;
+          width: 28px; height: 28px; border-radius: 50%;
           background: rgba(255, 255, 255, 0.2);
         }
 

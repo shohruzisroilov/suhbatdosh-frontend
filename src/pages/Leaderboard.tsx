@@ -9,45 +9,41 @@ import { Flame, Star, Trophy, Crown } from 'lucide-react';
 
 const LEVEL_CODE: Record<number, string> = { 1: 'A1', 2: 'A2', 3: 'B1', 4: 'B2', 5: 'C1', 6: 'C2' };
 
-function PodiumCard({ row, rank, me, valueText }: { row: any; rank: number; me: any; valueText: React.ReactNode }) {
-  const t = useT();
-  if (!row) return null;
-  const isMe = me && row.id === me;
-  const name = row.display_name || row.username || t('common.anonymous');
-
-  return (
-    <div className={`podium-card podium-card--${rank} ${isMe ? 'me' : ''}`}>
-      <div className="podium-card__rank">
-        {rank === 1 ? <Crown size={18} className="text-[#FFD700]" /> : `#${rank}`}
-      </div>
-      <Avatar name={name} avatarUrl={row.avatar_url} size={rank === 1 ? 52 : 44} />
-      <span className="podium-card__name">{name}</span>
-      {LEVEL_CODE[row.level] && <span className="podium-card__level">{LEVEL_CODE[row.level]}</span>}
-      <span className="podium-card__value">{valueText}</span>
-    </div>
-  );
-}
-
 function Row({ row, index, me, valueText }: { row: any; index: number; me: any; valueText: React.ReactNode }) {
   const t = useT();
   const isMe = me && row.id === me;
   const name = row.display_name || row.username || t('common.anonymous');
   const rank = index + 1;
 
+  let rankBadge = null;
+  if (rank === 1) {
+    rankBadge = <Crown size={16} className="text-[#FFD700] fill-[#FFD700]" />;
+  } else if (rank === 2) {
+    rankBadge = <span className="lb-rank-badge lb-rank-badge--2">2</span>;
+  } else if (rank === 3) {
+    rankBadge = <span className="lb-rank-badge lb-rank-badge--3">3</span>;
+  } else {
+    rankBadge = <span className="lb-rank-num">#{rank}</span>;
+  }
+
   return (
-    <div className={`lb-row ${isMe ? 'me' : ''}`}>
-      <span className="lb-rank">#{rank}</span>
-      <Avatar name={name} avatarUrl={row.avatar_url} size={38} />
+    <div className={`lb-row lb-row--rank-${rank <= 3 ? rank : 'normal'} ${isMe ? 'me' : ''}`}>
+      <div className="lb-rank-col">
+        {rankBadge}
+      </div>
+      <Avatar name={name} avatarUrl={row.avatar_url} size={40} />
       <div className="lb-row__info">
-        <span className="lb-row__name">
+        <div className="lb-row__name-line">
           <span className="lb-row__nametext">{name}</span>
           {isMe && <span className="lb-you">{t('lb.you')}</span>}
-        </span>
+        </div>
         {LEVEL_CODE[row.level] && (
           <span className="lb-row__level">{LEVEL_CODE[row.level]}</span>
         )}
       </div>
-      <span className="lb-row__value">{valueText}</span>
+      <div className="lb-row__value-col">
+        <span className="lb-row__value">{valueText}</span>
+      </div>
     </div>
   );
 }
@@ -77,11 +73,6 @@ export default function Leaderboard() {
   const mostActive = leaderboard?.mostActive || [];
   const topRated   = leaderboard?.topRated   || [];
   const activeList = tab === 'active' ? mostActive : topRated;
-
-  const top1 = activeList[0];
-  const top2 = activeList[1];
-  const top3 = activeList[2];
-  const restList = activeList.slice(3);
 
   function formatValue(row: any) {
     if (tab === 'active') {
@@ -144,29 +135,17 @@ export default function Leaderboard() {
             {[0, 1, 2, 3, 4].map(i => <SkeletonRow key={i} rank avatar={36} />)}
           </div>
         ) : activeList.length > 0 ? (
-          <>
-            {/* Top 3 Podium */}
-            <div className="podium-container">
-              {top2 && <PodiumCard row={top2} rank={2} me={user?.id} valueText={formatValue(top2)} />}
-              {top1 && <PodiumCard row={top1} rank={1} me={user?.id} valueText={formatValue(top1)} />}
-              {top3 && <PodiumCard row={top3} rank={3} me={user?.id} valueText={formatValue(top3)} />}
-            </div>
-
-            {/* Ranks 4+ */}
-            {restList.length > 0 && (
-              <div className="lb-list">
-                {restList.map((row: any, i: number) => (
-                  <Row
-                    key={row.id}
-                    row={row}
-                    index={i + 3}
-                    me={user?.id}
-                    valueText={formatValue(row)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          <div className="lb-list">
+            {activeList.map((row: any, i: number) => (
+              <Row
+                key={row.id || i}
+                row={row}
+                index={i}
+                me={user?.id}
+                valueText={formatValue(row)}
+              />
+            ))}
+          </div>
         ) : (
           <p className="lb-empty">{t(tab === 'active' ? 'lb.emptyActive' : 'lb.emptyRated')}</p>
         )}
@@ -229,69 +208,58 @@ export default function Leaderboard() {
 
         .lb-scroll {
           flex: 1; overflow-y: auto;
-          padding: 0 var(--space-4) calc(80px + env(safe-area-inset-bottom, 0px));
+          padding: 0 var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: var(--space-3);
-        }
-
-        /* Podium styling */
-        .podium-container {
-          display: flex; align-items: flex-end; justify-content: center; gap: 10px;
-          margin-top: 8px; margin-bottom: 8px;
-        }
-        .podium-card {
-          flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;
-          background: var(--bg-secondary); border: 1px solid var(--border);
-          border-radius: var(--radius-lg); padding: 12px 6px; gap: 4px;
-          position: relative;
-        }
-        .podium-card--1 {
-          border-color: rgba(255, 215, 0, 0.4);
-          background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, var(--bg-secondary) 100%);
-          transform: translateY(-8px);
-          box-shadow: 0 8px 24px rgba(255, 215, 0, 0.15);
-        }
-        .podium-card--2 { border-color: rgba(226, 232, 240, 0.25); }
-        .podium-card--3 { border-color: rgba(245, 158, 11, 0.25); }
-        .podium-card.me { border-color: var(--btn-bg); }
-
-        .podium-card__rank {
-          font-size: 11px; font-weight: var(--weight-heavy); color: var(--text-secondary);
-        }
-        .podium-card__name {
-          font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;
-        }
-        .podium-card__level {
-          font-size: 9px; font-weight: var(--weight-bold); color: var(--btn-bg); background: var(--btn-bg-soft);
-          padding: 1px 5px; border-radius: var(--radius-full);
-        }
-        .podium-card__value {
-          font-size: 11px; font-weight: var(--weight-heavy); color: var(--accent); margin-top: 2px;
         }
 
         .lb-list { display: flex; flex-direction: column; gap: 8px; }
 
         .lb-row {
-          display: flex; align-items: center; gap: var(--space-3);
-          padding: 10px 14px;
+          display: flex; align-items: center; gap: 12px;
+          padding: 12px 14px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
+          transition: transform 0.15s ease, border-color 0.15s ease;
         }
-        .lb-row.me { border-color: var(--btn-bg); background: rgba(0, 168, 255, 0.06); }
-        .lb-rank {
-          min-width: 28px; font-size: 12px; font-weight: var(--weight-heavy);
-          color: var(--text-tertiary); text-align: center;
+        .lb-row.me { border-color: var(--btn-bg) !important; background: rgba(0, 168, 255, 0.08) !important; }
+
+        .lb-row--rank-1 {
+          border-color: rgba(255, 215, 0, 0.45);
+          background: linear-gradient(90deg, rgba(255, 215, 0, 0.12) 0%, var(--bg-secondary) 80%);
+          box-shadow: 0 4px 16px rgba(255, 215, 0, 0.12);
         }
-        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .lb-row__name {
-          font-weight: var(--weight-bold); font-size: 13px;
-          display: flex; align-items: center; gap: 6px;
-          min-width: 0;
+        .lb-row--rank-2 {
+          border-color: rgba(226, 232, 240, 0.3);
+          background: linear-gradient(90deg, rgba(226, 232, 240, 0.08) 0%, var(--bg-secondary) 80%);
+        }
+        .lb-row--rank-3 {
+          border-color: rgba(245, 158, 11, 0.3);
+          background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, var(--bg-secondary) 80%);
+        }
+
+        .lb-rank-col {
+          min-width: 28px; display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .lb-rank-num {
+          font-size: 13px; font-weight: var(--weight-heavy); color: var(--text-tertiary);
+        }
+        .lb-rank-badge {
+          display: flex; align-items: center; justify-content: center;
+          width: 22px; height: 22px; border-radius: 50%;
+          font-size: 11px; font-weight: var(--weight-heavy);
+        }
+        .lb-rank-badge--2 { background: rgba(226, 232, 240, 0.2); color: #E2E8F0; border: 1px solid rgba(226, 232, 240, 0.4); }
+        .lb-rank-badge--3 { background: rgba(245, 158, 11, 0.2); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .lb-row__name-line {
+          display: flex; align-items: center; gap: 6px; min-width: 0;
         }
         .lb-row__nametext {
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          min-width: 0;
+          font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
         }
         .lb-you {
           font-size: 9px; font-weight: var(--weight-bold);
@@ -299,8 +267,10 @@ export default function Leaderboard() {
           background: var(--btn-bg); color: var(--btn-text);
           flex-shrink: 0;
         }
-        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary); }
-        .lb-row__value { font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary); white-space: nowrap; }
+        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--btn-bg); }
+
+        .lb-row__value-col { flex-shrink: 0; text-align: right; }
+        .lb-row__value { font-size: 13px; font-weight: var(--weight-heavy); color: var(--accent); white-space: nowrap; }
 
         .lb-empty {
           font-size: var(--text-sm); color: var(--text-secondary);
