@@ -5,25 +5,39 @@ import { useT } from '../i18n';
 import { selectionHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import SkeletonRow from '../components/SkeletonRow';
-import { Flame, Star } from 'lucide-react';
+import { Flame, Star, Trophy, Crown } from 'lucide-react';
 
 const LEVEL_CODE: Record<number, string> = { 1: 'A1', 2: 'A2', 3: 'B1', 4: 'B2', 5: 'C1', 6: 'C2' };
-function Rank({ i }: { i: number }) {
-  const rank = i + 1;
-  if (rank === 1) return <span className="lb-rank lb-rank--1">🥇 1</span>;
-  if (rank === 2) return <span className="lb-rank lb-rank--2">🥈 2</span>;
-  if (rank === 3) return <span className="lb-rank lb-rank--3">🥉 3</span>;
-  return <span className="lb-rank">#{rank}</span>;
+
+function PodiumCard({ row, rank, me, valueText }: { row: any; rank: number; me: any; valueText: React.ReactNode }) {
+  const t = useT();
+  if (!row) return null;
+  const isMe = me && row.id === me;
+  const name = row.display_name || row.username || t('common.anonymous');
+
+  return (
+    <div className={`podium-card podium-card--${rank} ${isMe ? 'me' : ''}`}>
+      <div className="podium-card__rank">
+        {rank === 1 ? <Crown size={18} className="text-[#FFD700]" /> : `#${rank}`}
+      </div>
+      <Avatar name={name} avatarUrl={row.avatar_url} size={rank === 1 ? 52 : 44} />
+      <span className="podium-card__name">{name}</span>
+      {LEVEL_CODE[row.level] && <span className="podium-card__level">{LEVEL_CODE[row.level]}</span>}
+      <span className="podium-card__value">{valueText}</span>
+    </div>
+  );
 }
 
 function Row({ row, index, me, valueText }: { row: any; index: number; me: any; valueText: React.ReactNode }) {
   const t = useT();
   const isMe = me && row.id === me;
   const name = row.display_name || row.username || t('common.anonymous');
+  const rank = index + 1;
+
   return (
     <div className={`lb-row ${isMe ? 'me' : ''}`}>
-      <Rank i={index} />
-      <Avatar name={name} avatarUrl={row.avatar_url} size={36} />
+      <span className="lb-rank">#{rank}</span>
+      <Avatar name={name} avatarUrl={row.avatar_url} size={38} />
       <div className="lb-row__info">
         <span className="lb-row__name">
           <span className="lb-row__nametext">{name}</span>
@@ -62,25 +76,32 @@ export default function Leaderboard() {
 
   const mostActive = leaderboard?.mostActive || [];
   const topRated   = leaderboard?.topRated   || [];
+  const activeList = tab === 'active' ? mostActive : topRated;
 
-  function formatTime(minutes: number) {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return t('lb.minutesShort', { n: m });
-    if (m === 0) return t('lb.hoursShort', { n: h });
-    return t('lb.hm', { h, m });
-  }
-  function chats(n: number) {
-    return t(n === 1 ? 'lb.chat' : 'lb.chats', { n });
-  }
-  function ratings(n: number) {
-    return t(n === 1 ? 'lb.rating' : 'lb.ratings', { n });
+  const top1 = activeList[0];
+  const top2 = activeList[1];
+  const top3 = activeList[2];
+  const restList = activeList.slice(3);
+
+  function formatValue(row: any) {
+    if (tab === 'active') {
+      const mins = row.total_minutes || 0;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      const timeStr = h === 0 ? `${m}m` : `${h}h ${m}m`;
+      return <>{timeStr}</>;
+    } else {
+      return <>{Number(row.avg_rating || 0).toFixed(1)} ★</>;
+    }
   }
 
   return (
     <div className="lb">
       <div className="lb-head">
-        <h1 className="lb-title">{t('lb.title')}</h1>
+        <div className="flex items-center gap-2">
+          <Trophy className="text-[#FFD700]" size={24} />
+          <h1 className="lb-title">{t('lb.title')}</h1>
+        </div>
         <p className="lb-sub">{t('lb.subtitle')}</p>
       </div>
 
@@ -97,14 +118,14 @@ export default function Leaderboard() {
         ))}
       </div>
 
-      {/* Tabs */}
+      {/* Category Tabs */}
       <div className="lb-tabs">
         <button
           type="button"
           className={`lb-tab ${tab === 'active' ? 'on' : ''}`}
           onClick={() => { if (tab !== 'active') { selectionHaptic(); setTab('active'); } }}
         >
-          <Flame size={15} />
+          <Flame size={15} className="text-[#FF9F0A]" />
           <span>{t('lb.mostActive')}</span>
         </button>
         <button
@@ -112,7 +133,7 @@ export default function Leaderboard() {
           className={`lb-tab ${tab === 'rated' ? 'on' : ''}`}
           onClick={() => { if (tab !== 'rated') { selectionHaptic(); setTab('rated'); } }}
         >
-          <Star size={15} />
+          <Star size={15} className="text-[#F59E0B]" />
           <span>{t('lb.topRated')}</span>
         </button>
       </div>
@@ -122,48 +143,32 @@ export default function Leaderboard() {
           <div className="lb-list">
             {[0, 1, 2, 3, 4].map(i => <SkeletonRow key={i} rank avatar={36} />)}
           </div>
-        ) : tab === 'active' ? (
-          mostActive.length ? (
-            <div className="lb-list">
-              {mostActive.map((row: any, i: number) => (
-                <Row
-                  key={row.id}
-                  row={row}
-                  index={i}
-                  me={user?.id}
-                  valueText={
-                    <>
-                      <strong>{formatTime(row.total_minutes)}</strong>
-                      {' · '}{chats(row.session_count)}
-                    </>
-                  }
-                />
-              ))}
+        ) : activeList.length > 0 ? (
+          <>
+            {/* Top 3 Podium */}
+            <div className="podium-container">
+              {top2 && <PodiumCard row={top2} rank={2} me={user?.id} valueText={formatValue(top2)} />}
+              {top1 && <PodiumCard row={top1} rank={1} me={user?.id} valueText={formatValue(top1)} />}
+              {top3 && <PodiumCard row={top3} rank={3} me={user?.id} valueText={formatValue(top3)} />}
             </div>
-          ) : (
-            <p className="lb-empty">{t('lb.emptyActive')}</p>
-          )
+
+            {/* Ranks 4+ */}
+            {restList.length > 0 && (
+              <div className="lb-list">
+                {restList.map((row: any, i: number) => (
+                  <Row
+                    key={row.id}
+                    row={row}
+                    index={i + 3}
+                    me={user?.id}
+                    valueText={formatValue(row)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
-          topRated.length ? (
-            <div className="lb-list">
-              {topRated.map((row: any, i: number) => (
-                <Row
-                  key={row.id}
-                  row={row}
-                  index={i}
-                  me={user?.id}
-                  valueText={
-                    <>
-                      <strong className="num">{Number(row.avg_rating).toFixed(1)}</strong>
-                      {' · '}{ratings(row.rating_count)}
-                    </>
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="lb-empty">{t('lb.emptyRated')}</p>
-          )
+          <p className="lb-empty">{t(tab === 'active' ? 'lb.emptyActive' : 'lb.emptyRated')}</p>
         )}
         <div className="lb-footer" />
       </div>
@@ -174,103 +179,114 @@ export default function Leaderboard() {
           height: 100%; overflow: hidden; background: var(--bg);
         }
         .lb-head {
-          padding: calc(var(--space-4) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
+          padding: calc(var(--space-4) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-2);
         }
-        .lb-title { font-size: var(--text-lg); font-weight: var(--weight-heavy); letter-spacing: -0.5px; }
-        .lb-sub { font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-0-5); }
+        .lb-title { font-size: 22px; font-weight: var(--weight-heavy); letter-spacing: -0.5px; }
+        .lb-sub { font-size: var(--text-xs); color: var(--text-secondary); margin-top: 2px; }
 
         .lb-scope {
           display: flex; gap: var(--space-1-5);
-          margin: 0 var(--space-4) var(--space-3);
+          margin: 0 var(--space-4) var(--space-2);
         }
         .lb-scope-btn {
-          flex: 1; padding: var(--space-1-5) var(--space-2);
-          font-size: var(--text-sm); font-weight: var(--weight-bold);
+          flex: 1; padding: 6px var(--space-2);
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
           color: var(--text-secondary);
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-full, 999px);
+          border-radius: var(--radius-full);
           transition: all 0.15s;
         }
         .lb-scope-btn.on {
-          color: var(--btn-text); background: var(--btn-bg); border-color: var(--btn-bg);
+          color: #FFFFFF; background: var(--btn-bg); border-color: var(--btn-bg);
+          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
         }
-        .lb-scope-btn:active { opacity: 0.7; }
+        .lb-scope-btn:active { opacity: 0.8; }
 
         .lb-tabs {
           display: flex; gap: var(--space-1);
           margin: 0 var(--space-4) var(--space-3);
-          padding: var(--space-1);
+          padding: 3px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
         }
         .lb-tab {
-          flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5, 6px);
-          padding: var(--space-2-5, 10px) var(--space-2);
-          font-size: var(--text-sm); font-weight: var(--weight-bold);
+          flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+          padding: 8px var(--space-2);
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
           color: var(--text-secondary);
           border: none;
-          border-radius: calc(var(--radius-md) - 4px);
+          border-radius: calc(var(--radius-md) - 3px);
           transition: all var(--t);
           cursor: pointer;
         }
         .lb-tab.on {
-          background: var(--bg);
+          background: var(--surface-2);
           color: var(--text-primary);
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          box-shadow: var(--shadow-sm);
         }
-        .lb-tab:active { opacity: 0.7; }
 
         .lb-scroll {
           flex: 1; overflow-y: auto;
-          padding: 0 var(--space-4) var(--space-2);
-          display: flex; flex-direction: column; gap: var(--space-1-5);
+          padding: 0 var(--space-4) calc(80px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: var(--space-3);
         }
-        .lb-loading { text-align: center; color: var(--text-secondary); padding: var(--space-7) 0; font-size: var(--text-base); }
 
-        .lb-list { display: flex; flex-direction: column; gap: var(--space-1-5); }
+        /* Podium styling */
+        .podium-container {
+          display: flex; align-items: flex-end; justify-content: center; gap: 10px;
+          margin-top: 8px; margin-bottom: 8px;
+        }
+        .podium-card {
+          flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;
+          background: var(--bg-secondary); border: 1px solid var(--border);
+          border-radius: var(--radius-lg); padding: 12px 6px; gap: 4px;
+          position: relative;
+        }
+        .podium-card--1 {
+          border-color: rgba(255, 215, 0, 0.4);
+          background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, var(--bg-secondary) 100%);
+          transform: translateY(-8px);
+          box-shadow: 0 8px 24px rgba(255, 215, 0, 0.15);
+        }
+        .podium-card--2 { border-color: rgba(226, 232, 240, 0.25); }
+        .podium-card--3 { border-color: rgba(245, 158, 11, 0.25); }
+        .podium-card.me { border-color: var(--btn-bg); }
+
+        .podium-card__rank {
+          font-size: 11px; font-weight: var(--weight-heavy); color: var(--text-secondary);
+        }
+        .podium-card__name {
+          font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;
+        }
+        .podium-card__level {
+          font-size: 9px; font-weight: var(--weight-bold); color: var(--btn-bg); background: var(--btn-bg-soft);
+          padding: 1px 5px; border-radius: var(--radius-full);
+        }
+        .podium-card__value {
+          font-size: 11px; font-weight: var(--weight-heavy); color: var(--accent); margin-top: 2px;
+        }
+
+        .lb-list { display: flex; flex-direction: column; gap: 8px; }
 
         .lb-row {
           display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3) var(--space-3);
+          padding: 10px 14px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
         }
-        .lb-row.me { border-color: var(--btn-bg); }
+        .lb-row.me { border-color: var(--btn-bg); background: rgba(0, 168, 255, 0.06); }
         .lb-rank {
-          min-width: 36px; height: 28px;
-          display: flex; align-items: center; justify-content: center; gap: 3px;
-          font-size: var(--text-xs); font-weight: var(--weight-heavy);
-          color: var(--text-secondary);
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm, 8px);
-          flex-shrink: 0;
+          min-width: 28px; font-size: 12px; font-weight: var(--weight-heavy);
+          color: var(--text-tertiary); text-align: center;
         }
-        .lb-rank--1 {
-          background: linear-gradient(135deg, #f59e0b, #d97706);
-          border-color: #f59e0b;
-          color: #ffffff;
-          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
-        }
-        .lb-rank--2 {
-          background: linear-gradient(135deg, #9ca3af, #6b7280);
-          border-color: #9ca3af;
-          color: #ffffff;
-          box-shadow: 0 2px 8px rgba(156, 163, 175, 0.3);
-        }
-        .lb-rank--3 {
-          background: linear-gradient(135deg, #b45309, #78350f);
-          border-color: #b45309;
-          color: #ffffff;
-          box-shadow: 0 2px 8px rgba(180, 83, 9, 0.3);
-        }
-        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: var(--space-0-5); min-width: 0; }
+        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
         .lb-row__name {
-          font-weight: var(--weight-bold); font-size: var(--text-base);
-          display: flex; align-items: center; gap: var(--space-1-5);
+          font-weight: var(--weight-bold); font-size: 13px;
+          display: flex; align-items: center; gap: 6px;
           min-width: 0;
         }
         .lb-row__nametext {
@@ -278,14 +294,13 @@ export default function Leaderboard() {
           min-width: 0;
         }
         .lb-you {
-          font-size: var(--text-xs); font-weight: var(--weight-bold); letter-spacing: 0.3px;
-          padding: var(--space-0-5) var(--space-1-5); border-radius: 999px;
+          font-size: 9px; font-weight: var(--weight-bold);
+          padding: 1px 6px; border-radius: 999px;
           background: var(--btn-bg); color: var(--btn-text);
           flex-shrink: 0;
         }
-        .lb-row__level { font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--text-secondary); }
-        .lb-row__value { font-size: var(--text-sm); color: var(--text-secondary); white-space: nowrap; }
-        .lb-row__value strong { color: var(--text-primary); font-weight: var(--weight-bold); }
+        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary); }
+        .lb-row__value { font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary); white-space: nowrap; }
 
         .lb-empty {
           font-size: var(--text-sm); color: var(--text-secondary);
@@ -298,3 +313,4 @@ export default function Leaderboard() {
     </div>
   );
 }
+

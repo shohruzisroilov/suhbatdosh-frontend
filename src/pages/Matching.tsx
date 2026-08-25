@@ -104,10 +104,12 @@ export default function Matching() {
     <div className="mt">
       <div className="mt__body scale-in">
         <div className="mt__dial">
+          <span className="mt__ripple" aria-hidden="true" />
+          <span className="mt__ripple mt__ripple--2" aria-hidden="true" />
           <span className="mt__scale" aria-hidden="true"><i /></span>
           <span className="mt__hole" aria-hidden="true" />
           <span className="mt__core">
-            {user?.level ? t(`level.${user.level}`) : 'EN'}
+            <span className="mt__core-level">{user?.level ? t(`level.${user.level}`) : 'EN'}</span>
           </span>
         </div>
 
@@ -159,12 +161,19 @@ const Styles = React.memo(function Styles() {
       }
 
       .mt__dial {
-        position: relative; width: 180px; height: 180px; flex-shrink: 0;
+        position: relative; width: 190px; height: 190px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
       }
+      .mt__ripple {
+        position: absolute; inset: 0; border-radius: 50%;
+        border: 1.5px solid var(--btn-bg); opacity: 0;
+        animation: radarRipple 2.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+      }
+      .mt__ripple--2 { animation-delay: 1.4s; }
+
       .mt__scale, .mt__hole { position: absolute; border-radius: 50%; }
       .mt__scale {
-        inset: 0;
+        inset: 12px;
         background: var(--border-strong);
         -webkit-mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
                 mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
@@ -175,19 +184,21 @@ const Styles = React.memo(function Styles() {
           transparent 0deg 200deg,
           var(--btn-bg) 352deg,
           transparent 356deg);
-        animation: dialScan 3.4s linear infinite;
+        animation: dialScan 3s linear infinite;
         will-change: transform;
       }
-      .mt__hole { width: 89%; height: 89%; background: var(--bg); }
+      .mt__hole { width: 82%; height: 82%; background: var(--bg); }
       .mt__core {
         position: relative; z-index: 1;
-        width: 84px; height: 84px; border-radius: 50%;
+        width: 88px; height: 88px; border-radius: 50%;
         background: var(--grad-primary); color: var(--btn-text);
-        display: flex; align-items: center; justify-content: center;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-shadow: 0 0 35px rgba(0, 168, 255, 0.55), 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+      .mt__core-level {
         font-family: var(--font-display);
-        font-size: var(--text-md); font-weight: var(--weight-heavy);
-        letter-spacing: -0.02em;
-        box-shadow: 0 0 30px rgba(42, 171, 238, 0.45), 0 8px 24px rgba(0, 0, 0, 0.45);
+        font-size: 22px; font-weight: var(--weight-heavy);
+        letter-spacing: -0.02em; line-height: 1;
       }
       @keyframes dialScan { to { transform: rotate(360deg); } }
 
@@ -197,7 +208,7 @@ const Styles = React.memo(function Styles() {
         background: var(--surface-2); color: var(--text-secondary);
       }
 
-      .mt__copy { display: flex; flex-direction: column; gap: var(--space-2); }
+      .mt__copy { display: flex; flex-direction: column; gap: var(--space-1.5); }
       .mt__title {
         font-family: var(--font-display);
         font-size: var(--text-lg); font-weight: var(--weight-heavy);
@@ -250,3 +261,4 @@ const Styles = React.memo(function Styles() {
     `}</style>
   );
 });
+
