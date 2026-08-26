@@ -113,9 +113,28 @@ export default function Home() {
           </div>
         </section>
 
-
-
         <div className="home__list stagger">
+          {/* Kunlik hisoblagich (Bepul daqiqalar) */}
+          {!user?.isPremium && (
+            <DailyProgress
+              dailyMinutes={user?.dailyMinutes || 0}
+              dailyLimit={user?.dailyLimit || 0}
+              onUpgrade={() => navigate('premium', { from: 'home' })}
+            />
+          )}
+
+          {/* Premium olish tugmasi / banner */}
+          {showPremium && (
+            <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
+              <span className="row__ico row__ico--accent"><Star size={18} /></span>
+              <span className="row__text">
+                <span className="row__title">{t('home.getPremium')}</span>
+                <span className="row__sub">{t('home.premiumSub')}</span>
+              </span>
+              <ChevronRight size={18} className="row__arrow" />
+            </button>
+          )}
+
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
 
@@ -170,28 +189,6 @@ export default function Home() {
               </button>
             </div>
           </div>
-
-          {/* Kunlik hisoblagich */}
-          {!user?.isPremium && (
-            <DailyProgress
-              dailyMinutes={user?.dailyMinutes || 0}
-              dailyLimit={user?.dailyLimit || 0}
-              onUpgrade={() => navigate('premium', { from: 'home' })}
-            />
-          )}
-
-
-
-          {showPremium && (
-            <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
-              <span className="row__ico row__ico--accent"><Star size={18} /></span>
-              <span className="row__text">
-                <span className="row__title">{t('home.getPremium')}</span>
-                <span className="row__sub">{t('home.premiumSub')}</span>
-              </span>
-              <ChevronRight size={18} className="row__arrow" />
-            </button>
-          )}
         </div>
 
         {/* Foydalanuvchilar fikri va Review qoldirish bo'limi */}
