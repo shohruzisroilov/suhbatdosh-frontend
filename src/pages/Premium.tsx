@@ -3,9 +3,9 @@ import { useT, useLang } from '../i18n';
 import { getPremiumPlans, createStarsInvoice, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { notifyHaptic, tapHaptic } from '../utils/haptics';
-import { ArrowLeft, ArrowRight, Star, Zap, Check, PartyPopper } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Star, Zap, Check, PartyPopper, CreditCard, Copy } from 'lucide-react';
 
-const AMOUNT_BY_LANG: Record<string, string> = { uz: "25 000 so'm", ru: '25 000 сум', en: "25 000 so'm" };
+const AMOUNT_BY_LANG: Record<string, string> = { uz: "$2 (26 000 so'm)", ru: '$2 (26 000 сум)', en: "$2 (26 000 so'm)" };
 
 export default function Premium() {
   const t = useT();
@@ -154,20 +154,38 @@ export default function Premium() {
 
             <div className="premium-divider"><span>{t('pm.orCard')}</span></div>
 
-            <div className="premium-card">
-              <div className="premium-row">
-                <span>{t('pm.cardNumber')}</span>
-                <button className="premium-copy" onClick={handleCopy}>
-                  {copied ? t('pm.copied') : '9860 1901 1079 9466'}
-                </button>
-              </div>
-              <div className="premium-row">
-                <span>{t('pm.name')}</span>
-                <span className="premium-val">Shohruz Isroilov</span>
-              </div>
-              <div className="premium-row">
-                <span>{t('pm.amount')}</span>
-                <span className="premium-val">{amount}</span>
+            {/* Visual Bank Card Component */}
+            <div className="card-payment-box">
+              <div className="bank-card">
+                <div className="bank-card__top">
+                  <div className="bank-card__chip">
+                    <CreditCard size={22} className="bank-card__chip-icon" />
+                    <span className="bank-card__type">Uzcard / Humo</span>
+                  </div>
+                  <span className="bank-card__badge">{amount}</span>
+                </div>
+
+                <div className="bank-card__number-wrap">
+                  <span className="bank-card__label">{t('pm.cardNumber')}</span>
+                  <div className="bank-card__number-row">
+                    <span className="bank-card__number">9860 1901 1079 9466</span>
+                    <button type="button" className={`bank-card__copy-btn ${copied ? 'copied' : ''}`} onClick={handleCopy}>
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copied ? t('pm.copied') : 'Nusxalash'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bank-card__bottom">
+                  <div className="bank-card__info">
+                    <span className="bank-card__label">{t('pm.name')}</span>
+                    <span className="bank-card__val">Shohruz Isroilov</span>
+                  </div>
+                  <div className="bank-card__info bank-card__info--right">
+                    <span className="bank-card__label">{t('pm.amount')}</span>
+                    <span className="bank-card__val bank-card__val--highlight">{amount}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -327,25 +345,81 @@ export default function Premium() {
           content: ''; flex: 1; height: 1px; background: var(--border);
         }
 
-        .premium-card {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-md);
-          overflow: hidden;
+        /* Bank Card Styling */
+        .card-payment-box {
+          width: 100%;
         }
-        .premium-row {
-          display: flex; justify-content: space-between; align-items: center;
-          padding: var(--space-4) var(--space-4); font-size: var(--text-base);
-          border-bottom: 1px solid var(--border);
+        .bank-card {
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: var(--radius-lg, 16px);
+          padding: var(--space-4);
+          color: #ffffff;
+          display: flex; flex-direction: column; gap: var(--space-3);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+          position: relative; overflow: hidden;
         }
-        .premium-row:last-child { border-bottom: none; }
-        .premium-row span:first-child { color: var(--text-secondary); }
-        .premium-val  { font-weight: var(--weight-bold); }
-        .premium-copy {
-          font-weight: var(--weight-bold); color: var(--btn-bg);
-          font-size: var(--text-base); transition: opacity var(--t);
+        .bank-card::before {
+          content: '';
+          position: absolute; top: -50%; right: -50%; width: 200px; height: 200px;
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+          pointer-events: none;
         }
-        .premium-copy:active { opacity: 0.6; }
+        .bank-card__top {
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .bank-card__chip {
+          display: flex; align-items: center; gap: 6px;
+          color: #38bdf8; font-size: 11px; font-weight: var(--weight-bold);
+          letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .bank-card__chip-icon { color: #38bdf8; }
+        .bank-card__badge {
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(4px);
+          padding: 3px 10px; border-radius: 999px;
+          font-size: 11px; font-weight: var(--weight-heavy);
+          color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .bank-card__number-wrap {
+          display: flex; flex-direction: column; gap: 4px;
+        }
+        .bank-card__label {
+          font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+          color: rgba(255, 255, 255, 0.6); font-weight: var(--weight-bold);
+        }
+        .bank-card__number-row {
+          display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .bank-card__number {
+          font-family: monospace; font-size: 17px; font-weight: 700;
+          letter-spacing: 1.5px; color: #ffffff;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .bank-card__copy-btn {
+          display: inline-flex; align-items: center; gap: 4px;
+          background: #00a8ff; color: #ffffff;
+          border: none; padding: 5px 10px; border-radius: 8px;
+          font-size: 11px; font-weight: var(--weight-bold);
+          cursor: pointer; transition: all 0.15s ease;
+          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.4);
+        }
+        .bank-card__copy-btn:active { transform: scale(0.95); opacity: 0.9; }
+        .bank-card__copy-btn.copied {
+          background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+        .bank-card__bottom {
+          display: flex; align-items: flex-end; justify-content: space-between;
+          padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bank-card__info { display: flex; flex-direction: column; gap: 2px; }
+        .bank-card__info--right { align-items: flex-end; }
+        .bank-card__val {
+          font-size: 13px; font-weight: var(--weight-bold); color: #ffffff;
+        }
+        .bank-card__val--highlight {
+          color: #38bdf8; font-weight: var(--weight-heavy); font-size: 14px;
+        }
 
         .premium-steps {
           display: flex; flex-direction: column; gap: var(--space-2-5);
@@ -375,3 +449,4 @@ export default function Premium() {
     </div>
   );
 }
+
