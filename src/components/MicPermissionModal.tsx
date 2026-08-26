@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { MicOff, Settings, RefreshCw, X, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { MicOff, Settings, RefreshCw, X, CheckCircle2 } from 'lucide-react';
 import { selectionHaptic, tapHaptic, notifyHaptic } from '../utils/haptics';
 
 export default function MicPermissionModal() {
@@ -13,7 +14,7 @@ export default function MicPermissionModal() {
   if (!micErrorModal || !micErrorModal.isOpen) return null;
 
   const handleClose = () => {
-    tapHaptic();
+    tapHaptic('light');
     setMicErrorModal(null);
   };
 
@@ -26,7 +27,7 @@ export default function MicPermissionModal() {
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
-      
+
       notifyHaptic('success');
       setPermissionGranted(true);
       setTimeout(() => {
@@ -40,225 +41,299 @@ export default function MicPermissionModal() {
     }
   };
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(10px)',
-        animation: 'fadeIn 0.25s ease-out',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '380px',
-          background: 'linear-[#1c2430], #131922',
-          backgroundColor: 'var(--card-bg, #1a222d)',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(239, 68, 68, 0.15)',
-          padding: '24px',
-          color: '#ffffff',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        {/* Close Icon */}
+  const modalContent = (
+    <div className="mic-modal-overlay" onClick={handleClose}>
+      <div className="mic-modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Close Icon Button */}
         <button
+          type="button"
+          className="mic-modal-close-btn"
           onClick={handleClose}
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'rgba(255, 255, 255, 0.6)',
-            cursor: 'pointer',
-          }}
           aria-label="Close"
         >
           <X size={18} />
         </button>
 
         {/* Animated Badge Icon */}
-        <div
-          style={{
-            position: 'relative',
-            marginTop: '8px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: '76px',
-              height: '76px',
-              borderRadius: '50%',
-              background: permissionGranted
-                ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.4))'
-                : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.3))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: permissionGranted
-                ? '0 0 25px rgba(34, 197, 94, 0.4)'
-                : '0 0 25px rgba(239, 68, 68, 0.3)',
-            }}
-          >
+        <div className="mic-modal-badge-wrapper">
+          <div className={`mic-modal-badge ${permissionGranted ? 'mic-modal-badge--success' : 'mic-modal-badge--error'}`}>
             {permissionGranted ? (
-              <CheckCircle2 size={38} color="#22c55e" />
+              <CheckCircle2 size={36} />
             ) : (
-              <MicOff size={36} color="#ef4444" />
+              <MicOff size={34} />
             )}
           </div>
         </div>
 
         {/* Title */}
-        <h3
-          style={{
-            fontSize: '20px',
-            fontWeight: 700,
-            marginBottom: '8px',
-            letterSpacing: '-0.01em',
-            color: '#ffffff',
-          }}
-        >
-          {permissionGranted
-            ? 'Mikrofon ulandi!'
-            : (t('mic.modalTitle') !== 'mic.modalTitle' ? t('mic.modalTitle') : 'Mikrofon ruxsati zarur')}
+        <h3 className="mic-modal-title">
+          {permissionGranted ? t('mic.grantedTitle') : t('mic.modalTitle')}
         </h3>
 
         {/* Description */}
-        <p
-          style={{
-            fontSize: '14px',
-            lineHeight: 1.5,
-            color: 'rgba(255, 255, 255, 0.75)',
-            marginBottom: '20px',
-            padding: '0 8px',
-          }}
-        >
+        <p className="mic-modal-desc">
           {permissionGranted
-            ? 'Ruxsat muvaffaqiyatli berildi. Endi davom etishingiz mumkin.'
-            : micErrorModal.errorMsg ||
-              'Jonli muloqot va ovozli mashq qilish uchun mikrofonga ruxsat bering.'}
+            ? t('mic.grantedDesc')
+            : micErrorModal.errorMsg || t('mic.modalDesc')}
         </p>
 
-        {/* Instructions Box */}
+        {/* Instructions Steps Card */}
         {!permissionGranted && (
-          <div
-            style={{
-              width: '100%',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '14px 16px',
-              marginBottom: '24px',
-              textAlign: 'left',
-              fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.85)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: '#38bdf8',
-              }}
-            >
+          <div className="mic-modal-steps-card">
+            <div className="mic-modal-steps-header">
               <Settings size={15} />
-              <span>Ruxsat berish tartibi:</span>
+              <span>{t('mic.instructionsTitle')}</span>
             </div>
-            <ol
-              style={{
-                margin: 0,
-                paddingLeft: '18px',
-                lineHeight: 1.6,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-              }}
-            >
-              <li>Telegram sozlamalari ⚙️ <b>Privacy & Security</b> ga kiring.</li>
-              <li><b>Microphone</b> bo'limidan berilgan ruxsatni yoqing.</li>
-            </ol>
+            <div className="mic-modal-step-item">
+              <span className="mic-modal-step-num">1</span>
+              <span className="mic-modal-step-text">{t('mic.step1')}</span>
+            </div>
+            <div className="mic-modal-step-item">
+              <span className="mic-modal-step-num">2</span>
+              <span className="mic-modal-step-text">{t('mic.step2')}</span>
+            </div>
           </div>
         )}
 
         {/* Buttons */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="mic-modal-actions">
           {!permissionGranted && (
             <button
+              type="button"
+              className="mic-modal-btn mic-modal-btn--primary"
               onClick={handleTryAgain}
               disabled={isRetrying}
-              style={{
-                width: '100%',
-                padding: '14px 20px',
-                borderRadius: '14px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                color: '#ffffff',
-                fontSize: '15px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 8px 20px rgba(37, 99, 235, 0.35)',
-                transition: 'transform 0.15s ease, opacity 0.15s ease',
-              }}
             >
               <RefreshCw
                 size={18}
-                style={{
-                  animation: isRetrying ? 'spin 1s linear infinite' : 'none',
-                }}
+                className={isRetrying ? 'spin-anim' : ''}
               />
-              <span>{isRetrying ? 'Tekshirilmoqda…' : 'Qayta urinish'}</span>
+              <span>{isRetrying ? t('mic.checking') : t('mic.tryAgain')}</span>
             </button>
           )}
 
           <button
+            type="button"
+            className="mic-modal-btn mic-modal-btn--secondary"
             onClick={handleClose}
-            style={{
-              width: '100%',
-              padding: '12px 20px',
-              borderRadius: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              background: 'transparent',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
           >
-            Yopish
+            {t('mic.close')}
           </button>
         </div>
       </div>
+
+      <style>{`
+        .mic-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(5, 8, 15, 0.78);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          animation: micFadeIn 0.22s ease-out;
+        }
+
+        @keyframes micFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .mic-modal-card {
+          width: 100%;
+          max-width: 380px;
+          background: linear-gradient(150deg, #182232 0%, #0f1622 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(239, 68, 68, 0.12);
+          padding: 26px 22px;
+          color: #ffffff;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          animation: micPopUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes micPopUp {
+          from { opacity: 0; transform: scale(0.92) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .mic-modal-close-btn {
+          position: absolute;
+          top: 18px; right: 18px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          width: 34px; height: 34px;
+          display: flex; align-items: center; justify-content: center;
+          color: rgba(255, 255, 255, 0.6);
+          cursor: pointer;
+          transition: background 0.15s, color 0.15s;
+        }
+        .mic-modal-close-btn:active {
+          background: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+        }
+
+        .mic-modal-badge-wrapper {
+          margin-top: 4px;
+          margin-bottom: 18px;
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .mic-modal-badge {
+          width: 76px; height: 76px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          position: relative;
+        }
+        .mic-modal-badge--error {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(220, 38, 38, 0.45));
+          border: 1.5px solid rgba(239, 68, 68, 0.4);
+          color: #f87171;
+          box-shadow: 0 0 30px rgba(239, 68, 68, 0.35);
+          animation: micPulseRed 2s ease-in-out infinite;
+        }
+        .mic-modal-badge--success {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(16, 185, 129, 0.45));
+          border: 1.5px solid rgba(34, 197, 94, 0.4);
+          color: #4ade80;
+          box-shadow: 0 0 30px rgba(34, 197, 94, 0.35);
+        }
+
+        @keyframes micPulseRed {
+          0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+          50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.55); }
+        }
+
+        .mic-modal-title {
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 8px;
+          letter-spacing: -0.3px;
+          color: #ffffff;
+        }
+
+        .mic-modal-desc {
+          font-size: 13.5px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.7);
+          margin-bottom: 20px;
+          padding: 0 4px;
+        }
+
+        .mic-modal-steps-card {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.04);
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 14px 16px;
+          margin-bottom: 22px;
+          text-align: left;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .mic-modal-steps-header {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #38bdf8;
+          margin-bottom: 2px;
+        }
+
+        .mic-modal-step-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.85);
+          line-height: 1.45;
+        }
+
+        .mic-modal-step-num {
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          background: rgba(56, 189, 248, 0.15);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          color: #38bdf8;
+          font-size: 11px;
+          font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+
+        .mic-modal-step-text {
+          flex: 1;
+        }
+
+        .mic-modal-actions {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .mic-modal-btn {
+          width: 100%;
+          padding: 13px 20px;
+          border-radius: 14px;
+          font-size: 14.5px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+        }
+        .mic-modal-btn:active {
+          transform: scale(0.975);
+        }
+
+        .mic-modal-btn--primary {
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          color: #ffffff;
+          box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
+        }
+        .mic-modal-btn--primary:disabled {
+          opacity: 0.75;
+          cursor: not-allowed;
+        }
+
+        .mic-modal-btn--secondary {
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.05);
+          color: rgba(255, 255, 255, 0.75);
+        }
+        .mic-modal-btn--secondary:hover {
+          background: rgba(255, 255, 255, 0.09);
+        }
+
+        .spin-anim {
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

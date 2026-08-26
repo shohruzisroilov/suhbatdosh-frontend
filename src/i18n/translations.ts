@@ -275,6 +275,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'call.err.permission': 'Microphone access denied. Allow it in your browser settings.',
 
     'mic.modalTitle': 'Microphone access required',
+    'mic.grantedTitle': 'Microphone connected!',
+    'mic.grantedDesc': 'Permission granted successfully. You can now start speaking.',
     'mic.modalDesc': 'Please turn on your microphone in settings to speak with your partner.',
     'mic.denied': 'Please turn on your microphone in settings to speak with your partner.',
     'mic.notFound': 'No microphone found. Please connect a mic and try again.',
@@ -282,7 +284,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mic.unsupported': "Voice doesn't work in Telegram Desktop. Please open Suhbatdosh on your phone.",
     'mic.instructionsTitle': 'Permission instructions:',
     'mic.step1': 'Go to Telegram settings ⚙️ Privacy & Security.',
-    'mic.step2': 'Turn on microphone permission.',
+    'mic.step2': 'Tap Microphone and turn on permission.',
     'mic.tryAgain': 'Try again',
     'mic.close': 'Close',
     'mic.checking': 'Checking…',
