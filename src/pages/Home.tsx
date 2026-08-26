@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Bot, Sparkles } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -109,6 +109,32 @@ export default function Home() {
                 <span>{t('home.start')}</span>
                 <ChevronRight size={18} strokeWidth={2.5} />
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Quick AI Voice Practice Card ── */}
+        <section
+          className="home-ai-quick-card fade-up"
+          onClick={() => { tapHaptic('medium'); navigate('chat', { isAi: true, mode: 'ai' }); }}
+        >
+          <div className="home-ai-quick-inner">
+            <div className="home-ai-quick-badge">
+              <Sparkles size={11} />
+              <span>AI VOICE PARTNER</span>
+            </div>
+            <div className="home-ai-quick-content">
+              <div className="home-ai-quick-text">
+                <h3 className="home-ai-quick-title">Practice English with AI 🎙️</h3>
+                <p className="home-ai-quick-sub">No wait · Instant voice chat · Level-adapted</p>
+              </div>
+              <div className="home-ai-quick-action">
+                <span className="home-ai-quick-btn">
+                  <Bot size={15} />
+                  <span>Start</span>
+                  <ChevronRight size={14} />
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -396,8 +422,42 @@ export default function Home() {
           background: var(--btn-bg-soft); color: var(--btn-bg);
           margin-bottom: var(--space-1);
         }
-        .home__empty-title { font-size: var(--text-base); font-weight: var(--weight-bold); }
-        .home__empty-sub   { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+        /* ── AI Voice Quick Card ── */
+        .home-ai-quick-card {
+          margin-bottom: 14px;
+          border-radius: var(--radius-lg);
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
+          border: 1px solid rgba(16, 185, 129, 0.25);
+          padding: 14px 16px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+          transition: transform 0.2s ease, border-color 0.2s ease;
+          position: relative; overflow: hidden;
+        }
+        .home-ai-quick-card:active { transform: scale(0.98); }
+        .home-ai-quick-inner { display: flex; flex-direction: column; gap: 8px; }
+        .home-ai-quick-badge {
+          display: inline-flex; align-items: center; gap: 5px;
+          font-size: 10px; font-weight: 800; color: #10b981;
+          letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .home-ai-quick-content {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .home-ai-quick-text { flex: 1; min-width: 0; }
+        .home-ai-quick-title {
+          font-size: 15px; font-weight: 700; color: #f3f4f6; margin: 0 0 2px 0;
+        }
+        .home-ai-quick-sub {
+          font-size: 12px; color: #9ca3af; margin: 0;
+        }
+        .home-ai-quick-action { flex-shrink: 0; }
+        .home-ai-quick-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 7px 13px; border-radius: var(--radius-full);
+          background: #10b981; color: #042f2e;
+          font-size: 13px; font-weight: 700;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+        }
 
         .home__foot { padding-bottom: var(--space-2); }
       `}</style>

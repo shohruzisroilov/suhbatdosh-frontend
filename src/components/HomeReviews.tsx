@@ -19,6 +19,8 @@ export default function HomeReviews() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     getReviews(1, 10)
@@ -32,6 +34,16 @@ export default function HomeReviews() {
       })
       .catch(() => {});
   }, []);
+
+  const displayReviews = reviews.slice(0, 5);
+
+  useEffect(() => {
+    if (displayReviews.length <= 1 || paused) return;
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % displayReviews.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [displayReviews.length, paused]);
 
   const openModal = () => {
     tapHaptic('light');
@@ -66,36 +78,67 @@ export default function HomeReviews() {
         </div>
       </div>
 
-      {reviews.length > 0 ? (
+      {displayReviews.length > 0 ? (
         <>
-          <div className="home-reviews-carousel">
-            {reviews.slice(0, 5).map((rev) => (
-              <div key={rev.id} className="home-review-item" onClick={goAllReviews} style={{ cursor: 'pointer' }}>
-                <div className="home-review-item-head">
-                  <div className="home-review-user">
-                    <div className="home-review-avatar">
-                      {rev.display_name?.charAt(0).toUpperCase() || 'U'}
+          <div
+            className="home-reviews-carousel"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onTouchStart={() => setPaused(true)}
+            onTouchEnd={() => setPaused(false)}
+          >
+            {displayReviews.map((rev, idx) => {
+              const isVisible = idx === activeIndex;
+              return (
+                <div
+                  key={rev.id}
+                  className={`home-review-item ${isVisible ? 'home-review-item-active' : ''}`}
+                  onClick={goAllReviews}
+                  style={{
+                    cursor: 'pointer',
+                    display: isVisible ? 'block' : 'none',
+                    animation: isVisible ? 'fadeInSlide 0.35s ease' : 'none',
+                  }}
+                >
+                  <div className="home-review-item-head">
+                    <div className="home-review-user">
+                      <div className="home-review-avatar">
+                        {rev.display_name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <span className="home-review-name">{rev.display_name || 'User'}</span>
                     </div>
-                    <span className="home-review-name">{rev.display_name || 'User'}</span>
+                    <div className="home-review-stars">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={11}
+                          fill={i < rev.rating ? '#eab308' : 'none'}
+                          className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="home-review-stars">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={11}
-                        fill={i < rev.rating ? '#eab308' : 'none'}
-                        className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
-                      />
-                    ))}
-                  </div>
+                  <p className="home-review-comment">
+                    <Quote size={12} className="home-review-quote-ico" />
+                    {rev.comment}
+                  </p>
                 </div>
-                <p className="home-review-comment">
-                  <Quote size={12} className="home-review-quote-ico" />
-                  {rev.comment}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {displayReviews.length > 1 && (
+            <div className="home-reviews-dots">
+              {displayReviews.map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  className={`home-reviews-dot ${dotIdx === activeIndex ? 'active' : ''}`}
+                  onClick={() => { tapHaptic('light'); setActiveIndex(dotIdx); }}
+                />
+              ))}
+            </div>
+          )}
 
           <button type="button" className="home-reviews-footer-btn" onClick={goAllReviews}>
             <span>View all reviews {stats?.total ? `(${stats.total})` : ''}</span>
@@ -274,10 +317,41 @@ export default function HomeReviews() {
           overflow: hidden;
         }
 
-        .home-review-quote-ico {
-          display: inline;
-          margin-right: 4px;
-          opacity: 0.5;
+        .home-reviews-dots {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 10px;
+          margin-bottom: 2px;
+        }
+
+        .home-reviews-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+
+        .home-reviews-dot.active {
+          width: 18px;
+          border-radius: 4px;
+          background: #0284c7;
+        }
+
+        @keyframes fadeInSlide {
+          from {
+            opacity: 0;
+            transform: translateY(4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .home-reviews-empty {

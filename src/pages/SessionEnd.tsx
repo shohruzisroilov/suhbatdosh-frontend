@@ -5,7 +5,7 @@ import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import ReportSheet from '../components/ReportSheet';
 import ReviewPrompt from '../components/ReviewPrompt';
-import { Star, Check, Flag, PartyPopper, LogOut } from 'lucide-react';
+import { Star, Check, Flag, PartyPopper, LogOut, Flame, Sparkles, Target } from 'lucide-react';
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hov, setHov] = useState(0);
@@ -125,6 +125,20 @@ export default function SessionEnd() {
           )}
         </div>
 
+        {/* ── Celebration & Streak Motivation Banner ── */}
+        <div className="end-streak-banner scale-in">
+          <div className="end-streak-badge">
+            <Flame size={15} fill="#FF9F0A" className="end-flame-ico" />
+            <span>Great Practice!</span>
+          </div>
+          <p className="end-streak-title">You're building fluency step by step! 🔥</p>
+          {durText && (
+            <p className="end-streak-sub">
+              🎯 +{durText} spoken English practice completed today.
+            </p>
+          )}
+        </div>
+
         {!submitted ? (
           <div className="end-rate fade-up">
             <p className="end-rate-title">{t('se.rate')}</p>
@@ -233,6 +247,29 @@ export default function SessionEnd() {
 
         .end-thanks { font-size: var(--text-md); font-weight: var(--weight-bold); }
         .end-actions { display: flex; flex-direction: column; gap: var(--space-1-5); width: 100%; }
+
+        /* ── Post-Session Celebration Banner ── */
+        .end-streak-banner {
+          width: 100%;
+          border-radius: var(--radius-lg);
+          background: linear-gradient(135deg, rgba(255, 159, 10, 0.12) 0%, rgba(234, 179, 8, 0.08) 100%);
+          border: 1px solid rgba(255, 159, 10, 0.3);
+          padding: 14px 16px;
+          display: flex; flex-direction: column; gap: 4px; text-align: left;
+          box-shadow: 0 4px 16px rgba(255, 159, 10, 0.15);
+        }
+        .end-streak-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 11px; font-weight: 800; color: #FF9F0A;
+          letter-spacing: 0.04em; text-transform: uppercase;
+        }
+        .end-flame-ico { color: #FF9F0A; filter: drop-shadow(0 0 6px rgba(255, 159, 10, 0.6)); }
+        .end-streak-title {
+          font-size: 14px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0;
+        }
+        .end-streak-sub {
+          font-size: 12px; color: rgba(255, 255, 255, 0.75); margin: 0; line-height: 1.4;
+        }
 
         .end-report {
           display: flex; align-items: center; justify-content: center; gap: var(--space-1-5);
