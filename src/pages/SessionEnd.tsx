@@ -38,6 +38,7 @@ export default function SessionEnd() {
   const [loading, setLoading]     = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const isAi        = !!screenParams?.isAi || !!session?.isAi;
   const sessionId   = screenParams?.sessionId || session?.id;
@@ -76,8 +77,23 @@ export default function SessionEnd() {
     setLoading(false);
   }
 
-  function goMatch() { clearSession(); setMatchingStatus('idle'); navigate('matching'); }
-  function goHome()  { clearSession(); setMatchingStatus('idle'); navigate('home'); }
+  function goMatch() {
+    tapHaptic('light');
+    clearSession();
+    setMatchingStatus('idle');
+    navigate('matching');
+  }
+
+  function handleGoHome() {
+    tapHaptic('light');
+    setShowReviewModal(true);
+  }
+
+  function finishGoHome() {
+    clearSession();
+    setMatchingStatus('idle');
+    navigate('home');
+  }
 
   return (
     <div className="end-screen">
@@ -125,14 +141,10 @@ export default function SessionEnd() {
           </div>
         )}
 
-        {submitted && <ReviewPrompt />}
-
-        {submitted && (
-          <div className="end-actions fade-up">
-            <button className="btn-primary" onClick={goMatch}>{t('se.findAnother')}</button>
-            <button className="btn-secondary" style={{marginTop:4}} onClick={goHome}>{t('se.goHome')}</button>
-          </div>
-        )}
+        <div className="end-actions fade-up" style={{ width: '100%', marginTop: 12 }}>
+          <button className="btn-primary" onClick={goMatch}>{t('se.findAnother')}</button>
+          <button className="btn-secondary" style={{ marginTop: 8 }} onClick={handleGoHome}>{t('se.goHome')}</button>
+        </div>
 
         {!isAi && (reportDone ? (
           <p className="end-report-done"><Check size={14} /> {reportDone}</p>
@@ -143,6 +155,14 @@ export default function SessionEnd() {
         ) : null)}
 
       </div>
+
+      {showReviewModal && (
+        <div className="home-review-modal-backdrop" onClick={finishGoHome}>
+          <div className="home-review-modal-content scale-in" onClick={(e) => e.stopPropagation()}>
+            <ReviewPrompt forceShow={true} onClose={finishGoHome} />
+          </div>
+        </div>
+      )}
 
       {reportOpen && (
         <ReportSheet
