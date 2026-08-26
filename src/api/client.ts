@@ -6,7 +6,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'https://suhbatdosh.shohruzisro
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 25000,
   headers: { 'Content-Type': 'application/json' },
 });
 
