@@ -101,14 +101,17 @@ export default function ChatOverlay({
       <div ref={messagesRef} className="chat-overlay__messages" role="log">
         {messages.length === 0 && <div className="chat-overlay__empty">{t('co.empty')}</div>}
         {messages.map((msg, i) => {
+          const isOwn = msg.is_own ?? msg.isOwn ?? false;
+          const timeStr = msg.sent_at || msg.sentAt || new Date().toISOString();
+          const prevTimeStr = i > 0 ? (messages[i - 1].sent_at || messages[i - 1].sentAt || '') : '';
           const showTime =
             i === 0 ||
-            Math.abs(new Date(msg.sent_at).getTime() - new Date(messages[i - 1].sent_at).getTime()) > 300000;
+            (prevTimeStr && Math.abs(new Date(timeStr).getTime() - new Date(prevTimeStr).getTime()) > 300000);
           return (
-            <React.Fragment key={msg.id}>
-              {showTime && <div className="chat-overlay__timesep">{msgTime(msg.sent_at)}</div>}
-              <div className={`co-msg ${msg.is_own ? 'co-msg--own' : 'co-msg--other'}`}>
-                <div className={`co-bubble ${msg.is_own ? 'co-bubble--own' : 'co-bubble--other'}`}>
+            <React.Fragment key={msg.id || i}>
+              {showTime && <div className="chat-overlay__timesep">{msgTime(timeStr)}</div>}
+              <div className={`co-msg ${isOwn ? 'co-msg--own' : 'co-msg--other'}`}>
+                <div className={`co-bubble ${isOwn ? 'co-bubble--own' : 'co-bubble--other'}`}>
                   <p>{msg.content}</p>
                 </div>
               </div>

@@ -367,7 +367,9 @@ export default function Chat() {
         senderId: 'ai_partner',
         content: initialGreeting,
         sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
         isOwn: false,
+        is_own: false,
       });
 
       timer = setTimeout(() => {
@@ -464,7 +466,9 @@ export default function Chat() {
         senderId: String(user?.id || 'me'),
         content: userText,
         sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
         isOwn: true,
+        is_own: true,
       });
 
       addMessage({
@@ -472,7 +476,9 @@ export default function Chat() {
         senderId: 'ai_partner',
         content: aiResponse,
         sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
         isOwn: false,
+        is_own: false,
       });
 
       setAiHistory((prev) => [
@@ -502,7 +508,9 @@ export default function Chat() {
       senderId: String(user?.id || 'me'),
       content: userText,
       sentAt: new Date().toISOString(),
+      sent_at: new Date().toISOString(),
       isOwn: true,
+      is_own: true,
     });
 
     setAiStatus('thinking');
@@ -521,7 +529,9 @@ export default function Chat() {
         senderId: 'ai_partner',
         content: aiResponse,
         sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
         isOwn: false,
+        is_own: false,
       });
 
       setAiHistory((prev) => [
@@ -531,7 +541,8 @@ export default function Chat() {
       ]);
 
       notifyHaptic('success');
-      speakAiText(aiResponse);
+      setAiStatus('idle');
+      if (micOn) startAiRecording();
     } catch {
       notifyHaptic('error');
       setAiStatus('idle');
