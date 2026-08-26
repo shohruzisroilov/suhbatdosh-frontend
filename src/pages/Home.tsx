@@ -142,6 +142,9 @@ export default function Home() {
           )}
         </div>
 
+        {/* Foydalanuvchilar fikri va Review qoldirish bo'limi */}
+        <HomeReviews />
+
         {/* Recent Practice History */}
         {!homeLoaded ? (
           <section className="home__section">
@@ -164,9 +167,6 @@ export default function Home() {
             <p className="home__empty-sub">{t('home.noSessionsSub')}</p>
           </section>
         )}
-
-        {/* Foydalanuvchilar fikri va Review qoldirish bo'limi */}
-        <HomeReviews />
 
         <div className="home__foot" />
       </div>
