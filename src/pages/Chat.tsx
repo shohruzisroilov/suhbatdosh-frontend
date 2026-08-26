@@ -427,7 +427,8 @@ export default function Chat() {
 
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const spokenText = text.replace(/Suhbatdosh/gi, 'Soh-bat-dosh');
+      const utterance = new SpeechSynthesisUtterance(spokenText);
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
       utterance.onend = () => {
