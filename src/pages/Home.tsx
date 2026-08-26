@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Bot, Sparkles } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -110,32 +110,6 @@ export default function Home() {
                 <ChevronRight size={18} strokeWidth={2.5} />
               </button>
             </div>
-          </div>
-        </section>
-
-        {/* ── Quick AI Voice Practice Card ── */}
-        <section
-          className="home-ai-quick-card fade-up"
-          onClick={() => { tapHaptic('medium'); navigate('chat', { isAi: true, mode: 'ai' }); }}
-        >
-          <div className="home-ai-quick-top">
-            <span className="home-ai-quick-badge">
-              <Sparkles size={12} />
-              <span>AI VOICE PARTNER</span>
-            </span>
-            <span className="home-ai-quick-free">FREE</span>
-          </div>
-
-          <div className="home-ai-quick-body">
-            <div className="home-ai-quick-info">
-              <h3 className="home-ai-quick-title">Practice English with AI 🎙️</h3>
-              <p className="home-ai-quick-sub">Instant voice practice • Level-adapted • No waiting</p>
-            </div>
-            <button type="button" className="home-ai-quick-btn">
-              <Bot size={16} />
-              <span>Start</span>
-              <ChevronRight size={15} strokeWidth={2.5} />
-            </button>
           </div>
         </section>
 
@@ -421,58 +395,6 @@ export default function Home() {
           display: flex; align-items: center; justify-content: center;
           background: var(--btn-bg-soft); color: var(--btn-bg);
           margin-bottom: var(--space-1);
-        }
-        /* ── AI Voice Quick Card ── */
-        .home-ai-quick-card {
-          position: relative;
-          background: linear-gradient(135deg, #047857 0%, #10B981 60%, #06B6D4 100%);
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          border-radius: 20px;
-          padding: 16px;
-          display: flex; flex-direction: column; gap: 10px;
-          box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-          cursor: pointer;
-          transition: transform 0.18s ease, box-shadow 0.18s ease;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .home-ai-quick-card:active {
-          transform: scale(0.985);
-          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
-        }
-        .home-ai-quick-top {
-          display: flex; align-items: center; justify-content: space-between;
-        }
-        .home-ai-quick-badge {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-size: 10px; font-weight: 800; color: #a7f3d0;
-          background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.2);
-          padding: 3px 9px; border-radius: 20px;
-          letter-spacing: 0.05em; text-transform: uppercase;
-        }
-        .home-ai-quick-free {
-          font-size: 10px; font-weight: 800; color: #ffffff;
-          background: rgba(255, 255, 255, 0.25);
-          padding: 2px 7px; border-radius: 10px; letter-spacing: 0.05em;
-        }
-        .home-ai-quick-body {
-          display: flex; align-items: center; justify-content: space-between; gap: 12px;
-        }
-        .home-ai-quick-info { flex: 1; min-width: 0; }
-        .home-ai-quick-title {
-          font-size: 16px; font-weight: 800; color: #ffffff; margin: 0 0 3px 0;
-          letter-spacing: -0.01em; line-height: 1.25;
-        }
-        .home-ai-quick-sub {
-          font-size: 12px; color: rgba(255, 255, 255, 0.9); margin: 0;
-          line-height: 1.35; font-weight: 500;
-        }
-        .home-ai-quick-btn {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 9px 16px; border-radius: 30px;
-          background: #ffffff; color: #047857;
-          font-size: 14px; font-weight: 800; border: none;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-          flex-shrink: 0; cursor: pointer;
         }
 
         .home__foot { padding-bottom: var(--space-2); }
