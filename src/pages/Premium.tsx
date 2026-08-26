@@ -104,17 +104,66 @@ export default function Premium() {
           </div>
         ) : (
           <>
-            <div className="premium-compare">
-              <div className="premium-compare__col">
-                <p className="premium-compare__head">{t('pm.freeTitle')}</p>
-                <p className="premium-compare__line">{t('pm.freeLine1')}</p>
-                <p className="premium-compare__line">{t('pm.freeLine2')}</p>
+            {/* Free vs Premium Detailed Comparison Matrix */}
+            <div className="premium-matrix">
+              <div className="premium-matrix-head">
+                <span className="premium-matrix-title">Imkoniyatlar taqqoslashi</span>
+                <span className="premium-matrix-sub">Bepul va Premium tarifi o'rtasidagi farqlar</span>
               </div>
-              <div className="premium-compare__col premium-compare__col--pro">
-                <p className="premium-compare__head"><Star size={11} fill="currentColor" strokeWidth={0} /> {t('pm.proTitle')}</p>
-                <p className="premium-compare__line"><Check size={13} strokeWidth={3} />{t('pm.proLine1')}</p>
-                <p className="premium-compare__line"><Check size={13} strokeWidth={3} />{t('pm.proLine2')}</p>
-                <p className="premium-compare__line"><Check size={13} strokeWidth={3} />{t('pm.proLine3')}</p>
+
+              <div className="premium-table">
+                <div className="premium-table-row premium-table-header">
+                  <div className="premium-cell feat-cell">Xususiyat</div>
+                  <div className="premium-cell free-cell">Bepul (Free)</div>
+                  <div className="premium-cell pro-cell">
+                    <Star size={11} fill="currentColor" strokeWidth={0} /> Premium
+                  </div>
+                </div>
+
+                <div className="premium-table-row">
+                  <div className="premium-cell feat-cell">
+                    <span className="feat-name">Suhbatdosh muloqot</span>
+                    <span className="feat-desc">Jonli sherik bilan gaplashish</span>
+                  </div>
+                  <div className="premium-cell free-cell text-muted">10 daq / kun</div>
+                  <div className="premium-cell pro-cell text-highlight">Cheksiz 24/7</div>
+                </div>
+
+                <div className="premium-table-row">
+                  <div className="premium-cell feat-cell">
+                    <span className="feat-name">IELTS Speaking Mock</span>
+                    <span className="feat-desc">Part 1, 2, 3 + Band 0-9 ball</span>
+                  </div>
+                  <div className="premium-cell free-cell text-muted">3 ta (Jami)</div>
+                  <div className="premium-cell pro-cell text-highlight">Kuniga 3x to'liq</div>
+                </div>
+
+                <div className="premium-table-row">
+                  <div className="premium-cell feat-cell">
+                    <span className="feat-name">CEFR Multilevel Mock</span>
+                    <span className="feat-desc">Milliy Sertifikat + A1-C1</span>
+                  </div>
+                  <div className="premium-cell free-cell text-muted">3 ta (Jami)</div>
+                  <div className="premium-cell pro-cell text-highlight">Kuniga 3x to'liq</div>
+                </div>
+
+                <div className="premium-table-row">
+                  <div className="premium-cell feat-cell">
+                    <span className="feat-name">Sherik izlash tezligi</span>
+                    <span className="feat-desc">Navbatda kutish vaqti</span>
+                  </div>
+                  <div className="premium-cell free-cell text-muted">Odatiy</div>
+                  <div className="premium-cell pro-cell text-highlight">Tezkor (Priority)</div>
+                </div>
+
+                <div className="premium-table-row">
+                  <div className="premium-cell feat-cell">
+                    <span className="feat-name">AI Examiner Tahlili</span>
+                    <span className="feat-desc">Xatolar va tavsiyalar</span>
+                  </div>
+                  <div className="premium-cell free-cell text-muted">Bazaviy</div>
+                  <div className="premium-cell pro-cell text-highlight">To'liq & Mukammal</div>
+                </div>
               </div>
             </div>
 
@@ -273,31 +322,73 @@ export default function Premium() {
         }
         .premium-hero p { font-size: var(--text-sm); color: var(--text-secondary); text-align: center; }
 
-        .premium-compare {
-          display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2);
+        .premium-matrix {
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 18px;
+          padding: 16px 14px;
+          display: flex; flex-direction: column; gap: 14px;
+          backdrop-filter: blur(10px);
         }
-        .premium-compare__col {
-          display: flex; flex-direction: column; gap: 5px;
-          padding: var(--space-4); border-radius: var(--radius-md);
-          background: var(--bg-secondary); border: 1px solid var(--border);
+        .premium-matrix-head {
+          display: flex; flex-direction: column; gap: 2px;
         }
-        .premium-compare__col--pro {
-          border-color: var(--btn-bg);
-          background: rgba(0, 168, 255, 0.05);
+        .premium-matrix-title {
+          font-size: 15px; font-weight: 800; color: #ffffff;
         }
-        .premium-compare__head {
-          display: flex; align-items: center; gap: 4px;
-          font-size: var(--text-xs); font-weight: var(--weight-bold);
+        .premium-matrix-sub {
+          font-size: 11px; color: #94a3b8;
+        }
+
+        .premium-table {
+          display: flex; flex-direction: column;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          overflow: hidden;
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .premium-table-row {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr 1fr;
+          align-items: center;
+          padding: 10px 12px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .premium-table-row:last-child { border-bottom: none; }
+        .premium-table-header {
+          background: rgba(255, 255, 255, 0.05);
+          font-size: 11px; font-weight: 800; color: #94a3b8;
           text-transform: uppercase; letter-spacing: 0.4px;
-          color: var(--text-secondary); margin-bottom: 4px;
+          padding: 10px 12px;
         }
-        .premium-compare__col--pro .premium-compare__head { color: var(--btn-bg); }
-        .premium-compare__line {
-          display: flex; align-items: flex-start; gap: var(--space-1-5);
-          font-size: var(--text-xs); line-height: 1.45; color: var(--text-primary);
+
+        .premium-cell {
+          display: flex; flex-direction: column; justify-content: center;
         }
-        .premium-compare__col--pro .premium-compare__line svg {
-          flex-shrink: 0; margin-top: 2px; color: var(--btn-bg);
+        .free-cell, .pro-cell {
+          text-align: center;
+          align-items: center;
+        }
+        .pro-cell {
+          color: #38bdf8;
+          font-weight: 700;
+        }
+        .premium-table-header .pro-cell {
+          flex-direction: row; gap: 4px; color: #ffd700;
+        }
+
+        .feat-name {
+          font-size: 12px; font-weight: 700; color: #ffffff; line-height: 1.25;
+        }
+        .feat-desc {
+          font-size: 10px; color: #94a3b8; margin-top: 1px;
+        }
+
+        .text-muted {
+          font-size: 11px; color: #64748b; font-weight: 600;
+        }
+        .text-highlight {
+          font-size: 11px; font-weight: 800; color: #38bdf8;
         }
 
         .premium-stars { display: flex; flex-direction: column; gap: var(--space-2); }
