@@ -23,6 +23,7 @@ import Premium from './pages/Premium.tsx';
 import Statistics from './pages/Statistics.tsx';
 import Matching from './pages/Matching.tsx';
 import SessionEnd from './pages/SessionEnd.tsx';
+import IeltsMock from './pages/IeltsMock.tsx';
 
 const Chat = lazy(() => import('./pages/Chat.tsx'));
 
@@ -49,7 +50,8 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   matching: Matching,
   chat: Chat,
   session_end: SessionEnd,
-  ielts: Home,
+  ielts: IeltsMock,
+  ielts_mock: IeltsMock,
 };
 
 const TAB_SCREENS = ['home', 'leaderboard', 'invite', 'profile'];

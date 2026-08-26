@@ -404,9 +404,27 @@ export default function Chat() {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }
 
-  async function speakAiText(text: string) {
+  async function speakAiText(text: string, preloadedAudioUrl?: string | null) {
     if (!isMountedRef.current) return;
     setAiStatus('speaking');
+
+    if (preloadedAudioUrl) {
+      const audio = new Audio(preloadedAudioUrl);
+      audio.onended = () => {
+        if (isMountedRef.current && micOn) {
+          startAiRecording();
+        } else {
+          setAiStatus('idle');
+        }
+      };
+      audio.onerror = () => {
+        if (isMountedRef.current && micOn) startAiRecording();
+      };
+      audio.play().catch(() => {
+        if (isMountedRef.current && micOn) startAiRecording();
+      });
+      return;
+    }
 
     try {
       const res = await getTTSAudio(text);
@@ -467,6 +485,7 @@ export default function Chat() {
 
       const userText = res.transcription || 'Voice message';
       const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
+      const audioUrl = res.audioUrl || null;
 
       addMessage({
         id: Date.now().toString(),
@@ -495,7 +514,7 @@ export default function Chat() {
       ]);
 
       notifyHaptic('success');
-      speakAiText(aiResponse);
+      speakAiText(aiResponse, audioUrl);
     } catch (err) {
       console.error('[AI Voice Turn Error]:', err);
       notifyHaptic('error');
@@ -537,6 +556,7 @@ export default function Chat() {
       });
 
       const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
+      const audioUrl = res.audioUrl || null;
 
       addMessage({
         id: (Date.now() + 1).toString(),
@@ -555,7 +575,7 @@ export default function Chat() {
       ]);
 
       notifyHaptic('success');
-      speakAiText(aiResponse);
+      speakAiText(aiResponse, audioUrl);
     } catch {
       notifyHaptic('error');
       setAiStatus('idle');
@@ -628,7 +648,7 @@ export default function Chat() {
           if (!silenceTimerRef.current && averageVolume <= silenceThresh) {
             silenceTimerRef.current = setTimeout(() => {
               stopAiRecording();
-            }, 1000);
+            }, 650);
           }
         }
 
@@ -658,24 +678,24 @@ export default function Chat() {
               handleSendAiTurn(base64Data, 'audio/webm');
             } else {
               setAiStatus('idle');
-              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 800);
+              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 600);
             }
           };
         } else {
           setAiStatus('idle');
-          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 800);
+          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 600);
         }
       };
 
       mediaRecorder.start(200);
       setAiStatus('listening');
 
-      // 4.5-second auto-send safety timer for seamless continuous turn-taking
+      // 4.0-second auto-send safety timer for seamless continuous turn-taking
       maxRecordTimerRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopAiRecording();
         }
-      }, 4500);
+      }, 4000);
     } catch {
       setAiStatus('idle');
       setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 1200);

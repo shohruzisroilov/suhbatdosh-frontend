@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Award, Sparkles } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -118,6 +118,21 @@ export default function Home() {
         <div className="home__list stagger">
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
+
+          {/* IELTS AI Mock Examiner Card */}
+          <button className="row" onClick={() => { tapHaptic('medium'); navigate('ielts_mock'); }}>
+            <span className="row__ico" style={{ background: 'rgba(56, 189, 248, 0.16)', color: '#38bdf8' }}>
+              <Award size={18} />
+            </span>
+            <span className="row__text">
+              <span className="row__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                IELTS Speaking Mock
+                <span style={{ fontSize: '10px', background: '#0284c7', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>AI Examiner</span>
+              </span>
+              <span className="row__sub">To'liq IELTS mock topshiring, feedback va Band score oling</span>
+            </span>
+            <ChevronRight size={18} className="row__arrow" />
+          </button>
 
           {/* Kunlik hisoblagich */}
           {!user?.isPremium && (
