@@ -99,7 +99,7 @@ function AuthErrorScreen({ message }: { message: string }) {
 }
 
 function TelegramApp() {
-  const { screen, isAuthLoading, appError, user, isSubscribed, setIsSubscribed } = useAppStore();
+  const { screen, navigate, isAuthLoading, appError, user, isSubscribed, setIsSubscribed } = useAppStore();
   useAuth();
   useSocket();
 
@@ -126,12 +126,12 @@ function TelegramApp() {
           {showTabs ? (
             <div className="tab-shell">
               <div className="tab-shell__content">
-                <ScreenComponent />
+                <ScreenComponent navigate={navigate} />
               </div>
               <BottomNav active={screen} />
             </div>
           ) : (
-            <ScreenComponent />
+            <ScreenComponent navigate={navigate} />
           )}
         </Suspense>
       </ErrorBoundary>
