@@ -29,6 +29,10 @@ export interface User {
   total_talk_seconds?: number;
   remindersEnabled?: boolean;
   reminders_enabled?: boolean;
+  bot_blocked?: boolean;
+  botBlocked?: boolean;
+  is_banned?: boolean;
+  isBanned?: boolean;
   created_at?: string;
 }
 
