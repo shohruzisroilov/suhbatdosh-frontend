@@ -18,6 +18,7 @@ import {
 import {
   getCefrStatus,
   createCefrTest,
+  getCefrTest,
   sendCefrAnswer,
   finishCefrTest,
   abandonCefrTest,
@@ -75,6 +76,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   // Test status
   const [testStatus, setTestStatus] = useState<'loading' | 'idle' | 'testing' | 'grading' | 'results'>('loading');
   const [testId, setTestId] = useState<string | null>(null);
+  const [activeTestId, setActiveTestId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<StepData | null>(null);
   const [totalSteps, setTotalSteps] = useState<number>(9);
 
@@ -129,11 +131,39 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       setQuota(res.quota);
       if (res.activeTest) {
         setTestId(res.activeTest.id);
+        setActiveTestId(res.activeTest.id);
+      } else {
+        setActiveTestId(null);
       }
       setTestStatus('idle');
     } catch (err: any) {
       console.error('CEFR Status error:', err);
       setErrorMsg('CEFR holatini yuklashda xatolik yuz berdi.');
+      setTestStatus('idle');
+    }
+  };
+
+  const loadActiveTest = async (id: string) => {
+    tapHaptic('medium');
+    setTestStatus('loading');
+    setErrorMsg(null);
+    try {
+      const res = await getCefrTest(id);
+      if (res.status === 'completed' && res.feedback) {
+        setFeedback(res.feedback);
+        setTestStatus('results');
+      } else if (res.step) {
+        setTestId(res.testId);
+        setTotalSteps(res.totalSteps || 9);
+        setCurrentStep(res.step);
+        setTestStatus('testing');
+        handleStepTransition(res.step);
+      } else {
+        setTestStatus('idle');
+      }
+    } catch (err: any) {
+      console.error('Load active test error:', err);
+      setErrorMsg('Imtihonni yuklashda xatolik.');
       setTestStatus('idle');
     }
   };
@@ -145,6 +175,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     try {
       const res = await createCefrTest('full');
       setTestId(res.testId);
+      setActiveTestId(res.testId);
       setTotalSteps(res.totalSteps || 9);
       setCurrentStep(res.step);
       setTestStatus('testing');
@@ -435,15 +466,35 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             </div>
           </div>
 
-          <button
-            className="im-btn im-btn--primary"
-            onClick={handleStartTest}
-            disabled={quota ? quota.remaining <= 0 : false}
-            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
-          >
-            <Sparkles size={20} />
-            <span>CEFR Mock Imtihonni Boshlash</span>
-          </button>
+          {activeTestId ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '12px' }}>
+              <button
+                className="im-btn im-btn--primary"
+                onClick={() => loadActiveTest(activeTestId)}
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%' }}
+              >
+                <Sparkles size={20} />
+                <span>Tugallanmagan imtihonni davom ettirish</span>
+              </button>
+              <button
+                className="im-btn im-btn--ghost"
+                onClick={handleAbandon}
+                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', width: '100%' }}
+              >
+                <span>Voz kechish va yangi imtihon boshlash</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              className="im-btn im-btn--primary"
+              onClick={handleStartTest}
+              disabled={quota ? quota.remaining <= 0 : false}
+              style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+            >
+              <Sparkles size={20} />
+              <span>CEFR Mock Imtihonni Boshlash</span>
+            </button>
+          )}
         </div>
       )}
 
