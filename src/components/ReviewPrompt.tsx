@@ -20,22 +20,31 @@ function markDismissed() {
   } catch {}
 }
 
-export default function ReviewPrompt() {
+interface ReviewPromptProps {
+  forceShow?: boolean;
+  onClose?: () => void;
+}
+
+export default function ReviewPrompt({ forceShow = false, onClose }: ReviewPromptProps) {
   const t = useT();
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(forceShow);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
+    if (forceShow) {
+      setShow(true);
+      return;
+    }
     if (dismissed()) return;
     getMyReview()
       .then((d) => {
-        if (!d.review) setShow(true);
+        if (!d?.review) setShow(true);
       })
       .catch(() => {});
-  }, []);
+  }, [forceShow]);
 
   if (!show) return null;
 
@@ -47,6 +56,7 @@ export default function ReviewPrompt() {
       await submitReview(rating, comment.trim() || '');
       markDismissed();
       setDone(true);
+      if (onClose) setTimeout(onClose, 1500);
     } catch {
       setSending(false);
     }
@@ -56,6 +66,7 @@ export default function ReviewPrompt() {
     tapHaptic('light');
     markDismissed();
     setShow(false);
+    onClose?.();
   }
 
   if (done) {

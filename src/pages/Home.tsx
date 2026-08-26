@@ -10,6 +10,7 @@ import PrimeTimeBanner from '../components/PrimeTimeBanner';
 import DailyProgress from '../components/DailyProgress';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
+import HomeReviews from '../components/HomeReviews';
 
 /**
  * Bosh sahifa — Conversation-First layout.
@@ -163,6 +164,9 @@ export default function Home() {
             <p className="home__empty-sub">{t('home.noSessionsSub')}</p>
           </section>
         )}
+
+        {/* Foydalanuvchilar fikri va Review qoldirish bo'limi */}
+        <HomeReviews />
 
         <div className="home__foot" />
       </div>
