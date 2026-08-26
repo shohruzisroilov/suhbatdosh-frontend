@@ -134,6 +134,21 @@ export default function Home() {
             <ChevronRight size={18} className="row__arrow" />
           </button>
 
+          {/* CEFR Multilevel Mock Examiner Card */}
+          <button className="row" onClick={() => { tapHaptic('medium'); navigate('cefr_mock'); }}>
+            <span className="row__ico" style={{ background: 'rgba(16, 185, 129, 0.16)', color: '#10b981' }}>
+              <Award size={18} />
+            </span>
+            <span className="row__text">
+              <span className="row__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                CEFR Multilevel Mock
+                <span style={{ fontSize: '10px', background: '#059669', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>National Certificate</span>
+              </span>
+              <span className="row__sub">Milliy sertifikat formati (Part 1.1 - Part 3) mock topshiring va daraja oling</span>
+            </span>
+            <ChevronRight size={18} className="row__arrow" />
+          </button>
+
           {/* Kunlik hisoblagich */}
           {!user?.isPremium && (
             <DailyProgress

@@ -24,6 +24,7 @@ import Statistics from './pages/Statistics.tsx';
 import Matching from './pages/Matching.tsx';
 import SessionEnd from './pages/SessionEnd.tsx';
 import IeltsMock from './pages/IeltsMock.tsx';
+import CefrMock from './pages/CefrMock.tsx';
 
 const Chat = lazy(() => import('./pages/Chat.tsx'));
 
@@ -52,6 +53,8 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   session_end: SessionEnd,
   ielts: IeltsMock,
   ielts_mock: IeltsMock,
+  cefr: CefrMock,
+  cefr_mock: CefrMock,
 };
 
 const TAB_SCREENS = ['home', 'leaderboard', 'invite', 'profile'];

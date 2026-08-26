@@ -113,3 +113,32 @@ export const getTTSAudio = (text: string) =>
 
 export const recordAiPartnerSession = (durationSeconds: number) =>
   api.post('/ai-partner/session-end', { durationSeconds }).then((r) => r.data);
+
+// CEFR Multilevel Mock Examiner Endpoints
+export const getCefrStatus = () =>
+  api.get('/cefr/status').then((r) => r.data);
+
+export const createCefrTest = (mode: 'full' | 'quick' = 'full') =>
+  api.post('/cefr/tests', { mode }).then((r) => r.data);
+
+export const getCefrTest = (id: string) =>
+  api.get(`/cefr/tests/${id}`).then((r) => r.data);
+
+export const sendCefrAnswer = (id: string, step: number, durationMs: number, audioBlob: Blob | null) => {
+  const headers: Record<string, string> = {};
+  let body: any = null;
+  if (audioBlob) {
+    headers['Content-Type'] = audioBlob.type || 'audio/webm';
+    body = audioBlob;
+  }
+  return api.post(`/cefr/tests/${id}/answers?step=${step}&ms=${durationMs}`, body, {
+    headers,
+  }).then((r) => r.data);
+};
+
+export const finishCefrTest = (id: string) =>
+  api.post(`/cefr/tests/${id}/finish`).then((r) => r.data);
+
+export const abandonCefrTest = (id: string) =>
+  api.post(`/cefr/tests/${id}/abandon`).then((r) => r.data);
+
