@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { useMutation } from '@tanstack/react-query';
 import { updateMe, updateNotifications } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
@@ -24,8 +25,10 @@ const TITLES: Record<string, string> = {
 };
 
 export default function Settings() {
-  const { user, setUser, navigate } = useAppStore();
+  const { user, setUser, navigate, screenParams } = useAppStore();
   const t = useT();
+
+  useTelegramBackButton(() => back());
 
   const [section, setSection] = useState<'menu' | 'level' | 'gender' | 'notifications'>('menu');
 
@@ -72,8 +75,9 @@ export default function Settings() {
 
   function back() {
     tapHaptic('light');
+    // Step out of a sub-section first, then back to whoever opened Settings.
     if (section !== 'menu') setSection('menu');
-    else navigate('home');
+    else navigate(screenParams?.from || 'profile');
   }
 
   const notifSummary = reminders ? t('settings.notifAllOn') : t('settings.notifNone');

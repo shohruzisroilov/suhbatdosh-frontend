@@ -4,6 +4,7 @@ import Avatar from './Avatar';
 import { useT } from '../i18n';
 import { Flame, ChevronDown, Check, X } from 'lucide-react';
 import { User } from '../types';
+import Modal from './Modal';
 import useAppStore from '../store/useAppStore';
 import { updateMe } from '../api/endpoints';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
@@ -65,12 +66,10 @@ export default function HomeHeader({
           )}
         </div>
 
-        <div
+        <button
+          type="button"
           className="hh__info"
           onClick={() => { tapHaptic('light'); setOpenLevelModal(true); }}
-          style={{ cursor: 'pointer' }}
-          role="button"
-          tabIndex={0}
         >
           <div className="hh__name-row">
             <span className="hh__name">{user?.displayName || t('common.anonymous')}</span>
@@ -79,8 +78,8 @@ export default function HomeHeader({
               <ChevronDown size={10} style={{ marginLeft: 2, opacity: 0.8 }} />
             </span>
           </div>
-          <span className="hh__sub">{t(`levelName.${level}`)} • Tap to change</span>
-        </div>
+          <span className="hh__sub">{t(`levelName.${level}`)} • {t('hh.tapToChange')}</span>
+        </button>
 
         <div className="hh__actions">
           {shown > 0 && (
@@ -95,10 +94,15 @@ export default function HomeHeader({
 
       {/* Quick Level Change Modal */}
       {openLevelModal && createPortal(
-        <div className="home-review-modal-backdrop" onClick={() => setOpenLevelModal(false)}>
-          <div className="hh-level-modal scale-in" onClick={(e) => e.stopPropagation()}>
+        <Modal
+          isOpen
+          onClose={() => setOpenLevelModal(false)}
+          backdropClassName="home-review-modal-backdrop"
+          className="hh-level-modal scale-in"
+          labelledBy="hh-level-title"
+        >
             <div className="hh-level-header">
-              <h3>Select English Level</h3>
+              <h3 id="hh-level-title">{t('hh.levelTitle')}</h3>
               <button
                 type="button"
                 className="hh-level-close"
@@ -107,9 +111,7 @@ export default function HomeHeader({
                 <X size={18} />
               </button>
             </div>
-            <p className="hh-level-desc">
-              Your level determines partner matching and AI conversation difficulty.
-            </p>
+            <p className="hh-level-desc">{t('hh.levelDesc')}</p>
 
             <div className="hh-level-list">
               {LEVELS.map((item) => {
@@ -131,8 +133,7 @@ export default function HomeHeader({
                 );
               })}
             </div>
-          </div>
-        </div>,
+        </Modal>,
         document.body
       )}
 
@@ -154,7 +155,10 @@ export default function HomeHeader({
           border: 2px solid var(--bg);
           box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
         }
-        .hh__info { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+        .hh__info {
+          flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 2px;
+          text-align: left; cursor: pointer;
+        }
         .hh__name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
         .hh__name {
           font-size: var(--text-base); font-weight: var(--weight-heavy);

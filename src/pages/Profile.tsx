@@ -6,10 +6,12 @@ import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
+  Bell,
   Check,
   ChevronRight,
   Clock,
   Gauge,
+  Gift,
   LifeBuoy,
   MessageSquare,
   Star,
@@ -203,6 +205,22 @@ export default function Profile() {
             <Chevron />
           </button>
 
+          {/* Settings Row — the only way into notification preferences, which were
+              unreachable while nothing navigated to the Settings screen. */}
+          <button
+            className="profile__row"
+            onClick={() => { tapHaptic('light'); navigate('settings', { from: 'profile' }); }}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--slate">
+              <Bell size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('settings.notifTitle')}</span>
+              <span className="profile__row-sub">{t('settings.notifSub')}</span>
+            </div>
+            <Chevron />
+          </button>
+
           {/* Gender Row */}
           <button className="profile__row" onClick={() => { tapHaptic('light'); setShowGenderModal(true); }}>
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
@@ -263,6 +281,22 @@ export default function Profile() {
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.reviews')}</span>
               <span className="profile__row-sub">{t('profile.reviewsSub')}</span>
+            </div>
+            <Chevron />
+          </button>
+
+          {/* Invite Row — moved out of the bottom nav; a referral link is something
+              you reach for occasionally, not every session. */}
+          <button
+            className="profile__row"
+            onClick={() => { tapHaptic('light'); navigate('invite', { from: 'profile' }); }}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--green">
+              <Gift size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('nav.invite')}</span>
+              <span className="profile__row-sub">{t('profile.inviteSub')}</span>
             </div>
             <Chevron />
           </button>
@@ -542,6 +576,8 @@ export default function Profile() {
         .profile__row-icon-wrapper--amber  { background: rgba(245, 158, 11, 0.14);  color: #f59e0b; }
         .profile__row-icon-wrapper--cyan   { background: rgba(6, 182, 212, 0.14);   color: #06b6d4; }
         .profile__row-icon-wrapper--rose   { background: rgba(244, 63, 94, 0.14);   color: #f43f5e; }
+        .profile__row-icon-wrapper--slate  { background: rgba(148, 163, 184, 0.14); color: #94a3b8; }
+        .profile__row-icon-wrapper--green  { background: var(--success-bg);          color: var(--success); }
 
         .profile__row-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile__row-title { font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary); }

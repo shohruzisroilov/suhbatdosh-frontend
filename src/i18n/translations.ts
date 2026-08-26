@@ -470,6 +470,18 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.actionPlan': 'Your action plan',
     'mock.picture': 'Picture {n}',
     'mock.topicPicture': 'Topic picture',
+    'mock.pageSub': 'Full speaking tests, marked by an AI examiner.',
+    'mock.ieltsParts': 'Parts 1, 2, 3',
+    'mock.cefrParts': '4 parts',
+    'mock.aiScored': 'AI feedback',
+    'mock.limitTitle': 'Run out of free tests?',
+    'mock.limitSub': 'Premium gives you 3 full tests every day',
+
+    'nav.mock': 'Exams',
+    'profile.inviteSub': 'Get free Premium days for each friend',
+    'hh.tapToChange': 'Tap to change',
+    'hh.levelTitle': 'Choose your English level',
+    'hh.levelDesc': 'Your level decides who you are matched with and how hard the AI talks.',
 
     // ─── Session end ────────────────────────────────────────────────────────
     'end.badge': 'Nice session',

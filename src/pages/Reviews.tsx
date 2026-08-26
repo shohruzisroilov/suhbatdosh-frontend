@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { useQuery } from '@tanstack/react-query';
 import { getReviews } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
@@ -68,7 +69,9 @@ function RatingBar({ label, count, total }: { label: number; count: number; tota
 
 export default function Reviews() {
   const t = useT();
-  const { navigate } = useAppStore();
+  const { navigate, screenParams } = useAppStore();
+
+  useTelegramBackButton(() => navigate(screenParams?.from || 'profile'));
 
   // TanStack Query for Reviews list
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({

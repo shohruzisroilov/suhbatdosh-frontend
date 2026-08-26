@@ -2,7 +2,7 @@ import React from 'react';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic } from '../utils/haptics';
-import { Mic, Trophy, Gift, User } from 'lucide-react';
+import { Mic, GraduationCap, Trophy, User } from 'lucide-react';
 
 interface Tab {
   key: string;
@@ -17,14 +17,16 @@ const TABS: Tab[] = [
     icon: <Mic size={20} strokeWidth={2.2} />,
   },
   {
+    // The mock exams are what sets this app apart, so they get a permanent slot.
+    // Invite moved into Profile: it is a once-in-a-while action, not a daily one.
+    key: 'mock',
+    label: 'nav.mock',
+    icon: <GraduationCap size={20} strokeWidth={2.2} />,
+  },
+  {
     key: 'leaderboard',
     label: 'nav.leaderboard',
     icon: <Trophy size={20} strokeWidth={2.2} />,
-  },
-  {
-    key: 'invite',
-    label: 'nav.invite',
-    icon: <Gift size={20} strokeWidth={2.2} />,
   },
   {
     key: 'profile',

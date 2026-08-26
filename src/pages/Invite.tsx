@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { getInvite } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { useT } from '../i18n';
 import { notifyHaptic, tapHaptic } from '../utils/haptics';
-import { Gift, Copy, Check, Trophy, Send, Medal, Award } from 'lucide-react';
+import { ArrowLeft, Award, Check, Copy, Gift, Medal, Send, Trophy } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
 export default function Invite() {
   const t = useT();
-  const { invite, setInvite } = useAppStore();
+  const { invite, setInvite, navigate, screenParams } = useAppStore();
+
+  useTelegramBackButton(() => navigate(screenParams?.from || 'profile'));
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -62,7 +65,21 @@ export default function Invite() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg)] text-[var(--text-primary)] overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-6">
+      {/* Invite is no longer a tab, so it needs a visible way out — Telegram's own
+          back button is not shown in every client. */}
+      <div className="flex items-center gap-1 px-2 pt-2 shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full text-[var(--text-primary)]"
+          onClick={() => { tapHaptic('light'); navigate(screenParams?.from || 'profile'); }}
+          aria-label={t('common.goBack')}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-2">
         {/* Header */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="w-12 h-12 rounded-full bg-[var(--btn-bg-soft)] text-[var(--btn-bg)] flex items-center justify-center">

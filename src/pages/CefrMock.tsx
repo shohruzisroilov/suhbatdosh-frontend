@@ -11,6 +11,7 @@ import {
   getTTSAudio,
 } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 
 interface CefrMockProps {
@@ -59,6 +60,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   const storeNavigate = useAppStore((s) => s.navigate);
   const navigate = props.navigate || storeNavigate;
   const user = useAppStore((s) => s.user);
+
+  useTelegramBackButton(() => storeNavigate('mock'));
 
   // Test status
   const [testStatus, setTestStatus] = useState<'loading' | 'idle' | 'testing' | 'grading' | 'results'>('loading');
@@ -440,7 +443,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     <div className="im-container">
       {/* Top Navigation */}
       <div className="im-header">
-        <button className="im-icon-btn" onClick={() => { tapHaptic('light'); navigate('home'); }}>
+        <button className="im-icon-btn" onClick={() => { tapHaptic('light'); navigate('mock'); }}>
           <ArrowLeft size={20} />
         </button>
         <div className="im-header-title">
@@ -847,7 +850,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <RotateCcw size={18} />
               <span>{t('mock.retakeCefr')}</span>
             </button>
-            <button className="im-btn im-btn--ghost" onClick={() => navigate('home')}>
+            <button className="im-btn im-btn--ghost" onClick={() => navigate('mock')}>
               <span>Bosh sahifaga qaytish</span>
             </button>
           </div>

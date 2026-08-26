@@ -15,6 +15,7 @@ import ChannelSubscribeModal from './components/ChannelSubscribeModal';
 
 import Onboarding from './pages/Onboarding.tsx';
 import Home from './pages/Home.tsx';
+import Mock from './pages/Mock.tsx';
 import Leaderboard from './pages/Leaderboard.tsx';
 import Invite from './pages/Invite.tsx';
 import Reviews from './pages/Reviews.tsx';
@@ -42,6 +43,7 @@ const queryClient = new QueryClient({
 const SCREENS: Record<string, React.ComponentType<any>> = {
   onboarding: Onboarding,
   home: Home,
+  mock: Mock,
   leaderboard: Leaderboard,
   invite: Invite,
   reviews: Reviews,
@@ -58,7 +60,7 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   cefr_mock: CefrMock,
 };
 
-const TAB_SCREENS = ['home', 'leaderboard', 'invite', 'profile'];
+const TAB_SCREENS = ['home', 'mock', 'leaderboard', 'profile'];
 
 function AuthErrorScreen({ message }: { message: string }) {
   return (

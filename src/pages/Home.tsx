@@ -3,7 +3,7 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Award, Sparkles } from 'lucide-react';
+import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import PrimeTimeBanner from '../components/PrimeTimeBanner';
@@ -142,61 +142,7 @@ export default function Home() {
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
 
-          {/* AI Mock Examiner Grid */}
-          <div className="home__mock-section">
-            <div className="home__section-head">
-              <span className="eyebrow" style={{ margin: 0 }}>{t('mock.section')}</span>
-              <span className="home__section-badge">AI Examiner</span>
-            </div>
-
-            <div className="mock-grid">
-              {/* 1. IELTS Speaking Mock Card */}
-              <button
-                className="mock-card mock-card--ielts"
-                onClick={() => { tapHaptic('medium'); navigate('ielts_mock'); }}
-              >
-                <div className="mock-card__header">
-                  <div className="mock-card__icon mock-card__icon--ielts">
-                    <Award size={20} />
-                  </div>
-                  <span className="mock-card__tag mock-card__tag--ielts">Band 0 - 9</span>
-                </div>
-                <div className="mock-card__content">
-                  <h3 className="mock-card__title">IELTS Speaking</h3>
-                  <p className="mock-card__sub">{t('mock.ieltsSub')}</p>
-                </div>
-                <div className="mock-card__footer">
-                  <span>{t('mock.enter')}</span>
-                  <ChevronRight size={15} />
-                </div>
-              </button>
-
-              {/* 2. CEFR Multilevel Speaking Mock Card */}
-              <button
-                className="mock-card mock-card--cefr"
-                onClick={() => { tapHaptic('medium'); navigate('cefr_mock'); }}
-              >
-                <div className="mock-card__header">
-                  <div className="mock-card__icon mock-card__icon--cefr">
-                    <Sparkles size={20} />
-                  </div>
-                  <span className="mock-card__tag mock-card__tag--cefr">A1 - C1</span>
-                </div>
-                <div className="mock-card__content">
-                  <h3 className="mock-card__title">CEFR Multilevel</h3>
-                  <p className="mock-card__sub">{t('mock.cefrSub')}</p>
-                </div>
-                <div className="mock-card__footer">
-                  <span>{t('mock.enter')}</span>
-                  <ChevronRight size={15} />
-                </div>
-              </button>
-            </div>
-          </div>
         </div>
-
-        {/* Foydalanuvchilar fikri va Review qoldirish bo'limi */}
-        <HomeReviews />
 
         {/* Recent Practice History */}
         {!homeLoaded ? (
@@ -221,6 +167,10 @@ export default function Home() {
           </section>
         )}
 
+        {/* Social proof sits last: it is for people still deciding, and a returning
+            user has already decided. */}
+        <HomeReviews />
+
         <div className="home__foot" />
       </div>
 
@@ -235,129 +185,6 @@ export default function Home() {
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
 
         /* ── AI Mock Grid Section ── */
-        .home__mock-section {
-          margin: 6px 0;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .home__section-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 4px;
-        }
-        .home__section-badge {
-          font-size: 10px;
-          font-weight: 800;
-          color: #38bdf8;
-          background: rgba(56, 189, 248, 0.12);
-          padding: 2px 8px;
-          border-radius: 6px;
-          border: 1px solid rgba(56, 189, 248, 0.25);
-        }
-        .mock-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .mock-card {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 14px;
-          border-radius: 16px;
-          text-align: left;
-          position: relative;
-          overflow: hidden;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: linear-gradient(145deg, rgba(16, 24, 38, 0.9), rgba(10, 16, 26, 0.95));
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          cursor: pointer;
-        }
-        .mock-card:active {
-          transform: scale(0.96);
-        }
-        .mock-card--ielts {
-          border-color: rgba(56, 189, 248, 0.25);
-          box-shadow: 0 4px 16px rgba(56, 189, 248, 0.06);
-        }
-        .mock-card--cefr {
-          border-color: rgba(16, 185, 129, 0.25);
-          box-shadow: 0 4px 16px rgba(16, 185, 129, 0.06);
-        }
-        .mock-card__header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 10px;
-        }
-        .mock-card__icon {
-          width: 34px;
-          height: 34px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .mock-card__icon--ielts {
-          background: rgba(56, 189, 248, 0.16);
-          color: #38bdf8;
-        }
-        .mock-card__icon--cefr {
-          background: rgba(16, 185, 129, 0.16);
-          color: #10b981;
-        }
-        .mock-card__tag {
-          font-size: 10px;
-          font-weight: 800;
-          padding: 2px 6px;
-          border-radius: 6px;
-        }
-        .mock-card__tag--ielts {
-          background: rgba(56, 189, 248, 0.12);
-          color: #38bdf8;
-          border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .mock-card__tag--cefr {
-          background: rgba(16, 185, 129, 0.12);
-          color: #10b981;
-          border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-        .mock-card__content {
-          margin-bottom: 10px;
-        }
-        .mock-card__title {
-          font-size: 14px;
-          font-weight: 800;
-          color: #ffffff;
-          margin: 0 0 3px 0;
-          line-height: 1.25;
-        }
-        .mock-card__sub {
-          font-size: 11px;
-          color: #94a3b8;
-          margin: 0;
-          line-height: 1.3;
-        }
-        .mock-card__footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 11px;
-          font-weight: 700;
-          padding-top: 8px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .mock-card--ielts .mock-card__footer {
-          color: #38bdf8;
-        }
-        .mock-card--cefr .mock-card__footer {
-          color: #10b981;
-        }
-
         /* ── Hero / Find Partner Card ── */
         .hero {
           position: relative; isolation: isolate; overflow: hidden;

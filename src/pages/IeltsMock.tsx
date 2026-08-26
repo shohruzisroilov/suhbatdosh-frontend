@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useT } from '../i18n';
 import useAppStore from '../store/useAppStore';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import {
   getIeltsStatus,
   startIeltsTest,
@@ -42,6 +43,8 @@ interface TestFeedback {
 export default function IeltsMock() {
   const t = useT();
   const { navigate, user } = useAppStore();
+
+  useTelegramBackButton(() => navigate('mock'));
 
   // Status & Quota
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -390,7 +393,7 @@ export default function IeltsMock() {
   // Render Header
   const renderHeader = () => (
     <div className="im-header">
-      <button className="im-back-btn" onClick={() => navigate('home')}>
+      <button className="im-back-btn" onClick={() => navigate('mock')}>
         <ArrowLeft size={18} />
       </button>
       <div className="im-header__title">
@@ -806,7 +809,7 @@ export default function IeltsMock() {
               <RotateCcw size={18} />
               <span>{t('mock.retake')}</span>
             </button>
-            <button className="im-btn im-btn--ghost" onClick={() => navigate('home')}>
+            <button className="im-btn im-btn--ghost" onClick={() => navigate('mock')}>
               <span>Bosh sahifaga qaytish</span>
             </button>
           </div>
