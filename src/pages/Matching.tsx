@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
+import { useAiSession } from '../hooks/useAiSession';
 import { useT } from '../i18n';
 import { Clock, Users, RotateCcw, Star, Sparkles, Bot, ArrowRight, Zap } from 'lucide-react';
 import { getAiStatus } from '../api/endpoints';
@@ -31,28 +32,11 @@ export default function Matching() {
   const cancelRef = useRef(cancel);
   cancelRef.current = cancel;
 
+  const openAiSession = useAiSession();
+
   const startAiCall = () => {
-    if (!user?.isPremium) {
-      const used = user?.dailyMinutes || 0;
-      const limit = user?.dailyLimit || 10;
-      if (used >= limit) {
-        useAppStore.setState({ matchingStatus: 'limit_reached' });
-        return;
-      }
-    }
     cancel();
-    useAppStore.setState({
-      session: {
-        id: `ai_${Date.now()}`,
-        partnerName: 'Suhbatdosh AI',
-        partnerLevel: user?.level || 1,
-        isAi: true,
-      },
-      partnerConnected: true,
-      isCallActive: false,
-      matchingStatus: 'idle',
-    });
-    navigate('chat');
+    openAiSession();
   };
 
   useEffect(() => {

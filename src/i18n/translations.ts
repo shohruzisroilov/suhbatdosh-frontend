@@ -477,9 +477,17 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.limitTitle': 'Run out of free tests?',
     'mock.limitSub': 'Premium gives you 3 full tests every day',
 
+    'ai.title': 'AI speaking partner',
+    'ai.sub': 'Talk any time — it replies at your level',
+    'ai.start': 'Start talking',
+
     'nav.mock': 'Exams',
     'profile.inviteSub': 'Get free Premium days for each friend',
     'profile.settingsSub': 'Level, gender and notifications',
+    'vocab.newWord': 'New word',
+    'vocab.save': 'Save',
+    'vocab.saved': 'Saved',
+    'vocab.dismiss': 'Dismiss',
     'hh.tapToChange': 'Tap to change',
     'hh.levelTitle': 'Choose your English level',
     'hh.levelDesc': 'Your level decides who you are matched with and how hard the AI talks.',
@@ -491,7 +499,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
 
     // ─── Waiting for a partner ──────────────────────────────────────────────
     'match.noneTitle': 'Nobody is free right now',
-    'match.noneDesc': 'Practise with the AI partner while you wait — it talks back and shows you what to fix.',
+    'match.noneDesc': 'Practise with the AI partner while you wait — it talks back at your level and saves the new words you meet.',
     'match.practiseWithAi': 'Practise with AI partner',
 
     // ─── Premium comparison table ───────────────────────────────────────────

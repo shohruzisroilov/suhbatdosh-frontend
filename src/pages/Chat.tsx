@@ -4,6 +4,7 @@ import { Track } from 'livekit-client';
 import { endSession, sendAIPartnerTurn, getTTSAudio, recordAiPartnerSession } from '../api/endpoints';
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
+import VocabPrompt, { type VocabItem } from '../components/VocabPrompt';
 import CallControls from '../components/CallControls';
 import ChatOverlay from '../components/ChatOverlay';
 import EndSessionSheet from '../components/EndSessionSheet';
@@ -334,6 +335,7 @@ export default function Chat() {
 
   // AI Voice State
   const [aiStatus, setAiStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+  const [aiVocab, setAiVocab] = useState<VocabItem | null>(null);
   const [aiHistory, setAiHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -483,6 +485,32 @@ export default function Chat() {
         { role: 'assistant', content: aiResponse },
       ]);
 
+      // Put both sides in the visible transcript, the way the text mode already does.
+      // A voice conversation used to leave the screen empty, so a learner could not
+      // read back how their speech was actually heard — which is the single most
+      // useful signal Whisper gives them about their pronunciation.
+      const now = Date.now();
+      addMessage({
+        id: String(now),
+        senderId: String(user?.id || 'me'),
+        content: userText,
+        sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
+        isOwn: true,
+        is_own: true,
+      });
+      addMessage({
+        id: String(now + 1),
+        senderId: 'ai_partner',
+        content: aiResponse,
+        sentAt: new Date().toISOString(),
+        sent_at: new Date().toISOString(),
+        isOwn: false,
+        is_own: false,
+      });
+
+      setAiVocab(res.vocab?.word ? res.vocab : null);
+
       notifyHaptic('success');
       speakAiText(aiResponse, audioUrl);
     } catch (err) {
@@ -543,6 +571,8 @@ export default function Chat() {
         { role: 'user', content: userText },
         { role: 'assistant', content: aiResponse },
       ]);
+
+      setAiVocab(res.vocab?.word ? res.vocab : null);
 
       notifyHaptic('success');
       speakAiText(aiResponse, audioUrl);
@@ -914,6 +944,11 @@ export default function Chat() {
       {/* ── Speaking section — audio mode ── */}
       {!camOn && (
         <div className="call-body">
+          {/* Sits between turns rather than interrupting: the partner never stops the
+              conversation to teach, so this is where a session leaves something behind. */}
+          {isAiSession && aiVocab && (
+            <VocabPrompt item={aiVocab} onDone={() => setAiVocab(null)} />
+          )}
           {!partnerConnected && (
             <div className="call-waiting-note">
               <span className="call-waiting-spinner" />
