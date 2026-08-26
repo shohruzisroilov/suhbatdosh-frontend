@@ -23,7 +23,6 @@ import {
   finishCefrTest,
   abandonCefrTest,
 } from '../api/endpoints';
-import { useAuth } from '../hooks/useAuth';
 import useAppStore from '../store/useAppStore';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 
@@ -71,7 +70,7 @@ interface CefrFeedback {
 export default function CefrMock(props: Partial<CefrMockProps>) {
   const storeNavigate = useAppStore((s) => s.navigate);
   const navigate = props.navigate || storeNavigate;
-  const { user } = useAuth();
+  const user = useAppStore((s) => s.user);
 
   // Test status
   const [testStatus, setTestStatus] = useState<'loading' | 'idle' | 'testing' | 'grading' | 'results'>('loading');
