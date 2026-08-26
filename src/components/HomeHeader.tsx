@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Avatar from './Avatar';
 import { useT } from '../i18n';
 import { Flame, ChevronDown, Check, X } from 'lucide-react';
@@ -93,7 +94,7 @@ export default function HomeHeader({
       </header>
 
       {/* Quick Level Change Modal */}
-      {openLevelModal && (
+      {openLevelModal && createPortal(
         <div className="home-review-modal-backdrop" onClick={() => setOpenLevelModal(false)}>
           <div className="hh-level-modal scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="hh-level-header">
@@ -131,7 +132,8 @@ export default function HomeHeader({
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

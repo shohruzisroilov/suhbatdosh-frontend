@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { getReviews } from '../api/endpoints';
 import { Star, MessageSquarePlus, Quote, ChevronRight } from 'lucide-react';
 import { tapHaptic } from '../utils/haptics';
@@ -156,12 +157,13 @@ export default function HomeReviews() {
         </div>
       )}
 
-      {showReviewModal && (
+      {showReviewModal && createPortal(
         <div className="home-review-modal-backdrop" onClick={() => setShowReviewModal(false)}>
           <div className="home-review-modal-content scale-in" onClick={(e) => e.stopPropagation()}>
             <ReviewPrompt forceShow={true} onClose={() => setShowReviewModal(false)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

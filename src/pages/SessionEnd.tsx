@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { rateSession } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
@@ -170,12 +171,13 @@ export default function SessionEnd() {
 
       </div>
 
-      {showReviewModal && (
+      {showReviewModal && createPortal(
         <div className="home-review-modal-backdrop" onClick={finishGoHome}>
           <div className="home-review-modal-content scale-in" onClick={(e) => e.stopPropagation()}>
             <ReviewPrompt forceShow={true} onClose={finishGoHome} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {reportOpen && (
@@ -189,8 +191,9 @@ export default function SessionEnd() {
 
       <style>{`
         .end-screen {
-          display: flex; align-items: center; justify-content: center;
-          padding: var(--space-6) var(--space-4); flex: 1; background: var(--bg); overflow-y: auto;
+          display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+          padding: var(--space-6) var(--space-4); flex: 1; background: var(--bg);
+          overflow-y: auto; overflow-x: hidden; width: 100%; position: relative;
         }
         .end-body {
           width: 100%; max-width: 340px;
