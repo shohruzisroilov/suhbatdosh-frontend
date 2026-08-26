@@ -405,8 +405,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <ArrowLeft size={20} />
         </button>
         <div className="im-header-title">
-          <h2>🇺🇿 CEFR Multilevel Speaking</h2>
-          <span className="im-badge">National Certificate</span>
+          <h2>CEFR Multilevel Speaking Mock</h2>
+          <span className="im-badge">CEFR Mock</span>
         </div>
         <button className="im-icon-btn" onClick={toggleSound}>
           {soundEnabled ? <Volume2 size={20} className="text-sky-400" /> : <VolumeX size={20} className="text-gray-400" />}
@@ -434,7 +434,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <div className="im-hero-ico" style={{ background: 'rgba(16, 185, 129, 0.16)', color: '#10b981' }}>
             <Award size={40} />
           </div>
-          <h3>Uzbekistan National Certificate Speaking</h3>
+          <h3>CEFR Multilevel Speaking Mock</h3>
           <p className="im-desc">
             Milliy Sertifikat formati bo'yicha (Part 1.1, Part 1.2 Rasm tahlili, Part 2 B2, va Part 3 C1) to'liq AI topshirish va darajani aniqlash.
           </p>
