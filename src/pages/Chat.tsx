@@ -496,9 +496,16 @@ export default function Chat() {
 
       notifyHaptic('success');
       speakAiText(aiResponse);
-    } catch {
+    } catch (err) {
+      console.error('[AI Voice Turn Error]:', err);
       notifyHaptic('error');
       setAiStatus('idle');
+      // Auto-restart recording loop after error so session never gets permanently stuck
+      setTimeout(() => {
+        if (isMountedRef.current && micOn) {
+          startAiRecording();
+        }
+      }, 1000);
     }
   }
 
@@ -548,11 +555,13 @@ export default function Chat() {
       ]);
 
       notifyHaptic('success');
-      setAiStatus('idle');
-      if (micOn) startAiRecording();
+      speakAiText(aiResponse);
     } catch {
       notifyHaptic('error');
       setAiStatus('idle');
+      setTimeout(() => {
+        if (isMountedRef.current && micOn) startAiRecording();
+      }, 1000);
     }
   }
 
@@ -573,6 +582,9 @@ export default function Chat() {
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AudioCtx();
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
       audioContextRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
@@ -603,8 +615,8 @@ export default function Chat() {
           }
         }
 
-        const speechThresh = baseNoiseFloor + 3;
-        const silenceThresh = baseNoiseFloor + 1.5;
+        const speechThresh = baseNoiseFloor + 2.5;
+        const silenceThresh = baseNoiseFloor + 1.2;
 
         if (averageVolume > speechThresh) {
           hasSpokenRef.current = true;
@@ -616,7 +628,7 @@ export default function Chat() {
           if (!silenceTimerRef.current && averageVolume <= silenceThresh) {
             silenceTimerRef.current = setTimeout(() => {
               stopAiRecording();
-            }, 1200);
+            }, 1000);
           }
         }
 
@@ -646,24 +658,27 @@ export default function Chat() {
               handleSendAiTurn(base64Data, 'audio/webm');
             } else {
               setAiStatus('idle');
+              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 800);
             }
           };
         } else {
           setAiStatus('idle');
+          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 800);
         }
       };
 
-      mediaRecorder.start(250);
+      mediaRecorder.start(200);
       setAiStatus('listening');
 
-      // Max 7-second auto-send safety timer for continuous speech
+      // 4.5-second auto-send safety timer for seamless continuous turn-taking
       maxRecordTimerRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopAiRecording();
         }
-      }, 7000);
+      }, 4500);
     } catch {
       setAiStatus('idle');
+      setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 1200);
     }
   }
 
