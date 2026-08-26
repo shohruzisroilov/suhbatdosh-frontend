@@ -884,6 +884,7 @@ export default function Chat() {
       <CallControls
         micOn={micOn}
         camOn={camOn}
+        isAiSession={isAiSession}
         speaking={(youSpeaking || aiStatus === 'listening') && micOn}
         onToggleMic={() => {
           setMicOn(v => {
