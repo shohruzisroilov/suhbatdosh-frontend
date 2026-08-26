@@ -234,9 +234,34 @@ export default function Chat() {
   // AI Voice loop effect
   useEffect(() => {
     isMountedRef.current = true;
+    let timer: NodeJS.Timeout;
+
     if (isAiSession) {
       setPartnerConnected(true);
-      startAiRecording();
+      const userName = user?.displayName || 'there';
+      const initialGreeting = `Hi ${userName}! I'm Suhbatdosh AI, your speaking partner. What would you like to practice talking about today?`;
+
+      setAiHistory([{ role: 'assistant', content: initialGreeting }]);
+
+      addMessage({
+        id: `ai_init_${Date.now()}`,
+        senderId: 'ai_partner',
+        content: initialGreeting,
+        sentAt: new Date().toISOString(),
+        isOwn: false,
+      });
+
+      timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          speakAiText(initialGreeting);
+        }
+      }, 500);
+
+      return () => {
+        if (timer) clearTimeout(timer);
+        isMountedRef.current = false;
+        cleanupAiAudio();
+      };
     }
     return () => {
       isMountedRef.current = false;
@@ -271,6 +296,9 @@ export default function Chat() {
             setAiStatus('idle');
           }
         };
+        audio.onerror = () => {
+          if (isMountedRef.current && micOn) startAiRecording();
+        };
         await audio.play();
         return;
       }
@@ -287,6 +315,9 @@ export default function Chat() {
         } else {
           setAiStatus('idle');
         }
+      };
+      utterance.onerror = () => {
+        if (isMountedRef.current && micOn) startAiRecording();
       };
       window.speechSynthesis.speak(utterance);
     } else {
