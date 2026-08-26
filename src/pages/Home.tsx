@@ -136,7 +136,7 @@ export default function Home() {
               <Award size={18} />
             </span>
             <span className="row__text">
-              <span className="row__title">CEFR Multilevel Mock</span>
+              <span className="row__title">CEFR Multilevel Speaking Mock</span>
             </span>
             <ChevronRight size={18} className="row__arrow" />
           </button>
