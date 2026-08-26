@@ -118,24 +118,24 @@ export default function Home() {
           className="home-ai-quick-card fade-up"
           onClick={() => { tapHaptic('medium'); navigate('chat', { isAi: true, mode: 'ai' }); }}
         >
-          <div className="home-ai-quick-inner">
-            <div className="home-ai-quick-badge">
-              <Sparkles size={11} />
+          <div className="home-ai-quick-top">
+            <span className="home-ai-quick-badge">
+              <Sparkles size={12} />
               <span>AI VOICE PARTNER</span>
+            </span>
+            <span className="home-ai-quick-free">FREE</span>
+          </div>
+
+          <div className="home-ai-quick-body">
+            <div className="home-ai-quick-info">
+              <h3 className="home-ai-quick-title">Practice English with AI 🎙️</h3>
+              <p className="home-ai-quick-sub">Instant voice practice • Level-adapted • No waiting</p>
             </div>
-            <div className="home-ai-quick-content">
-              <div className="home-ai-quick-text">
-                <h3 className="home-ai-quick-title">Practice English with AI 🎙️</h3>
-                <p className="home-ai-quick-sub">No wait · Instant voice chat · Level-adapted</p>
-              </div>
-              <div className="home-ai-quick-action">
-                <span className="home-ai-quick-btn">
-                  <Bot size={15} />
-                  <span>Start</span>
-                  <ChevronRight size={14} />
-                </span>
-              </div>
-            </div>
+            <button type="button" className="home-ai-quick-btn">
+              <Bot size={16} />
+              <span>Start</span>
+              <ChevronRight size={15} strokeWidth={2.5} />
+            </button>
           </div>
         </section>
 
@@ -424,39 +424,55 @@ export default function Home() {
         }
         /* ── AI Voice Quick Card ── */
         .home-ai-quick-card {
-          margin-bottom: 14px;
-          border-radius: var(--radius-lg);
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
-          border: 1px solid rgba(16, 185, 129, 0.25);
-          padding: 14px 16px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-          transition: transform 0.2s ease, border-color 0.2s ease;
-          position: relative; overflow: hidden;
+          position: relative;
+          background: linear-gradient(135deg, #047857 0%, #10B981 60%, #06B6D4 100%);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 20px;
+          padding: 16px;
+          display: flex; flex-direction: column; gap: 10px;
+          box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+          cursor: pointer;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+          -webkit-tap-highlight-color: transparent;
         }
-        .home-ai-quick-card:active { transform: scale(0.98); }
-        .home-ai-quick-inner { display: flex; flex-direction: column; gap: 8px; }
+        .home-ai-quick-card:active {
+          transform: scale(0.985);
+          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+        }
+        .home-ai-quick-top {
+          display: flex; align-items: center; justify-content: space-between;
+        }
         .home-ai-quick-badge {
           display: inline-flex; align-items: center; gap: 5px;
-          font-size: 10px; font-weight: 800; color: #10b981;
+          font-size: 10px; font-weight: 800; color: #a7f3d0;
+          background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 3px 9px; border-radius: 20px;
           letter-spacing: 0.05em; text-transform: uppercase;
         }
-        .home-ai-quick-content {
+        .home-ai-quick-free {
+          font-size: 10px; font-weight: 800; color: #ffffff;
+          background: rgba(255, 255, 255, 0.25);
+          padding: 2px 7px; border-radius: 10px; letter-spacing: 0.05em;
+        }
+        .home-ai-quick-body {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
         }
-        .home-ai-quick-text { flex: 1; min-width: 0; }
+        .home-ai-quick-info { flex: 1; min-width: 0; }
         .home-ai-quick-title {
-          font-size: 15px; font-weight: 700; color: #f3f4f6; margin: 0 0 2px 0;
+          font-size: 16px; font-weight: 800; color: #ffffff; margin: 0 0 3px 0;
+          letter-spacing: -0.01em; line-height: 1.25;
         }
         .home-ai-quick-sub {
-          font-size: 12px; color: #9ca3af; margin: 0;
+          font-size: 12px; color: rgba(255, 255, 255, 0.9); margin: 0;
+          line-height: 1.35; font-weight: 500;
         }
-        .home-ai-quick-action { flex-shrink: 0; }
         .home-ai-quick-btn {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 13px; border-radius: var(--radius-full);
-          background: #10b981; color: #042f2e;
-          font-size: 13px; font-weight: 700;
-          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+          padding: 9px 16px; border-radius: 30px;
+          background: #ffffff; color: #047857;
+          font-size: 14px; font-weight: 800; border: none;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+          flex-shrink: 0; cursor: pointer;
         }
 
         .home__foot { padding-bottom: var(--space-2); }
