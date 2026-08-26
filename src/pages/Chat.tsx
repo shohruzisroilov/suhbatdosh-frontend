@@ -339,6 +339,7 @@ export default function Chat() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const maxRecordTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasSpokenRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
@@ -395,6 +396,7 @@ export default function Chat() {
       try { mediaRecorderRef.current.stop(); } catch {}
     }
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       try { audioContextRef.current.close(); } catch {}
@@ -560,7 +562,10 @@ export default function Chat() {
       return;
     }
     try {
+      if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       hasSpokenRef.current = false;
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
@@ -585,7 +590,8 @@ export default function Chat() {
         for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         const averageVolume = sum / bufferLength;
 
-        if (averageVolume > 15) {
+        // Lower volume threshold to 4 to detect soft mobile speech easily
+        if (averageVolume > 4) {
           hasSpokenRef.current = true;
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
@@ -595,7 +601,7 @@ export default function Chat() {
           if (!silenceTimerRef.current) {
             silenceTimerRef.current = setTimeout(() => {
               stopAiRecording();
-            }, 2200);
+            }, 1800);
           }
         }
 
@@ -611,11 +617,12 @@ export default function Chat() {
       mediaRecorder.onstop = async () => {
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
         stream.getTracks().forEach((t) => t.stop());
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
-        if (audioBlob.size > 200 && hasSpokenRef.current) {
+        if (audioBlob.size > 200 && (hasSpokenRef.current || audioChunksRef.current.length > 2)) {
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
@@ -629,6 +636,13 @@ export default function Chat() {
 
       mediaRecorder.start();
       setAiStatus('listening');
+
+      // Max 10-second safety timeout so recording never gets stuck permanently
+      maxRecordTimerRef.current = setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          stopAiRecording();
+        }
+      }, 10000);
     } catch {
       setAiStatus('idle');
     }
@@ -882,6 +896,38 @@ export default function Chat() {
               <span>{t('call.waiting')}</span>
             </div>
           )}
+          {isAiSession && (
+            <div className="ai-voice-action-box">
+              {aiStatus === 'listening' ? (
+                <button
+                  type="button"
+                  className="ai-voice-btn ai-voice-btn--listening"
+                  onClick={() => stopAiRecording()}
+                >
+                  <span className="ai-voice-dot" />
+                  <span>Listening... (Tap when done)</span>
+                </button>
+              ) : aiStatus === 'thinking' ? (
+                <div className="ai-voice-status-pill">
+                  <span className="ai-voice-spinner" />
+                  <span>AI is thinking...</span>
+                </div>
+              ) : aiStatus === 'speaking' ? (
+                <div className="ai-voice-status-pill ai-voice-status-pill--speaking">
+                  <Sparkles size={16} />
+                  <span>AI is speaking...</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="ai-voice-btn"
+                  onClick={() => startAiRecording()}
+                >
+                  <span>🎙️ Tap to speak to AI</span>
+                </button>
+              )}
+            </div>
+          )}
           <SpeakingQuestions onDetailChange={setSpeakingDetail} />
         </div>
       )}
@@ -957,6 +1003,87 @@ export default function Chat() {
           border: 1.5px solid rgba(56, 189, 248, 0.5);
           box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
           color: #ffffff;
+        }
+
+        .ai-voice-action-box {
+          width: 100%;
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          z-index: 12;
+        }
+
+        .ai-voice-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px 20px;
+          border-radius: 99px;
+          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+          cursor: pointer;
+          transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .ai-voice-btn:active {
+          transform: scale(0.96);
+        }
+
+        .ai-voice-btn--listening {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          box-shadow: 0 4px 20px rgba(239, 68, 68, 0.45);
+          animation: pulseListening 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseListening {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+          50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+
+        .ai-voice-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #ffffff;
+          animation: blinkDot 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes blinkDot {
+          from { opacity: 0.3; }
+          to { opacity: 1; }
+        }
+
+        .ai-voice-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 99px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          font-size: 13px;
+          font-weight: 600;
+          color: #94a3b8;
+        }
+        .ai-voice-status-pill--speaking {
+          color: #38bdf8;
+          border-color: rgba(56, 189, 248, 0.3);
+          background: rgba(56, 189, 248, 0.1);
+        }
+
+        .ai-voice-spinner {
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-top-color: #38bdf8;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
         }
 
         .call-bg-glow {
