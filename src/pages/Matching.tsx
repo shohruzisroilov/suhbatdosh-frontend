@@ -32,6 +32,14 @@ export default function Matching() {
   cancelRef.current = cancel;
 
   const startAiCall = () => {
+    if (!user?.isPremium) {
+      const used = user?.dailyMinutes || 0;
+      const limit = user?.dailyLimit || 10;
+      if (used >= limit) {
+        useAppStore.setState({ matchingStatus: 'limit_reached' });
+        return;
+      }
+    }
     cancel();
     useAppStore.setState({
       session: {

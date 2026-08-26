@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useTracks, VideoTrack, useRemoteParticipants, useSpeakingParticipants } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { endSession, sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
+import { endSession, sendAIPartnerTurn, getTTSAudio, recordAiPartnerSession } from '../api/endpoints';
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
 import CallControls from '../components/CallControls';
@@ -192,7 +192,7 @@ export default function Chat() {
     livekitToken, livekitUrl,
     clearSession, setMatchingStatus,
     partnerConnected, setPartnerConnected,
-    user, addMessage,
+    user, updateUser, addMessage,
   } = useAppStore();
   const { joinSession, sendMessage, sendTyping } = useSocket();
   const t = useT();
@@ -433,7 +433,22 @@ export default function Chat() {
       backBtn.show();
       backBtn.onClick(onBack);
     }
-    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+    timerRef.current = setInterval(() => {
+      setElapsed((prevElapsed) => {
+        const next = prevElapsed + 1;
+        if (isAiSession && !user?.isPremium) {
+          const used = user?.dailyMinutes || 0;
+          const limit = user?.dailyLimit || 10;
+          const remSecs = Math.max(0, (limit - used) * 60);
+          if (remSecs > 0 && next >= remSecs) {
+            setTimeout(() => {
+              handleEnd(true);
+            }, 0);
+          }
+        }
+        return next;
+      });
+    }, 1000);
 
     const timeoutId = setTimeout(() => {
       if (!isAiSession && !useAppStore.getState().partnerConnected) {
@@ -449,7 +464,7 @@ export default function Chat() {
         backBtn.hide();
       }
     };
-  }, [isAiSession]);
+  }, [isAiSession, user?.isPremium, user?.dailyMinutes, user?.dailyLimit]);
 
   async function handleRetryConnection() {
     if (session?.id) {
@@ -469,14 +484,36 @@ export default function Chat() {
     navigate('home');
   }
 
-  async function handleEnd() {
+  async function handleEnd(isLimitReached = false) {
     if (ending) return;
     setEnding(true);
     cleanupAiAudio();
-    if (!isAiSession && session?.id) {
+
+    if (isAiSession) {
+      try {
+        const res = await recordAiPartnerSession(elapsed);
+        if (res?.user) {
+          updateUser(res.user);
+        } else if (res?.addedMinutes) {
+          updateUser({ dailyMinutes: (user?.dailyMinutes || 0) + res.addedMinutes });
+        }
+      } catch (err) {
+        console.error('[AI Session End Error]', err);
+      }
+
+      if (isLimitReached) {
+        setMatchingStatus('limit_reached');
+        navigate('matching');
+        return;
+      }
+      navigate('home');
+      return;
+    }
+
+    if (session?.id) {
       try { await endSession(session.id); } catch {}
     }
-    navigate(isAiSession ? 'home' : 'session_end', { sessionId: session?.id, elapsed });
+    navigate('session_end', { sessionId: session?.id, elapsed });
   }
 
   const unread = showChat ? 0 : Math.max(0, messages.length - lastSeenCount);

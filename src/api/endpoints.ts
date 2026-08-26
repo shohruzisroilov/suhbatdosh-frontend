@@ -110,3 +110,6 @@ export const deleteVocabularyItem = (id: number) =>
 
 export const getTTSAudio = (text: string) =>
   api.post('/ai-partner/tts', { text }).then((r) => r.data);
+
+export const recordAiPartnerSession = (durationSeconds: number) =>
+  api.post('/ai-partner/session-end', { durationSeconds }).then((r) => r.data);
