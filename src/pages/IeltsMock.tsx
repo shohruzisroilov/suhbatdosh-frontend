@@ -389,66 +389,90 @@ export default function IeltsMock() {
         {renderHeader()}
 
         <div className="im-content">
-          <div className="im-hero-card">
-            <div className="im-badge">Official Format</div>
-            <div className="im-avatar-wrapper">
-              <div className="im-avatar">🎙️</div>
-              <div className="im-avatar-ring" />
+          <div className="im-start-card">
+            <div className="im-hero-ico" style={{ background: 'rgba(56, 189, 248, 0.16)', color: '#38bdf8' }}>
+              <Award size={40} />
             </div>
-            <h1 className="im-title">IELTS Speaking Mock Exam</h1>
-            <p className="im-desc">
-              Rasmiy IELTS Speaking formati bo'yicha 3 ta bo'limdan iborat to'liq imtihon topshiring. AI Examiner sizning bahoingizni 0-9 band shkalasida aniqlab beradi.
+            <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px 0', color: '#fff' }}>
+              IELTS Speaking Mock Exam
+            </h3>
+            <p className="im-desc" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 16px 0', textAlign: 'center' }}>
+              Rasmiy IELTS Speaking formati bo'yicha (Part 1, Part 2 Cue Card, va Part 3 Discussion) to'liq AI topshirish va band ballni aniqlash.
             </p>
-          </div>
 
-          {/* Quota Card */}
-          <div className="im-quota-card">
-            <div className="im-quota-info">
-              <span className="im-quota-label">
-                {status?.isPremium ? 'Kunlik Limit (Premium)' : 'Bepul Limit (Free)'}
-              </span>
-              <span className="im-quota-value">
-                {status?.remaining ?? 0} / {status?.limit ?? 3} ta imtihon qoldi
-              </span>
+            <div className="im-details-grid">
+              <div className="im-detail-card">
+                <div className="im-detail-head">
+                  <Clock size={15} style={{ color: '#38bdf8' }} />
+                  <span>Davomiyligi</span>
+                </div>
+                <p className="im-detail-val">~11-14 daqiqa</p>
+              </div>
+
+              <div className="im-detail-card">
+                <div className="im-detail-head">
+                  <Award size={15} style={{ color: '#38bdf8' }} />
+                  <span>Baholash</span>
+                </div>
+                <p className="im-detail-val">Band 0 - 9.0 (IELTS)</p>
+              </div>
+
+              <div className="im-detail-card im-detail-card--full">
+                <div className="im-detail-head">
+                  <BookOpen size={15} style={{ color: '#38bdf8' }} />
+                  <span>Format & Bo'limlar</span>
+                </div>
+                <p className="im-detail-val">Part 1 (Intro) + Part 2 (Cue Card) + Part 3 (Discussion)</p>
+              </div>
+
+              <div className="im-detail-card im-detail-card--full">
+                <div className="im-detail-head">
+                  <Sparkles size={15} style={{ color: '#38bdf8' }} />
+                  <span>Kunlik Limit</span>
+                </div>
+                <p className="im-detail-val">
+                  {status
+                    ? `${status.remaining} / ${status.limit} ta imtihon qoldi`
+                    : '3 / 3 ta imtihon qoldi'}
+                </p>
+              </div>
             </div>
-            {!status?.isPremium && (
-              <p className="im-quota-hint">
-                Oddiy foydalanuvchilar jami 3 marotaba, Premium foydalanuvchilar kuniga 3 marotaba topshirishi mumkin.
-              </p>
-            )}
-          </div>
 
-          {/* Error notice */}
-          {errorMsg && (
-            <div className="im-error-box">
-              <AlertCircle size={16} />
-              <span>{errorMsg}</span>
+            {/* Error notice */}
+            {errorMsg && (
+              <div className="im-error-box" style={{ width: '100%', marginBottom: '14px' }}>
+                <AlertCircle size={16} />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="im-actions" style={{ width: '100%' }}>
+              {status?.active ? (
+                <>
+                  <button className="im-btn im-btn--primary" onClick={() => loadActiveTest(status.active!)}>
+                    <Sparkles size={18} />
+                    <span>Tugallanmagan imtihonni davom ettirish</span>
+                  </button>
+                  <button
+                    className="im-btn im-btn--ghost"
+                    onClick={handleAbandon}
+                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                  >
+                    <span>Voz kechish va yangi imtihon boshlash</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="im-btn im-btn--primary"
+                  onClick={handleStartTest}
+                  disabled={loadingStatus || (status?.remaining ?? 0) <= 0}
+                >
+                  <Sparkles size={18} />
+                  <span>IELTS Mock Imtihonni Boshlash</span>
+                </button>
+              )}
             </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="im-actions">
-            {status?.active ? (
-              <>
-                <button className="im-btn im-btn--primary" onClick={() => loadActiveTest(status.active!)}>
-                  <span>Tugallanmagan imtihonni davom ettirish</span>
-                  <ChevronRight size={18} />
-                </button>
-                <button className="im-btn im-btn--ghost" onClick={handleAbandon}>
-                  <span>Voz kechish va yangi imtihon boshlash</span>
-                </button>
-              </>
-            ) : (
-              <button
-                className="im-btn im-btn--primary"
-                onClick={handleStartTest}
-                disabled={loadingStatus || (status?.remaining ?? 0) <= 0}
-              >
-                <Sparkles size={18} />
-                <span>Imtihonni Boshlash</span>
-                <ChevronRight size={18} />
-              </button>
-            )}
           </div>
         </div>
         <style>{css}</style>
@@ -769,7 +793,66 @@ const css = `
   .im-sparkle { color: #38bdf8; }
 
   .im-content {
-    padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 500px; margin: 0 auto; width: 100%;
+    padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box;
+  }
+
+  .im-start-card {
+    background: linear-gradient(145deg, rgba(16, 24, 38, 0.95), rgba(10, 16, 26, 0.98));
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 24px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(56, 189, 248, 0.12);
+  }
+  .im-hero-ico {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+  }
+
+  .im-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .im-detail-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+  .im-detail-card--full {
+    grid-column: span 2;
+  }
+  .im-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+  .im-detail-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.3;
   }
 
   .im-hero-card {

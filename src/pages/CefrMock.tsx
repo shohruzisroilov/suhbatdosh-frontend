@@ -439,29 +439,41 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             Milliy Sertifikat formati bo'yicha (Part 1.1, Part 1.2 Rasm tahlili, Part 2 B2, va Part 3 C1) to'liq AI topshirish va darajani aniqlash.
           </p>
 
-          {quota && (
-            <div className="im-quota-badge">
-              <Sparkles size={16} />
-              <span>
-                {quota.isPremium
-                  ? `Kunlik limit: ${quota.used}/${quota.limit} (Qolgani: ${quota.remaining})`
-                  : `Bepul sinov: ${quota.used}/${quota.limit} (Qolgani: ${quota.remaining})`}
-              </span>
+          <div className="im-details-grid">
+            <div className="im-detail-card">
+              <div className="im-detail-head">
+                <Clock size={15} style={{ color: '#10b981' }} />
+                <span>Davomiyligi</span>
+              </div>
+              <p className="im-detail-val">~11-14 daqiqa</p>
             </div>
-          )}
 
-          <div className="im-info-list">
-            <div className="im-info-item">
-              <Clock size={16} />
-              <span>Davomiyligi: ~11-14 daqiqa</span>
+            <div className="im-detail-card">
+              <div className="im-detail-head">
+                <Award size={15} style={{ color: '#10b981' }} />
+                <span>Baholash</span>
+              </div>
+              <p className="im-detail-val">Max 75 ball (A1 - C1)</p>
             </div>
-            <div className="im-info-item">
-              <BookOpen size={16} />
-              <span>Part 1.1 (A1-A2) + Part 1.2 (B1 Rasm) + Part 2 (B2) + Part 3 (C1)</span>
+
+            <div className="im-detail-card im-detail-card--full">
+              <div className="im-detail-head">
+                <BookOpen size={15} style={{ color: '#10b981' }} />
+                <span>Format & Bo'limlar</span>
+              </div>
+              <p className="im-detail-val">Part 1.1 (A1-A2) + Part 1.2 (Rasm) + Part 2 (B2) + Part 3 (C1)</p>
             </div>
-            <div className="im-info-item">
-              <HelpCircle size={16} />
-              <span>Maksimal ball: 75 / CEFR Daraja: A1-C1</span>
+
+            <div className="im-detail-card im-detail-card--full">
+              <div className="im-detail-head">
+                <Sparkles size={15} style={{ color: '#10b981' }} />
+                <span>Kunlik Limit</span>
+              </div>
+              <p className="im-detail-val">
+                {quota
+                  ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi`
+                  : '3 / 3 ta imtihon qoldi'}
+              </p>
             </div>
           </div>
 
@@ -901,24 +913,40 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           margin-bottom: 20px;
         }
 
-        .im-info-list {
+        .im-details-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
           width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
-        .im-info-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+        .im-detail-card {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 12px 14px;
           border-radius: 14px;
-          font-size: 13px;
-          color: #cbd5e1;
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
           text-align: left;
+        }
+        .im-detail-card--full {
+          grid-column: span 2;
+        }
+        .im-detail-head {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11px;
+          font-weight: 700;
+          color: #94a3b8;
+        }
+        .im-detail-val {
+          font-size: 13px;
+          font-weight: 700;
+          color: #ffffff;
+          margin: 0;
+          line-height: 1.3;
         }
 
         .im-btn {
