@@ -48,6 +48,7 @@ export interface Session {
   partnerName?: string;
   partnerAvatarUrl?: string;
   partnerLevel?: number;
+  isAi?: boolean;
   livekit_token?: string;
   livekit_room?: string;
   duration_seconds?: number;

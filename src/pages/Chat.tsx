@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useTracks, VideoTrack, useRemoteParticipants, useSpeakingParticipants } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { endSession } from '../api/endpoints';
+import { endSession, sendAIPartnerTurn, getTTSAudio } from '../api/endpoints';
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
 import CallControls from '../components/CallControls';
@@ -11,7 +11,7 @@ import Avatar from '../components/Avatar';
 import SpeakingQuestions from '../components/SpeakingQuestions';
 import { useT } from '../i18n';
 import { notifyHaptic } from '../utils/haptics';
-import { AlertCircle, AlertTriangle, X } from 'lucide-react';
+import { AlertCircle, AlertTriangle, X, Sparkles } from 'lucide-react';
 
 function fmt(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -192,9 +192,12 @@ export default function Chat() {
     livekitToken, livekitUrl,
     clearSession, setMatchingStatus,
     partnerConnected, setPartnerConnected,
+    user, addMessage,
   } = useAppStore();
   const { joinSession, sendMessage, sendTyping } = useSocket();
   const t = useT();
+
+  const isAiSession = !!session?.isAi;
 
   const [elapsed, setElapsed]       = useState(0);
   const [showChat, setShowChat]     = useState(false);
@@ -210,6 +213,17 @@ export default function Chat() {
   const [youSpeaking, setYouSpeaking] = useState(false);
   const [partnerSpeaking, setPartnerSpeaking] = useState(false);
 
+  // AI Voice State
+  const [aiStatus, setAiStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+  const [aiHistory, setAiHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSpokenRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+
   const handleSpeaking = useCallback((you: boolean, partner: boolean) => {
     setYouSpeaking(you);
     setPartnerSpeaking(partner);
@@ -217,8 +231,202 @@ export default function Chat() {
 
   const timerRef = useRef<any>(null);
 
+  // AI Voice loop effect
   useEffect(() => {
-    if (session?.id) joinSession(session.id);
+    isMountedRef.current = true;
+    if (isAiSession) {
+      setPartnerConnected(true);
+      startAiRecording();
+    }
+    return () => {
+      isMountedRef.current = false;
+      cleanupAiAudio();
+    };
+  }, [isAiSession]);
+
+  function cleanupAiAudio() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop(); } catch {}
+    }
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try { audioContextRef.current.close(); } catch {}
+    }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  async function speakAiText(text: string) {
+    if (!isMountedRef.current) return;
+    setAiStatus('speaking');
+
+    try {
+      const res = await getTTSAudio(text);
+      if (res?.ok && res?.audioUrl) {
+        const audio = new Audio(res.audioUrl);
+        audio.onended = () => {
+          if (isMountedRef.current && micOn) {
+            startAiRecording();
+          } else {
+            setAiStatus('idle');
+          }
+        };
+        await audio.play();
+        return;
+      }
+    } catch {}
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.95;
+      utterance.onend = () => {
+        if (isMountedRef.current && micOn) {
+          startAiRecording();
+        } else {
+          setAiStatus('idle');
+        }
+      };
+      window.speechSynthesis.speak(utterance);
+    } else {
+      if (isMountedRef.current && micOn) startAiRecording();
+    }
+  }
+
+  async function handleSendAiTurn(audioBase64: string, audioMimeType: string) {
+    if (!isMountedRef.current) return;
+    setAiStatus('thinking');
+
+    try {
+      const res = await sendAIPartnerTurn({
+        audioBase64,
+        audioMimeType,
+        history: aiHistory,
+        userLevel: user?.level ? String(user.level) : undefined,
+      });
+
+      const userText = res.transcription || 'Voice message';
+      const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
+
+      addMessage({
+        id: Date.now().toString(),
+        senderId: String(user?.id || 'me'),
+        content: userText,
+        sentAt: new Date().toISOString(),
+        isOwn: true,
+      });
+
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        senderId: 'ai_partner',
+        content: aiResponse,
+        sentAt: new Date().toISOString(),
+        isOwn: false,
+      });
+
+      setAiHistory((prev) => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: aiResponse },
+      ]);
+
+      notifyHaptic('success');
+      speakAiText(aiResponse);
+    } catch {
+      notifyHaptic('error');
+      setAiStatus('idle');
+    }
+  }
+
+  async function startAiRecording() {
+    if (!isMountedRef.current || !micOn) {
+      setAiStatus('idle');
+      return;
+    }
+    try {
+      hasSpokenRef.current = false;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      audioContextRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const checkSilence = () => {
+        if (!isMountedRef.current || mediaRecorder.state === 'inactive') return;
+        analyser.getByteFrequencyData(dataArray);
+
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+        const averageVolume = sum / bufferLength;
+
+        if (averageVolume > 15) {
+          hasSpokenRef.current = true;
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+        } else if (hasSpokenRef.current) {
+          if (!silenceTimerRef.current) {
+            silenceTimerRef.current = setTimeout(() => {
+              stopAiRecording();
+            }, 2200);
+          }
+        }
+
+        animationFrameRef.current = requestAnimationFrame(checkSilence);
+      };
+
+      checkSilence();
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        stream.getTracks().forEach((t) => t.stop());
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+        if (audioBlob.size > 200 && hasSpokenRef.current) {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            const base64Data = (reader.result as string).split(',')[1];
+            handleSendAiTurn(base64Data, 'audio/webm');
+          };
+        } else {
+          setAiStatus('idle');
+        }
+      };
+
+      mediaRecorder.start();
+      setAiStatus('listening');
+    } catch {
+      setAiStatus('idle');
+    }
+  }
+
+  function stopAiRecording() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  }
+
+  useEffect(() => {
+    if (!isAiSession && session?.id) joinSession(session.id);
     const backBtn = window.Telegram?.WebApp?.BackButton;
     const onBack = () => setShowEnd(true);
     if (backBtn) {
@@ -228,7 +436,7 @@ export default function Chat() {
     timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
 
     const timeoutId = setTimeout(() => {
-      if (!useAppStore.getState().partnerConnected) {
+      if (!isAiSession && !useAppStore.getState().partnerConnected) {
         setConnectionTimeout(true);
       }
     }, 25000);
@@ -241,7 +449,7 @@ export default function Chat() {
         backBtn.hide();
       }
     };
-  }, []);
+  }, [isAiSession]);
 
   async function handleRetryConnection() {
     if (session?.id) {
@@ -262,10 +470,13 @@ export default function Chat() {
   }
 
   async function handleEnd() {
-    if (ending || !session?.id) return;
+    if (ending) return;
     setEnding(true);
-    try { await endSession(session.id); } catch {}
-    navigate('session_end', { sessionId: session.id, elapsed });
+    cleanupAiAudio();
+    if (!isAiSession && session?.id) {
+      try { await endSession(session.id); } catch {}
+    }
+    navigate(isAiSession ? 'home' : 'session_end', { sessionId: session?.id, elapsed });
   }
 
   const unread = showChat ? 0 : Math.max(0, messages.length - lastSeenCount);
@@ -296,8 +507,8 @@ export default function Chat() {
   return (
     <div className="call-screen">
 
-      {/* LiveKit room */}
-      {isCallActive && livekitToken && livekitUrl && (
+      {/* LiveKit room for real human calls */}
+      {!isAiSession && isCallActive && livekitToken && livekitUrl && (
         <LiveKitRoom
           {...({
             token: livekitToken,
@@ -359,22 +570,34 @@ export default function Chat() {
       {/* ── Header — audio mode ── */}
       {!camOn && (
         <div className="call-header">
-          <div className={`call-presence${partnerSpeaking ? ' call-presence--speaking' : ''}`}>
-            <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
+          <div className={`call-presence${partnerSpeaking || aiStatus === 'speaking' ? ' call-presence--speaking' : ''}`}>
+            {isAiSession ? (
+              <div className="ai-partner-avatar">
+                <Sparkles size={22} className="text-cyan-400" />
+              </div>
+            ) : (
+              <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
+            )}
           </div>
           <div className="call-header__info">
-            <span className="call-header__name">{session?.partnerName || 'Partner'}</span>
+            <span className="call-header__name">
+              {session?.partnerName || (isAiSession ? 'Suhbatdosh AI' : 'Partner')}
+            </span>
             <div className="call-header__meta">
               <div className="call-header__meta-row">
                 <span className="call-tag">{t('lang.en')}</span>
-                {session?.partnerLevel && (
-                  <span className="call-tag call-tag--dim">{t(`level.${session.partnerLevel}`)}</span>
+                {(session?.partnerLevel || user?.level) && (
+                  <span className="call-tag call-tag--dim">{t(`level.${session?.partnerLevel || user?.level}`)}</span>
                 )}
-                {partnerSpeaking && (
+                {isAiSession ? (
+                  <span className={`call-status ${aiStatus === 'speaking' ? 'call-status--speaking' : ''}`}>
+                    {aiStatus === 'listening' ? 'Listening...' : aiStatus === 'thinking' ? 'Thinking...' : aiStatus === 'speaking' ? 'Speaking...' : 'Connected'}
+                  </span>
+                ) : partnerSpeaking ? (
                   <span className="call-status call-status--speaking">
                     {t('call.speaking')}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -409,9 +632,18 @@ export default function Chat() {
       <CallControls
         micOn={micOn}
         camOn={camOn}
-        speaking={youSpeaking && micOn}
-        onToggleMic={() => setMicOn(v => !v)}
-        onToggleCam={() => setCamOn(v => !v)}
+        speaking={(youSpeaking || aiStatus === 'listening') && micOn}
+        onToggleMic={() => {
+          setMicOn(v => {
+            const next = !v;
+            if (isAiSession) {
+              if (!next) stopAiRecording();
+              else startAiRecording();
+            }
+            return next;
+          });
+        }}
+        onToggleCam={() => !isAiSession && setCamOn(v => !v)}
         onEnd={() => setShowEnd(true)}
         onOpenChat={() => setShowChat(true)}
         unread={unread}
@@ -452,6 +684,15 @@ export default function Chat() {
           flex-direction: column;
         }
 
+        .ai-partner-avatar {
+          width: 44px; height: 44px; border-radius: 50%;
+          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          display: flex; align-items: center; justify-content: center;
+          border: 1.5px solid rgba(56, 189, 248, 0.5);
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+          color: #ffffff;
+        }
+
         .call-bg-glow {
           position: absolute; inset: 0; z-index: 0;
           background:
@@ -489,7 +730,7 @@ export default function Chat() {
         }
         @keyframes speakPulse {
           0%   { box-shadow: 0 0 0 0 rgba(52,199,89,0.45); }
-          100% { box-shadow: 0 0 0 9px rgba(52,199,89,0); }
+          100% { shadow: 0 0 0 9px rgba(52,199,89,0); }
         }
 
         .call-header__info {

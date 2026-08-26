@@ -3,8 +3,6 @@ import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { Clock, Users, RotateCcw, Star, Sparkles } from 'lucide-react';
-import AIPartnerModal from '../components/AIPartnerModal';
-
 import { getAiStatus } from '../api/endpoints';
 
 function fmtElapsed(s: number): string {
@@ -22,7 +20,6 @@ export default function Matching() {
   const t = useT();
   const started = useRef(false);
   const [elapsed, setElapsed] = useState(0);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
 
   useEffect(() => {
@@ -33,6 +30,22 @@ export default function Matching() {
 
   const cancelRef = useRef(cancel);
   cancelRef.current = cancel;
+
+  const startAiCall = () => {
+    cancel();
+    useAppStore.setState({
+      session: {
+        id: `ai_${Date.now()}`,
+        partnerName: 'Suhbatdosh AI',
+        partnerLevel: user?.level || 1,
+        isAi: true,
+      },
+      partnerConnected: true,
+      isCallActive: false,
+      matchingStatus: 'idle',
+    });
+    navigate('chat');
+  };
 
   useEffect(() => {
     const backBtn = window.Telegram?.WebApp?.BackButton;
@@ -100,7 +113,7 @@ export default function Matching() {
 
           <button
             className="btn-primary flex items-center justify-center gap-2"
-            onClick={() => setIsAiModalOpen(true)}
+            onClick={startAiCall}
             style={{ background: 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)' }}
           >
             <Sparkles size={18} />
@@ -113,7 +126,6 @@ export default function Matching() {
           </button>
           <button className="btn-quiet" onClick={() => navigate('home')}>{t('common.goBack')}</button>
         </div>
-        <AIPartnerModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
         <Styles />
       </div>
     );
@@ -164,7 +176,7 @@ export default function Matching() {
         {aiEnabled && (
           <button
             type="button"
-            onClick={() => setIsAiModalOpen(true)}
+            onClick={startAiCall}
             style={{
               width: '100%',
               padding: elapsed >= 6 ? '14px 18px' : '12px 16px',
@@ -193,7 +205,6 @@ export default function Matching() {
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
       </div>
 
-      <AIPartnerModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
       <Styles />
     </div>
   );
