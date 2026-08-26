@@ -22,7 +22,7 @@ export default function Home() {
 
   const isFemale  = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
-  const showPremium = !user?.isPremium && (user?.dailyLimit ?? 0) > 0;
+  const isLimitReached = !user?.isPremium && (user?.dailyLimit ?? 0) > 0 && (user?.dailyMinutes ?? 0) >= (user?.dailyLimit ?? 0);
 
   useEffect(() => {
     getMe().then(d => {
@@ -60,6 +60,26 @@ export default function Home() {
             </span>
             <span className={`switch${womenOnly ? ' switch--on' : ''}`} />
           </button>
+        )}
+
+        {/* Kunlik limit tugaganda chiqariladigan Bepul daqiqalar hisoblagichi va Premium banner */}
+        {isLimitReached && (
+          <>
+            <DailyProgress
+              dailyMinutes={user?.dailyMinutes || 0}
+              dailyLimit={user?.dailyLimit || 0}
+              onUpgrade={() => navigate('premium', { from: 'home' })}
+            />
+
+            <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
+              <span className="row__ico row__ico--accent"><Star size={18} /></span>
+              <span className="row__text">
+                <span className="row__title">{t('home.getPremium')}</span>
+                <span className="row__sub">{t('home.premiumSub')}</span>
+              </span>
+              <ChevronRight size={18} className="row__arrow" />
+            </button>
+          </>
         )}
 
         {/* ── Find Partner Hero Card ── */}
@@ -114,27 +134,6 @@ export default function Home() {
         </section>
 
         <div className="home__list stagger">
-          {/* Kunlik hisoblagich (Bepul daqiqalar) */}
-          {!user?.isPremium && (
-            <DailyProgress
-              dailyMinutes={user?.dailyMinutes || 0}
-              dailyLimit={user?.dailyLimit || 0}
-              onUpgrade={() => navigate('premium', { from: 'home' })}
-            />
-          )}
-
-          {/* Premium olish tugmasi / banner */}
-          {showPremium && (
-            <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
-              <span className="row__ico row__ico--accent"><Star size={18} /></span>
-              <span className="row__text">
-                <span className="row__title">{t('home.getPremium')}</span>
-                <span className="row__sub">{t('home.premiumSub')}</span>
-              </span>
-              <ChevronRight size={18} className="row__arrow" />
-            </button>
-          )}
-
           {/* Prime Time Event Banner */}
           <PrimeTimeBanner />
 
