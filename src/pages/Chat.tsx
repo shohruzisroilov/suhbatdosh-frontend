@@ -896,38 +896,6 @@ export default function Chat() {
               <span>{t('call.waiting')}</span>
             </div>
           )}
-          {isAiSession && (
-            <div className="ai-voice-action-box">
-              {aiStatus === 'listening' ? (
-                <button
-                  type="button"
-                  className="ai-voice-btn ai-voice-btn--listening"
-                  onClick={() => stopAiRecording()}
-                >
-                  <span className="ai-voice-dot" />
-                  <span>Listening... (Tap when done)</span>
-                </button>
-              ) : aiStatus === 'thinking' ? (
-                <div className="ai-voice-status-pill">
-                  <span className="ai-voice-spinner" />
-                  <span>AI is thinking...</span>
-                </div>
-              ) : aiStatus === 'speaking' ? (
-                <div className="ai-voice-status-pill ai-voice-status-pill--speaking">
-                  <Sparkles size={16} />
-                  <span>AI is speaking...</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="ai-voice-btn"
-                  onClick={() => startAiRecording()}
-                >
-                  <span>🎙️ Tap to speak to AI</span>
-                </button>
-              )}
-            </div>
-          )}
           <SpeakingQuestions onDetailChange={setSpeakingDetail} />
         </div>
       )}
