@@ -479,6 +479,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
 
     'nav.mock': 'Exams',
     'profile.inviteSub': 'Get free Premium days for each friend',
+    'profile.settingsSub': 'Level, gender and notifications',
     'hh.tapToChange': 'Tap to change',
     'hh.levelTitle': 'Choose your English level',
     'hh.levelDesc': 'Your level decides who you are matched with and how hard the AI talks.',

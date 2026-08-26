@@ -6,16 +6,14 @@ import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
-  Bell,
   Check,
   ChevronRight,
   Clock,
-  Gauge,
   Gift,
   LifeBuoy,
   MessageSquare,
+  SlidersHorizontal,
   Star,
-  User as UserIcon,
   Users,
   X,
 } from 'lucide-react';
@@ -24,11 +22,6 @@ const SUPPORT_URL = 'https://t.me/Shohruz_Isroilov';
 
 const LEVELS = [1, 2, 3, 4, 5, 6];
 
-const GENDERS = [
-  { v: 'male', key: 'gender.male' },
-  { v: 'female', key: 'gender.female' },
-  { v: 'skip', key: 'gender.notSay' },
-];
 
 function openSupport() {
   const wa = window.Telegram?.WebApp;
@@ -73,8 +66,6 @@ export default function Profile() {
   const t = useT();
 
   const [showRatingsModal, setShowRatingsModal] = useState(false);
-  const [showLevelModal, setShowLevelModal] = useState(false);
-  const [showGenderModal, setShowGenderModal] = useState(false);
 
   const [ratingsList, setRatingsList] = useState<RatingItem[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(false);
@@ -103,22 +94,7 @@ export default function Profile() {
       .finally(() => setLoadingRatings(false));
   };
 
-  const pickLevel = (v: number) => {
-    if (!user || v === user.level) return;
-    selectionHaptic();
-    setUser({ ...user, level: v });
-    updateMe({ level: v }).catch(() => {});
-    setShowLevelModal(false);
-  };
 
-  const pickGender = (v: string) => {
-    const next = v === 'skip' ? null : v;
-    if (!user || next === user.gender) return;
-    selectionHaptic();
-    setUser({ ...user, gender: next });
-    updateMe({ gender: next ?? '' }).catch(() => {});
-    setShowGenderModal(false);
-  };
 
   const isPremium = !!user?.isPremium;
   const premiumUntil = formatDate(user?.premiumUntil);
@@ -188,50 +164,25 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Settings Section */}
+        {/* Settings Section — one door, not three.
+            Level and gender used to live here AND inside Settings, so opening
+            "Notifications" from Profile landed on a menu repeating rows the user had
+            just scrolled past. Settings now owns all three preferences; the level is
+            still one tap away from the home header. */}
         <div className="profile__section-header">{t('settings.title')}</div>
         <div className="profile__card">
-          {/* Level Row */}
-          <button className="profile__row" onClick={() => { tapHaptic('light'); setShowLevelModal(true); }}>
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
-              <Gauge size={14} />
-            </span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('settings.levelTitle')}</span>
-              <span className="profile__row-sub">
-                {t(`level.${level}`)} · {t(`levelName.${level}`)}
-              </span>
-            </div>
-            <Chevron />
-          </button>
-
-          {/* Settings Row — the only way into notification preferences, which were
-              unreachable while nothing navigated to the Settings screen. */}
           <button
             className="profile__row"
             onClick={() => { tapHaptic('light'); navigate('settings', { from: 'profile' }); }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--slate">
-              <Bell size={14} />
+              <SlidersHorizontal size={14} />
             </span>
             <div className="profile__row-text">
-              <span className="profile__row-title">{t('settings.notifTitle')}</span>
-              <span className="profile__row-sub">{t('settings.notifSub')}</span>
+              <span className="profile__row-title">{t('settings.title')}</span>
+              <span className="profile__row-sub">{t('profile.settingsSub')}</span>
             </div>
-            <Chevron />
-          </button>
-
-          {/* Gender Row */}
-          <button className="profile__row" onClick={() => { tapHaptic('light'); setShowGenderModal(true); }}>
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
-              <UserIcon size={14} />
-            </span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('settings.genderTitle')}</span>
-              <span className="profile__row-sub">
-                {gender ? t(`gender.${gender}`) : t('settings.genderNotSet')}
-              </span>
-            </div>
+            <span className="profile__row-val">{t(`level.${level}`)}</span>
             <Chevron />
           </button>
         </div>
@@ -322,88 +273,6 @@ export default function Profile() {
 
         <div className="profile__footer" />
       </div>
-
-      {/* Level Selector Modal */}
-      {showLevelModal && (
-        <Modal
-          isOpen
-          onClose={() => setShowLevelModal(false)}
-          backdropClassName="ratings-modal-backdrop"
-          className="ratings-modal"
-          labelledBy="profile-level-title"
-        >
-            <div className="ratings-modal__handle" aria-hidden="true" />
-            <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title" id="profile-level-title">{t('settings.levelTitle')}</h2>
-              <button type="button" className="ratings-modal__close" onClick={() => setShowLevelModal(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="ratings-modal__body">
-              <div className="profile__modal-list">
-                {LEVELS.map((lv) => {
-                  const selected = level === lv;
-                  return (
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      key={lv}
-                      className={`profile__modal-option${selected ? ' profile__modal-option--selected' : ''}`}
-                      onClick={() => pickLevel(lv)}
-                    >
-                      <div className="profile__level-badge">{t(`level.${lv}`)}</div>
-                      <div className="profile__modal-option-text">
-                        <span className="profile__modal-option-title">{t(`levelName.${lv}`)}</span>
-                        <span className="profile__modal-option-sub">{t(`ob.level${lv}.sub`)}</span>
-                      </div>
-                      {selected && <Check size={16} className="profile__modal-check" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-        </Modal>
-      )}
-
-      {/* Gender Selector Modal */}
-      {showGenderModal && (
-        <Modal
-          isOpen
-          onClose={() => setShowGenderModal(false)}
-          backdropClassName="ratings-modal-backdrop"
-          className="ratings-modal"
-          labelledBy="profile-gender-title"
-        >
-            <div className="ratings-modal__handle" aria-hidden="true" />
-            <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title" id="profile-gender-title">{t('settings.genderTitle')}</h2>
-              <button type="button" className="ratings-modal__close" onClick={() => setShowGenderModal(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="ratings-modal__body">
-              <div className="profile__modal-list">
-                {GENDERS.map((g) => {
-                  const selected = (g.v === 'skip' ? null : g.v) === gender;
-                  return (
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      key={g.v}
-                      className={`profile__modal-option${selected ? ' profile__modal-option--selected' : ''}`}
-                      onClick={() => pickGender(g.v)}
-                    >
-                      <span className="profile__modal-option-title">{t(g.key)}</span>
-                      {selected && <Check size={16} className="profile__modal-check" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-        </Modal>
-      )}
 
       {/* Partner Ratings Modal */}
       {showRatingsModal && (
@@ -644,24 +513,6 @@ export default function Profile() {
         .ratings-modal__empty p { font-size: var(--text-sm); }
 
         .profile__modal-list { display: flex; flex-direction: column; gap: var(--space-2); }
-        .profile__modal-option {
-          display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3) var(--space-4);
-          background: var(--surface-2); border: 1.5px solid var(--border);
-          border-radius: var(--radius-md); cursor: pointer;
-          transition: border-color 0.15s, background 0.15s;
-        }
-        .profile__modal-option:active { background: var(--surface-3); }
-        .profile__modal-option--selected { border-color: var(--btn-bg); background: rgba(0, 168, 255, 0.06); }
-        .profile__level-badge {
-          font-family: monospace; font-weight: var(--weight-heavy);
-          color: var(--btn-bg); font-size: var(--text-sm); min-width: 30px; text-align: center;
-          background: var(--btn-bg-soft); padding: 2px 6px; border-radius: 6px;
-        }
-        .profile__modal-option-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-        .profile__modal-option-title { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-primary); }
-        .profile__modal-option-sub { font-size: var(--text-xs); color: var(--text-secondary); }
-        .profile__modal-check { color: var(--btn-bg); flex-shrink: 0; }
       `}</style>
     </div>
   );
