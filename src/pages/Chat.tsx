@@ -147,6 +147,125 @@ function VideoGrid({ session }: { session: any }) {
   );
 }
 
+function AiVideoGrid({
+  camOn,
+  aiStatus,
+}: {
+  camOn: boolean;
+  aiStatus: 'idle' | 'listening' | 'thinking' | 'speaking';
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [swapped, setSwapped] = useState(false);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    if (camOn) {
+      navigator.mediaDevices
+        ?.getUserMedia({ video: true, audio: false })
+        .then((s) => {
+          stream = s;
+          if (videoRef.current) {
+            videoRef.current.srcObject = s;
+          }
+        })
+        .catch((err) => {
+          console.warn('Camera access error:', err);
+        });
+    }
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [camOn]);
+
+  const pip = useDrag({ x: -14, y: -130 }, () => setSwapped((v) => !v));
+
+  if (!camOn) return null;
+
+  const isSpeaking = aiStatus === 'speaking';
+  const isListening = aiStatus === 'listening';
+  const isThinking = aiStatus === 'thinking';
+
+  return (
+    <div className="video-grid ai-video-grid">
+      <div className={`video-main ${!swapped && isSpeaking ? 'video-main--speaking' : ''}`}>
+        {swapped ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="ai-user-video"
+          />
+        ) : (
+          <div className="ai-avatar-view">
+            <div className={`ai-orb-container ${aiStatus}`}>
+              <div className="ai-orb-glow" />
+              <div className="ai-orb-core">
+                <Sparkles size={56} className="ai-orb-icon" />
+              </div>
+              {isSpeaking && <div className="ai-wave-ring ring-1" />}
+              {isSpeaking && <div className="ai-wave-ring ring-2" />}
+              {isSpeaking && <div className="ai-wave-ring ring-3" />}
+            </div>
+            <div className="ai-view-badge">
+              <span className={`ai-badge-dot ${aiStatus}`} />
+              <span>
+                {isListening
+                  ? 'Listening...'
+                  : isThinking
+                  ? 'Thinking...'
+                  : isSpeaking
+                  ? 'Speaking...'
+                  : 'Suhbatdosh AI'}
+              </span>
+            </div>
+          </div>
+        )}
+        <div className="video-scrim" />
+        <span className="video-label">
+          {!swapped && isSpeaking && <span className="video-label__dot" />}
+          {swapped ? 'You' : 'Suhbatdosh AI'}
+        </span>
+      </div>
+
+      <div
+        className={`video-pip ${swapped && isSpeaking ? 'video-pip--speaking' : ''}`}
+        style={{
+          right: Math.max(12, -pip.pos.x),
+          bottom: Math.max(12, -pip.pos.y),
+          touchAction: 'none',
+        }}
+        onPointerDown={pip.onPointerDown}
+        onPointerMove={pip.onPointerMove}
+        onPointerUp={pip.onPointerUp}
+      >
+        {!swapped ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="ai-user-video-pip"
+          />
+        ) : (
+          <div className="ai-avatar-view-pip">
+            <Sparkles size={26} className="text-cyan-400" />
+          </div>
+        )}
+        <span className="video-label video-label--pip">{!swapped ? 'You' : 'Suhbatdosh AI'}</span>
+        <div className="video-pip__swap" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="M8 3 4 7l4 4" /><path d="M4 7h16" />
+            <path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function friendlyError(msg: string | null, t: any): string {
   if (!msg) return t('call.err.generic');
   const m = msg.toLowerCase();
@@ -652,6 +771,11 @@ export default function Chat() {
         </LiveKitRoom>
       )}
 
+      {/* AI Video Grid when camera is ON in AI session */}
+      {isAiSession && camOn && (
+        <AiVideoGrid camOn={camOn} aiStatus={aiStatus} />
+      )}
+
       {/* Reconnecting banner */}
       {isReconnecting && (
         <div className="reconnecting-banner fade-down">
@@ -760,7 +884,7 @@ export default function Chat() {
             return next;
           });
         }}
-        onToggleCam={() => !isAiSession && setCamOn(v => !v)}
+        onToggleCam={() => setCamOn(v => !v)}
         onEnd={() => setShowEnd(true)}
         onOpenChat={() => setShowChat(true)}
         unread={unread}
@@ -1071,6 +1195,67 @@ export default function Chat() {
         @keyframes dotPulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(1.15); }
+        }
+
+        /* AI Video Grid Styles */
+        .ai-video-grid { position: absolute; inset: 0; z-index: 1; }
+        .ai-user-video, .ai-user-video-pip {
+          width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+        }
+        .ai-avatar-view {
+          width: 100%; height: 100%;
+          background: radial-gradient(circle at center, #0c192e 0%, #030712 100%);
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          position: relative; overflow: hidden;
+        }
+        .ai-orb-container {
+          position: relative; width: 140px; height: 140px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .ai-orb-core {
+          width: 90px; height: 90px; border-radius: 50%;
+          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          border: 2px solid rgba(56, 189, 248, 0.6);
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); z-index: 2;
+        }
+        .ai-orb-icon { color: #ffffff; }
+        .ai-orb-glow {
+          position: absolute; inset: -20px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, transparent 70%);
+          animation: orbPulse 3s ease-in-out infinite;
+        }
+        .ai-wave-ring {
+          position: absolute; border-radius: 50%;
+          border: 2px solid rgba(56, 189, 248, 0.6);
+          animation: waveExpand 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+        .ring-1 { width: 100px; height: 100px; animation-delay: 0s; }
+        .ring-2 { width: 100px; height: 100px; animation-delay: 0.6s; }
+        .ring-3 { width: 100px; height: 100px; animation-delay: 1.2s; }
+        @keyframes waveExpand {
+          0% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(0.95); opacity: 0.7; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        .ai-view-badge {
+          margin-top: 24px; padding: 8px 18px; border-radius: 20px;
+          background: rgba(15, 23, 42, 0.75);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(12px); display: flex; align-items: center; gap: 8px;
+          font-size: 13px; font-weight: 600; color: #f8fafc; z-index: 2;
+        }
+        .ai-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+        .ai-badge-dot.listening { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .ai-badge-dot.thinking { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .ai-badge-dot.speaking { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+        .ai-avatar-view-pip {
+          width: 100%; height: 100%;
+          background: linear-gradient(135deg, #0c192e 0%, #030712 100%);
+          display: flex; align-items: center; justify-content: center;
         }
       `}</style>
     </div>
