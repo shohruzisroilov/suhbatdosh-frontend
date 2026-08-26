@@ -216,8 +216,13 @@ export default function IeltsMock() {
       setIsRecording(true);
       recordingStartTimeRef.current = Date.now();
 
+      const maxMs = (currentStep?.maxSec || 60) * 1000;
       recordTimerRef.current = setInterval(() => {
-        setRecordingMs(Date.now() - recordingStartTimeRef.current);
+        const elapsed = Date.now() - recordingStartTimeRef.current;
+        setRecordingMs(elapsed);
+        if (elapsed >= maxMs) {
+          stopRecordingAndSend();
+        }
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
@@ -546,7 +551,7 @@ export default function IeltsMock() {
                   <div className="im-rec-active">
                     <div className="im-rec-timer">
                       <span className="im-rec-dot" />
-                      <span>{formatSecs(recordingMs)}</span>
+                      <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
                     </div>
                     <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
                       <MicOff size={22} />
