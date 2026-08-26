@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getReviews } from '../api/endpoints';
 import { Star, MessageSquarePlus, Quote, ChevronRight } from 'lucide-react';
 import { tapHaptic } from '../utils/haptics';
@@ -21,6 +21,7 @@ export default function HomeReviews() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getReviews(1, 10)
@@ -41,9 +42,19 @@ export default function HomeReviews() {
     if (displayReviews.length <= 1 || paused) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % displayReviews.length);
-    }, 3500);
+    }, 4000);
     return () => clearInterval(timer);
   }, [displayReviews.length, paused]);
+
+  useEffect(() => {
+    if (carouselRef.current && displayReviews.length > 0) {
+      const cardWidth = 236; // 224px width + 12px gap
+      carouselRef.current.scrollTo({
+        left: activeIndex * cardWidth,
+        behavior: 'smooth',
+      });
+    }
+  }, [activeIndex, displayReviews.length]);
 
   const openModal = () => {
     tapHaptic('light');
@@ -81,50 +92,44 @@ export default function HomeReviews() {
       {displayReviews.length > 0 ? (
         <>
           <div
+            ref={carouselRef}
             className="home-reviews-carousel"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onTouchStart={() => setPaused(true)}
             onTouchEnd={() => setPaused(false)}
           >
-            {displayReviews.map((rev, idx) => {
-              const isVisible = idx === activeIndex;
-              return (
-                <div
-                  key={rev.id}
-                  className={`home-review-item ${isVisible ? 'home-review-item-active' : ''}`}
-                  onClick={goAllReviews}
-                  style={{
-                    cursor: 'pointer',
-                    display: isVisible ? 'block' : 'none',
-                    animation: isVisible ? 'fadeInSlide 0.35s ease' : 'none',
-                  }}
-                >
-                  <div className="home-review-item-head">
-                    <div className="home-review-user">
-                      <div className="home-review-avatar">
-                        {rev.display_name?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <span className="home-review-name">{rev.display_name || 'User'}</span>
+            {displayReviews.map((rev, idx) => (
+              <div
+                key={rev.id}
+                className="home-review-item"
+                onClick={goAllReviews}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="home-review-item-head">
+                  <div className="home-review-user">
+                    <div className="home-review-avatar">
+                      {rev.display_name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div className="home-review-stars">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={11}
-                          fill={i < rev.rating ? '#eab308' : 'none'}
-                          className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
-                        />
-                      ))}
-                    </div>
+                    <span className="home-review-name">{rev.display_name || 'User'}</span>
                   </div>
-                  <p className="home-review-comment">
-                    <Quote size={12} className="home-review-quote-ico" />
-                    {rev.comment}
-                  </p>
+                  <div className="home-review-stars">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={11}
+                        fill={i < rev.rating ? '#eab308' : 'none'}
+                        className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
+                      />
+                    ))}
+                  </div>
                 </div>
-              );
-            })}
+                <p className="home-review-comment">
+                  <Quote size={12} className="home-review-quote-ico" />
+                  {rev.comment}
+                </p>
+              </div>
+            ))}
           </div>
 
           {displayReviews.length > 1 && (
@@ -250,6 +255,8 @@ export default function HomeReviews() {
           gap: 12px;
           overflow-x: auto;
           padding-bottom: 6px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
@@ -258,8 +265,9 @@ export default function HomeReviews() {
         }
 
         .home-review-item {
-          min-width: 220px;
+          min-width: 224px;
           max-width: 240px;
+          scroll-snap-align: start;
           padding: 12px;
           border-radius: 14px;
           background: rgba(255, 255, 255, 0.05);
