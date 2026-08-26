@@ -125,11 +125,7 @@ export default function Home() {
               <Award size={18} />
             </span>
             <span className="row__text">
-              <span className="row__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                IELTS Speaking Mock
-                <span style={{ fontSize: '10px', background: '#0284c7', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>AI Examiner</span>
-              </span>
-              <span className="row__sub">To'liq IELTS mock topshiring, feedback va Band score oling</span>
+              <span className="row__title">IELTS Speaking Mock</span>
             </span>
             <ChevronRight size={18} className="row__arrow" />
           </button>
@@ -140,11 +136,7 @@ export default function Home() {
               <Award size={18} />
             </span>
             <span className="row__text">
-              <span className="row__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                CEFR Multilevel Mock
-                <span style={{ fontSize: '10px', background: '#059669', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>National Certificate</span>
-              </span>
-              <span className="row__sub">Milliy sertifikat formati (Part 1.1 - Part 3) mock topshiring va daraja oling</span>
+              <span className="row__title">CEFR Multilevel Mock</span>
             </span>
             <ChevronRight size={18} className="row__arrow" />
           </button>
