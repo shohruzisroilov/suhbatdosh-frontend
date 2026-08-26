@@ -22,6 +22,7 @@ import {
   sendCefrAnswer,
   finishCefrTest,
   abandonCefrTest,
+  getTTSAudio,
 } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
@@ -226,19 +227,53 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     }, 1000);
   };
 
-  const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-GB';
-    utterance.rate = 0.95;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speakText = async (text?: string) => {
+    if (!soundEnabled || !text) return;
+    stopSpeech();
+    try {
+      const res = await getTTSAudio(text);
+      if (res?.ok && res?.audioUrl) {
+        const audio = new Audio(res.audioUrl);
+        audioRef.current = audio;
+        audio.onplay = () => setIsSpeaking(true);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          fallbackSpeech(text);
+        };
+        await audio.play();
+        return;
+      }
+    } catch {
+      fallbackSpeech(text);
+    }
+  };
+
+  const fallbackSpeech = (text: string) => {
+    if (!soundEnabled || !text || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-GB';
+      utterance.rate = 0.95;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
+    }
   };
 
   const stopSpeech = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current = null;
+      } catch {}
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -611,14 +646,37 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <span>Javobingiz tahlil qilinmoqda...</span>
             </div>
           ) : currentStep.kind === 'frame' || currentStep.kind === 'closing' ? (
-            <button
-              className="im-btn im-btn--primary"
-              onClick={handleNextFrame}
-              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <span>Tushundim, davom etamiz</span>
-              <ChevronRight size={18} />
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <div className="im-recording-controls">
+                {!isRecording ? (
+                  <button className="im-rec-btn im-rec-btn--start" onClick={startRecording} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                    <Mic size={24} />
+                    <span>Javob berish (Ovoz yozish)</span>
+                  </button>
+                ) : (
+                  <div className="im-rec-active">
+                    <div className="im-rec-timer">
+                      <span className="im-rec-dot" />
+                      <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
+                    </div>
+                    <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
+                      <MicOff size={22} />
+                      <span>Javobni tugatish va yuborish</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              {!isRecording && (
+                <button
+                  className="im-btn im-btn--ghost"
+                  onClick={handleNextFrame}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <span>Tushundim, keyingisiga o'tish</span>
+                  <ChevronRight size={18} />
+                </button>
+              )}
+            </div>
           ) : (
             <div className="im-recording-controls">
               {!isRecording ? (

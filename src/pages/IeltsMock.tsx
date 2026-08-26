@@ -7,6 +7,7 @@ import {
   sendIeltsAnswer,
   finishIeltsTest,
   abandonIeltsTest,
+  getTTSAudio,
 } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import {
@@ -168,14 +169,38 @@ export default function IeltsMock() {
     fetchStatus();
   };
 
-  // Speech synthesis for AI Examiner voice
-  const speakText = (text?: string) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Speech synthesis for AI Examiner voice (High Quality AI Voice TTS with Web Speech API fallback)
+  const speakText = async (text?: string) => {
+    if (!soundEnabled || !text) return;
+    stopSpeech();
+    try {
+      const res = await getTTSAudio(text);
+      if (res?.ok && res?.audioUrl) {
+        const audio = new Audio(res.audioUrl);
+        audioRef.current = audio;
+        audio.onplay = () => setIsSpeaking(true);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          fallbackSpeech(text);
+        };
+        await audio.play();
+        return;
+      }
+    } catch {
+      fallbackSpeech(text);
+    }
+  };
+
+  const fallbackSpeech = (text: string) => {
     if (!soundEnabled || !text || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
-      utterance.rate = 0.95; // Clear natural speed
+      utterance.rate = 0.95;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -186,10 +211,16 @@ export default function IeltsMock() {
   };
 
   const stopSpeech = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current = null;
+      } catch {}
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      setIsSpeaking(false);
     }
+    setIsSpeaking(false);
   };
 
   // ── Recording Logic ──
@@ -575,10 +606,33 @@ export default function IeltsMock() {
                 <span>Javob yuborilmoqda...</span>
               </div>
             ) : isFrame ? (
-              <button className="im-btn im-btn--primary" onClick={handleNextFrame}>
-                <span>Tushundim, davom etamiz</span>
-                <ChevronRight size={18} />
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                <div className="im-recording-controls">
+                  {!isRecording ? (
+                    <button className="im-rec-btn im-rec-btn--start" onClick={startRecording}>
+                      <Mic size={24} />
+                      <span>Javob berish (Ovoz yozish)</span>
+                    </button>
+                  ) : (
+                    <div className="im-rec-active">
+                      <div className="im-rec-timer">
+                        <span className="im-rec-dot" />
+                        <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
+                      </div>
+                      <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
+                        <MicOff size={22} />
+                        <span>Javobni tugatish va yuborish</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {!isRecording && (
+                  <button className="im-btn im-btn--ghost" onClick={handleNextFrame} style={{ width: '100%', justifyContent: 'center' }}>
+                    <span>Tushundim, keyingisiga o'tish</span>
+                    <ChevronRight size={18} />
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="im-recording-controls">
                 {!isRecording ? (
