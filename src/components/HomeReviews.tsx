@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getReviews } from '../api/endpoints';
-import { Star, MessageSquarePlus, Quote } from 'lucide-react';
+import { Star, MessageSquarePlus, Quote, ChevronRight } from 'lucide-react';
 import { tapHaptic } from '../utils/haptics';
+import useAppStore from '../store/useAppStore';
 import ReviewPrompt from './ReviewPrompt';
 
 interface ReviewItem {
@@ -14,6 +15,7 @@ interface ReviewItem {
 }
 
 export default function HomeReviews() {
+  const { navigate } = useAppStore();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -36,10 +38,15 @@ export default function HomeReviews() {
     setShowReviewModal(true);
   };
 
+  const goAllReviews = () => {
+    tapHaptic('light');
+    navigate('reviews');
+  };
+
   return (
     <div className="home-reviews-card fade-up">
       <div className="home-reviews-header">
-        <div className="home-reviews-title-wrap">
+        <div className="home-reviews-title-wrap" onClick={goAllReviews} style={{ cursor: 'pointer' }}>
           <span className="home-reviews-badge">
             <Star size={12} fill="#eab308" className="text-yellow-500" />
             <span>{stats?.avg_rating || '4.9'} / 5.0</span>
@@ -47,45 +54,54 @@ export default function HomeReviews() {
           <h3 className="home-reviews-title">Foydalanuvchilar fikri</h3>
         </div>
 
-        <button
-          type="button"
-          className="home-reviews-add-btn"
-          onClick={openModal}
-        >
-          <MessageSquarePlus size={15} />
-          <span>Fikr qoldirish</span>
-        </button>
+        <div className="home-reviews-actions">
+          <button
+            type="button"
+            className="home-reviews-add-btn"
+            onClick={openModal}
+          >
+            <MessageSquarePlus size={14} />
+            <span>Fikr qoldirish</span>
+          </button>
+        </div>
       </div>
 
       {reviews.length > 0 ? (
-        <div className="home-reviews-carousel">
-          {reviews.slice(0, 5).map((rev) => (
-            <div key={rev.id} className="home-review-item">
-              <div className="home-review-item-head">
-                <div className="home-review-user">
-                  <div className="home-review-avatar">
-                    {rev.display_name?.charAt(0).toUpperCase() || 'U'}
+        <>
+          <div className="home-reviews-carousel">
+            {reviews.slice(0, 5).map((rev) => (
+              <div key={rev.id} className="home-review-item" onClick={goAllReviews} style={{ cursor: 'pointer' }}>
+                <div className="home-review-item-head">
+                  <div className="home-review-user">
+                    <div className="home-review-avatar">
+                      {rev.display_name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <span className="home-review-name">{rev.display_name || 'Foydalanuvchi'}</span>
                   </div>
-                  <span className="home-review-name">{rev.display_name || 'Foydalanuvchi'}</span>
+                  <div className="home-review-stars">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={11}
+                        fill={i < rev.rating ? '#eab308' : 'none'}
+                        className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="home-review-stars">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={11}
-                      fill={i < rev.rating ? '#eab308' : 'none'}
-                      className={i < rev.rating ? 'text-yellow-500' : 'text-slate-600'}
-                    />
-                  ))}
-                </div>
+                <p className="home-review-comment">
+                  <Quote size={12} className="home-review-quote-ico" />
+                  {rev.comment}
+                </p>
               </div>
-              <p className="home-review-comment">
-                <Quote size={12} className="home-review-quote-ico" />
-                {rev.comment}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <button type="button" className="home-reviews-footer-btn" onClick={goAllReviews}>
+            <span>Barcha sharhlarni ko'rish {stats?.total ? `(${stats.total})` : ''}</span>
+            <ChevronRight size={14} />
+          </button>
+        </>
       ) : (
         <div className="home-reviews-empty" onClick={openModal}>
           <p>Suhbatdosh ilovasi haqida birinchi bo'lib o'z fikringizni qoldiring!</p>
@@ -111,6 +127,27 @@ export default function HomeReviews() {
           flex-direction: column;
           gap: 14px;
           margin-top: 4px;
+        }
+
+        .home-reviews-footer-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 9px 14px;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .home-reviews-footer-btn:active {
+          transform: scale(0.98);
+          background: rgba(255, 255, 255, 0.1);
         }
 
         .home-reviews-header {
