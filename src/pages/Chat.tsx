@@ -363,16 +363,6 @@ export default function Chat() {
 
       setAiHistory([{ role: 'assistant', content: initialGreeting }]);
 
-      addMessage({
-        id: `ai_init_${Date.now()}`,
-        senderId: 'ai_partner',
-        content: initialGreeting,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: false,
-        is_own: false,
-      });
-
       timer = setTimeout(() => {
         if (isMountedRef.current) {
           speakAiText(initialGreeting);
@@ -486,26 +476,6 @@ export default function Chat() {
       const userText = res.transcription || 'Voice message';
       const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
       const audioUrl = res.audioUrl || null;
-
-      addMessage({
-        id: Date.now().toString(),
-        senderId: String(user?.id || 'me'),
-        content: userText,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: true,
-        is_own: true,
-      });
-
-      addMessage({
-        id: (Date.now() + 1).toString(),
-        senderId: 'ai_partner',
-        content: aiResponse,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: false,
-        is_own: false,
-      });
 
       setAiHistory((prev) => [
         ...prev,
