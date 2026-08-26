@@ -426,8 +426,12 @@ export default function Chat() {
     } catch {}
 
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const spokenText = text.replace(/Suhbatdosh/gi, 'Soh-bat-dosh');
+      const spokenText = text
+        .replace(/Suhbatdosh AI/gi, 'Soohbahtdosh A I')
+        .replace(/Suhbatdosh/gi, 'Soohbahtdosh')
+        .replace(/Assalomu alaykum/gi, 'Ahssalohmoo ahlaykoom')
+        .replace(/Salom/gi, 'Sahlom')
+        .replace(/Rahmat/gi, 'Rahmat');
       const utterance = new SpeechSynthesisUtterance(spokenText);
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
