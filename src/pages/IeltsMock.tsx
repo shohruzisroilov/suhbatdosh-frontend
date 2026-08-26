@@ -43,9 +43,12 @@ interface TestFeedback {
   lexical: { band: string; comment: string };
   grammar: { band: string; comment: string };
   pronunciation: { band: string; comment: string };
-  partNotes: { part1: string; part2: string; part3: string };
-  fixes: Array<{ said: string; better: string; why: string }>;
-  advice: string;
+  partNotes?: { part1: string; part2: string; part3: string };
+  strongPoints?: string[];
+  mainProblems?: string[];
+  fixes?: Array<{ said: string; better: string; why: string }>;
+  advice?: string;
+  betterAnswer?: { original: string; improved: string; explanation: string };
 }
 
 export default function IeltsMock() {
@@ -639,6 +642,52 @@ export default function IeltsMock() {
               <p className="im-subscore-comment">{feedback.pronunciation.comment}</p>
             </div>
           </div>
+
+          {/* Strong Points & Main Problems */}
+          {((feedback.strongPoints && feedback.strongPoints.length > 0) || (feedback.mainProblems && feedback.mainProblems.length > 0)) && (
+            <div className="im-subscores-grid">
+              {feedback.strongPoints && feedback.strongPoints.length > 0 && (
+                <div className="im-subscore-item" style={{ borderLeft: '3px solid #10b981' }}>
+                  <div className="im-subscore-head">
+                    <span className="im-subscore-name" style={{ color: '#10b981' }}>💪 Strong Points</span>
+                  </div>
+                  <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                    {feedback.strongPoints.map((pt, idx) => (
+                      <li key={idx}>{pt}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {feedback.mainProblems && feedback.mainProblems.length > 0 && (
+                <div className="im-subscore-item" style={{ borderLeft: '3px solid #ef4444' }}>
+                  <div className="im-subscore-head">
+                    <span className="im-subscore-name" style={{ color: '#ef4444' }}>⚠️ Main Problems</span>
+                  </div>
+                  <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                    {feedback.mainProblems.map((pr, idx) => (
+                      <li key={idx}>{pr}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Better Answer Example */}
+          {feedback.betterAnswer && (
+            <div className="im-advice-card" style={{ background: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
+              <h3 style={{ color: '#38bdf8' }}>✏️ Better Answer Example</h3>
+              <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div><strong style={{ color: '#fca5a5' }}>Original:</strong> "{feedback.betterAnswer.original}"</div>
+                <div><strong style={{ color: '#86efac' }}>Improved (Band 7.5+):</strong> "{feedback.betterAnswer.improved}"</div>
+                {feedback.betterAnswer.explanation && (
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
+                    Tahlil: {feedback.betterAnswer.explanation}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Error Fixes & Corrections */}
           {feedback.fixes && feedback.fixes.length > 0 && (
