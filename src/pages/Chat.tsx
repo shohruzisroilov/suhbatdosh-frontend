@@ -618,7 +618,7 @@ export default function Chat() {
           if (!silenceTimerRef.current && averageVolume <= silenceThresh) {
             silenceTimerRef.current = setTimeout(() => {
               stopAiRecording();
-            }, 650);
+            }, 380);
           }
         }
 
@@ -648,24 +648,24 @@ export default function Chat() {
               handleSendAiTurn(base64Data, 'audio/webm');
             } else {
               setAiStatus('idle');
-              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 600);
+              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 400);
             }
           };
         } else {
           setAiStatus('idle');
-          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 600);
+          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 400);
         }
       };
 
-      mediaRecorder.start(200);
+      mediaRecorder.start(100);
       setAiStatus('listening');
 
-      // 4.0-second auto-send safety timer for seamless continuous turn-taking
+      // 3.0-second auto-send safety timer for seamless continuous turn-taking
       maxRecordTimerRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopAiRecording();
         }
-      }, 4000);
+      }, 3000);
     } catch {
       setAiStatus('idle');
       setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 1200);
