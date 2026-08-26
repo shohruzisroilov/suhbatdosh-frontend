@@ -39,8 +39,9 @@ export default function SessionEnd() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState<string | null>(null);
 
+  const isAi        = !!screenParams?.isAi || !!session?.isAi;
   const sessionId   = screenParams?.sessionId || session?.id;
-  const partnerName = session?.partnerName || t('common.yourPartner');
+  const partnerName = isAi ? 'Suhbatdosh AI' : (session?.partnerName || t('common.yourPartner'));
   const reason      = screenParams?.reason;
 
   useEffect(() => {
@@ -65,11 +66,14 @@ export default function SessionEnd() {
     : null;
 
   async function handleRate() {
-    if (!rating || !sessionId) return;
+    if (!rating) return;
     tapHaptic('medium');
-    setLoading(true);
-    try { await rateSession(sessionId, rating); } catch {}
-    setSubmitted(true); setLoading(false);
+    if (!isAi && sessionId) {
+      setLoading(true);
+      try { await rateSession(sessionId, rating); } catch {}
+    }
+    setSubmitted(true);
+    setLoading(false);
   }
 
   function goMatch() { clearSession(); setMatchingStatus('idle'); navigate('matching'); }
@@ -130,13 +134,13 @@ export default function SessionEnd() {
           </div>
         )}
 
-        {reportDone ? (
+        {!isAi && (reportDone ? (
           <p className="end-report-done"><Check size={14} /> {reportDone}</p>
         ) : sessionId ? (
           <button className="end-report" onClick={() => { tapHaptic('light'); setReportOpen(true); }}>
             <Flag size={14} /> {t('rep.link')}
           </button>
-        ) : null}
+        ) : null)}
 
       </div>
 

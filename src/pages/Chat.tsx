@@ -716,7 +716,7 @@ export default function Chat() {
         navigate('matching');
         return;
       }
-      navigate('home');
+      navigate('session_end', { sessionId: 'ai_session', elapsed, isAi: true });
       return;
     }
 
