@@ -51,7 +51,7 @@ export default function HomeReviews() {
             <Star size={12} fill="#eab308" className="text-yellow-500" />
             <span>{stats?.avg_rating || '4.9'} / 5.0</span>
           </span>
-          <h3 className="home-reviews-title">Foydalanuvchilar fikri</h3>
+          <h3 className="home-reviews-title">User Reviews</h3>
         </div>
 
         <div className="home-reviews-actions">
@@ -61,7 +61,7 @@ export default function HomeReviews() {
             onClick={openModal}
           >
             <MessageSquarePlus size={14} />
-            <span>Fikr qoldirish</span>
+            <span>Write Review</span>
           </button>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function HomeReviews() {
                     <div className="home-review-avatar">
                       {rev.display_name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <span className="home-review-name">{rev.display_name || 'Foydalanuvchi'}</span>
+                    <span className="home-review-name">{rev.display_name || 'User'}</span>
                   </div>
                   <div className="home-review-stars">
                     {[...Array(5)].map((_, i) => (
@@ -98,13 +98,13 @@ export default function HomeReviews() {
           </div>
 
           <button type="button" className="home-reviews-footer-btn" onClick={goAllReviews}>
-            <span>Barcha sharhlarni ko'rish {stats?.total ? `(${stats.total})` : ''}</span>
+            <span>View all reviews {stats?.total ? `(${stats.total})` : ''}</span>
             <ChevronRight size={14} />
           </button>
         </>
       ) : (
         <div className="home-reviews-empty" onClick={openModal}>
-          <p>Suhbatdosh ilovasi haqida birinchi bo'lib o'z fikringizni qoldiring!</p>
+          <p>Be the first to leave a review for Suhbatdosh!</p>
         </div>
       )}
 

@@ -76,7 +76,7 @@ export default function ReviewPrompt({ forceShow = false, onClose }: ReviewPromp
           <Check size={28} />
         </div>
         <p className="rp-title">{t('rp.thanks')}</p>
-        <p className="rp-sub">Fikringiz uchun rahmat! Loyihani rivojlantirishda yordamingiz muhim.</p>
+        <p className="rp-sub">Thank you for your feedback! Your review helps us improve Suhbatdosh.</p>
         <Styles />
       </div>
     );
