@@ -335,6 +335,23 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     }
   };
 
+  const handleNextFrame = async () => {
+    tapHaptic('light');
+    setSubmittingAnswer(true);
+    await submitAnswer(null);
+    setSubmittingAnswer(false);
+  };
+
+  const getPartBadgeText = (part: string, kind?: string) => {
+    if (kind === 'frame' || part === 'intro') return 'KIRISH • Examiner Yo\'riqnomasi';
+    if (kind === 'closing' || part === 'closing') return 'YAKUN • Imtihon Tugadi';
+    if (part === '1.1') return 'PART 1.1 • Oddiy Savollar (A1-A2)';
+    if (part === '1.2') return 'PART 1.2 • Rasmlarni Taqqoslash (B1)';
+    if (part === '2') return 'PART 2 • Mavzu Bo\'yicha Nutq (B2)';
+    if (part === '3') return 'PART 3 • Erkin Muhokama (C1)';
+    return `PART ${part}`;
+  };
+
   const handleFinishTest = async () => {
     if (!testId) return;
     setTestStatus('grading');
@@ -515,10 +532,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Progress Tracker */}
           <div className="im-progress-bar-wrap">
             <div className="im-progress-info">
-              <span>
-                Part {currentStep.part} ({currentStep.i + 1} / {totalSteps})
-              </span>
-              <span>{Math.round(((currentStep.i + 1) / totalSteps) * 100)}%</span>
+              <span>{getPartBadgeText(String(currentStep.part), currentStep.kind)}</span>
+              <span>{currentStep.i + 1} / {totalSteps}</span>
             </div>
             <div className="im-progress-bar">
               <div
@@ -528,23 +543,31 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             </div>
           </div>
 
-          {/* Examiner Audio Speaking Animation */}
-          {isSpeaking && (
-            <div className="im-examiner-speaking">
-              <Volume2 size={18} className="animate-pulse text-emerald-400" />
-              <span>AI Examiner savolni o'qimoqda...</span>
+          {/* Examiner Box Card */}
+          <div className="im-examiner-box" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div className={`im-examiner-avatar${isSpeaking ? ' is-speaking' : ''}`} style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, boxShadow: isSpeaking ? '0 0 12px rgba(16, 185, 129, 0.5)' : 'none' }}>
+              🎙️
             </div>
-          )}
+            <div className="im-examiner-speech" style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>AI Examiner</span>
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
+              </div>
+              <p className="im-examiner-text" style={{ fontSize: '14px', margin: '4px 0 0 0', color: '#f8fafc', lineHeight: 1.4 }}>
+                {currentStep.say}
+              </p>
+            </div>
+          </div>
 
           {/* 1.2 Comparison Pictures Display */}
           {currentStep.pictures?.type === 'comparison' && (
             <div className="im-pictures-grid">
               <div className="im-picture-card">
-                <span className="im-pic-tag">Rasm 1</span>
+                <span className="im-pic-tag">📷 Rasm 1</span>
                 <p>{currentStep.pictures.pic1Alt}</p>
               </div>
               <div className="im-picture-card">
-                <span className="im-pic-tag">Rasm 2</span>
+                <span className="im-pic-tag">📷 Rasm 2</span>
                 <p>{currentStep.pictures.pic2Alt}</p>
               </div>
             </div>
@@ -553,14 +576,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* 2 Contextual Picture Display */}
           {currentStep.pictures?.type === 'contextual' && (
             <div className="im-picture-card im-picture-card--full">
-              <span className="im-pic-tag">Mavzu Rasmi</span>
+              <span className="im-pic-tag">🖼️ Mavzu Rasmi</span>
               <p>{currentStep.pictures.pic1Alt}</p>
             </div>
           )}
 
           {/* Question / Task Card */}
           <div className="im-question-card">
-            <span className="im-part-tag">PART {currentStep.part}</span>
+            <span className="im-part-tag">{getPartBadgeText(String(currentStep.part), currentStep.kind)}</span>
             <h3 className="im-question-text">{currentStep.say}</h3>
 
             {/* Prompts list for Part 2 */}
@@ -573,7 +596,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             )}
           </div>
 
-          {/* Prep Timer Card */}
+          {/* Prep Timer Card / Submitting / Frame / Recording Controls */}
           {isPrepping ? (
             <div className="im-prep-card">
               <Clock size={24} className="animate-spin text-emerald-400" />
@@ -587,6 +610,15 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <div className="im-spinner" />
               <span>Javobingiz tahlil qilinmoqda...</span>
             </div>
+          ) : currentStep.kind === 'frame' || currentStep.kind === 'closing' ? (
+            <button
+              className="im-btn im-btn--primary"
+              onClick={handleNextFrame}
+              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <span>Tushundim, davom etamiz</span>
+              <ChevronRight size={18} />
+            </button>
           ) : (
             <div className="im-recording-controls">
               {!isRecording ? (

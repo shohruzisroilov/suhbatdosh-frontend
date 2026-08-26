@@ -359,6 +359,15 @@ export default function IeltsMock() {
     return `${m}:${rs.toString().padStart(2, '0')}`;
   };
 
+  const getIeltsPartBadgeText = (part: number, kind: string) => {
+    if (kind === 'frame') return 'KIRISH • Examiner Yo\'riqnomasi';
+    if (kind === 'closing') return 'YAKUN • Imtihon Tugadi';
+    if (part === 1) return 'PART 1 • Kirish & Shaxsiy Savollar';
+    if (part === 2) return 'PART 2 • Cue Card Topshirig\'i';
+    if (part === 3) return 'PART 3 • Erkin Muhokama & Tahlil';
+    return `PART ${part}`;
+  };
+
   // Render Header
   const renderHeader = () => (
     <div className="im-header">
@@ -493,7 +502,7 @@ export default function IeltsMock() {
         <div className="im-progress">
           <div className="im-progress__bar" style={{ width: `${((stepIndex + 1) / (totalSteps || 1)) * 100}%` }} />
           <div className="im-progress__info">
-            <span>Part {currentStep.part}</span>
+            <span>{getIeltsPartBadgeText(currentStep.part, currentStep.kind)}</span>
             <span>{stepIndex + 1} / {totalSteps}</span>
           </div>
         </div>
@@ -505,7 +514,10 @@ export default function IeltsMock() {
               🎙️
             </div>
             <div className="im-examiner-speech">
-              <span className="im-examiner-name">AI Examiner</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="im-examiner-name">AI Examiner</span>
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#38bdf8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
+              </div>
               <p className="im-examiner-text">
                 {currentStep.say || currentStep.cardSay}
               </p>
