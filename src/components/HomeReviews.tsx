@@ -256,19 +256,25 @@ export default function HomeReviews() {
 
         .home-review-modal-backdrop {
           position: fixed;
-          inset: 0;
-          z-index: 9999;
-          background: rgba(0, 0, 0, 0.7);
-          backdrop-filter: blur(4px);
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 10000;
+          background: rgba(0, 0, 0, 0.78);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 16px;
+          box-sizing: border-box;
         }
 
         .home-review-modal-content {
           width: 100%;
-          max-width: 360px;
+          max-width: 380px;
+          margin: auto;
         }
       `}</style>
     </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import { getMyReview, submitReview } from '../api/endpoints';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Star } from 'lucide-react';
+import { Star, X, Check, Loader2 } from 'lucide-react';
 
 const DISMISS_KEY = 'suhbatdosh.reviewPromptDismissed';
 
@@ -56,13 +56,13 @@ export default function ReviewPrompt({ forceShow = false, onClose }: ReviewPromp
       await submitReview(rating, comment.trim() || '');
       markDismissed();
       setDone(true);
-      if (onClose) setTimeout(onClose, 1500);
+      if (onClose) setTimeout(onClose, 1400);
     } catch {
       setSending(false);
     }
   }
 
-  function later() {
+  function handleClose() {
     tapHaptic('light');
     markDismissed();
     setShow(false);
@@ -71,56 +71,72 @@ export default function ReviewPrompt({ forceShow = false, onClose }: ReviewPromp
 
   if (done) {
     return (
-      <div className="rp">
-        <p className="rp__thanks">{t('rp.thanks')}</p>
+      <div className="rp-container rp-done">
+        <div className="rp-done-icon">
+          <Check size={28} />
+        </div>
+        <p className="rp-title">{t('rp.thanks')}</p>
+        <p className="rp-sub">Fikringiz uchun rahmat! Loyihani rivojlantirishda yordamingiz muhim.</p>
         <Styles />
       </div>
     );
   }
 
   return (
-    <div className="rp">
-      <p className="rp__title">{t('rp.title')}</p>
-      <p className="rp__sub">{t('rp.sub')}</p>
+    <div className="rp-container">
+      {onClose && (
+        <button type="button" className="rp-close-btn" onClick={handleClose} aria-label="Close">
+          <X size={18} />
+        </button>
+      )}
 
-      <div className="rp__stars" role="radiogroup" aria-label="rating">
+      <div className="rp-header">
+        <h3 className="rp-title">{t('rp.title')}</h3>
+        <p className="rp-sub">{t('rp.sub')}</p>
+      </div>
+
+      <div className="rp-stars-row">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
-            className={`rp__star${rating >= n ? ' on' : ''}`}
+            className={`rp-star-btn ${rating >= n ? 'active' : ''}`}
             onClick={() => {
               selectionHaptic();
               setRating(n);
             }}
-            role="radio"
-            aria-checked={rating === n}
-            aria-label={`${n} star`}
           >
-            <Star size={26} fill={rating >= n ? 'currentColor' : 'none'} strokeWidth={1.75} />
+            <Star size={30} fill={rating >= n ? '#EAB308' : 'none'} strokeWidth={1.8} />
           </button>
         ))}
       </div>
 
       {rating > 0 && (
-        <>
-          <textarea
-            className="rp__input"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder={t('rp.placeholder')}
-            maxLength={500}
-            rows={2}
-          />
-          <button className="rp__send" onClick={send} disabled={sending}>
-            {sending ? t('rp.sending') : t('rp.send')}
+        <div className="rp-form-section fade-up">
+          <div className="rp-input-wrap">
+            <textarea
+              className="rp-textarea"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t('rp.placeholder')}
+              maxLength={500}
+              rows={3}
+            />
+            <span className="rp-char-counter">{comment.length}/500</span>
+          </div>
+
+          <button className="rp-submit-btn" onClick={send} disabled={sending}>
+            {sending ? <Loader2 size={18} className="animate-spin" /> : t('rp.send')}
           </button>
-        </>
+        </div>
       )}
 
-      <button className="rp__later" onClick={later}>
-        {t('rp.later')}
-      </button>
+      {!rating && (
+        <button type="button" className="rp-later-btn" onClick={handleClose}>
+          {t('rp.later')}
+        </button>
+      )}
+
       <Styles />
     </div>
   );
@@ -129,65 +145,193 @@ export default function ReviewPrompt({ forceShow = false, onClose }: ReviewPromp
 const Styles = React.memo(function Styles() {
   return (
     <style>{`
-      .rp {
-        width: 100%; display: flex; flex-direction: column; align-items: center;
-        gap: var(--space-3); padding: var(--space-5) var(--space-4);
-        background: var(--bg-secondary); border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        position: relative; overflow: hidden;
+      .rp-container {
+        width: 100%;
+        background: #0F172A;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 24px;
+        padding: 24px 20px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        box-sizing: border-box;
       }
-      .rp::before {
-        content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, var(--btn-bg), #0066FF);
-        border-radius: 2px 2px 0 0;
+
+      .rp-done {
+        padding: 32px 20px;
+        text-align: center;
       }
-      .rp__title {
-        font-family: var(--font-display);
-        font-size: var(--text-md); font-weight: var(--weight-heavy); letter-spacing: -0.02em;
-        color: var(--text-primary);
+
+      .rp-done-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        color: #4ADE80;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 4px;
       }
-      .rp__sub {
-        font-size: var(--text-sm); color: var(--text-secondary);
-        text-align: center; line-height: 1.5; margin-top: -4px;
+
+      .rp-close-btn {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #94A3B8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
       }
-      .rp__thanks {
-        font-size: var(--text-sm); color: var(--success);
-        text-align: center; line-height: 1.5; font-weight: var(--weight-semi);
+      .rp-close-btn:active {
+        transform: scale(0.9);
+        color: #FFFFFF;
+        background: rgba(255, 255, 255, 0.15);
       }
-      .rp__stars { display: flex; gap: 4px; }
-      .rp__star {
-        width: 42px; height: 42px;
-        display: flex; align-items: center; justify-content: center;
-        color: var(--border-strong);
-        transition: color var(--t), transform var(--t-spring);
+
+      .rp-header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
-      .rp__star.on     { color: var(--rating); }
-      .rp__star:active { transform: scale(0.82); }
-      .rp__input {
-        width: 100%; resize: none;
-        background: var(--surface-2); border: 1px solid var(--border);
-        border-radius: var(--radius-md); padding: var(--space-3) var(--space-3);
-        font-size: var(--text-sm); color: var(--text-primary); font-family: inherit;
-        transition: border-color var(--t);
+
+      .rp-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin: 0;
+        letter-spacing: -0.01em;
       }
-      .rp__input:focus { border-color: rgba(0, 168, 255, 0.4); outline: none; }
-      .rp__input::placeholder { color: var(--text-tertiary); }
-      .rp__send {
-        width: 100%; background: var(--btn-bg); color: var(--btn-text);
-        border-radius: var(--radius-md); padding: var(--space-3);
-        font-size: var(--text-base); font-weight: var(--weight-bold);
-        box-shadow: 0 4px 14px rgba(0, 168, 255, 0.25);
-        transition: opacity var(--t), transform var(--t);
+
+      .rp-sub {
+        font-size: 13px;
+        color: #94A3B8;
+        margin: 0;
+        line-height: 1.4;
       }
-      .rp__send:disabled { opacity: 0.5; }
-      .rp__send:active:not(:disabled) { opacity: 0.88; transform: scale(0.98); }
-      .rp__later {
-        font-size: var(--text-xs); color: var(--text-tertiary);
-        padding: var(--space-1) var(--space-3);
-        transition: color var(--t);
+
+      .rp-stars-row {
+        display: flex;
+        gap: 8px;
+        padding: 4px 0;
       }
-      .rp__later:active { color: var(--text-secondary); }
+
+      .rp-star-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      .rp-star-btn.active {
+        color: #EAB308;
+        background: rgba(234, 179, 8, 0.12);
+        border-color: rgba(234, 179, 8, 0.35);
+      }
+      .rp-star-btn:active {
+        transform: scale(0.85);
+      }
+
+      .rp-form-section {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .rp-input-wrap {
+        position: relative;
+        width: 100%;
+      }
+
+      .rp-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        resize: none;
+        background: #1E293B;
+        border: 1.5px solid #334155;
+        border-radius: 14px;
+        padding: 12px 14px 28px;
+        font-size: 14px;
+        color: #FFFFFF;
+        font-family: inherit;
+        line-height: 1.4;
+        transition: border-color 0.15s ease;
+      }
+      .rp-textarea:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+      }
+      .rp-textarea::placeholder {
+        color: #64748B;
+      }
+
+      .rp-char-counter {
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        font-size: 11px;
+        color: #64748B;
+        font-weight: 500;
+        pointer-events: none;
+      }
+
+      .rp-submit-btn {
+        width: 100%;
+        height: 44px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: #FFFFFF;
+        font-size: 15px;
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 4px 16px rgba(14, 165, 233, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .rp-submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .rp-submit-btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .rp-later-btn {
+        background: none;
+        border: none;
+        color: #64748B;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 4px 8px;
+        transition: color 0.15s ease;
+      }
+      .rp-later-btn:active {
+        color: #94A3B8;
+      }
     `}</style>
   );
 });
