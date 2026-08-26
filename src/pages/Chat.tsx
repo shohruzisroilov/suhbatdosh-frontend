@@ -370,6 +370,55 @@ export default function Chat() {
     }
   }
 
+  async function handleSendAiTextTurn(text: string) {
+    if (!isMountedRef.current || !text.trim()) return;
+
+    stopAiRecording();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+    const userText = text.trim();
+
+    addMessage({
+      id: Date.now().toString(),
+      senderId: String(user?.id || 'me'),
+      content: userText,
+      sentAt: new Date().toISOString(),
+      isOwn: true,
+    });
+
+    setAiStatus('thinking');
+
+    try {
+      const res = await sendAIPartnerTurn({
+        text: userText,
+        history: aiHistory,
+        userLevel: user?.level ? String(user.level) : undefined,
+      });
+
+      const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
+
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        senderId: 'ai_partner',
+        content: aiResponse,
+        sentAt: new Date().toISOString(),
+        isOwn: false,
+      });
+
+      setAiHistory((prev) => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: aiResponse },
+      ]);
+
+      notifyHaptic('success');
+      speakAiText(aiResponse);
+    } catch {
+      notifyHaptic('error');
+      setAiStatus('idle');
+    }
+  }
+
   async function startAiRecording() {
     if (!isMountedRef.current || !micOn) {
       setAiStatus('idle');
@@ -721,11 +770,19 @@ export default function Chat() {
       {showChat && (
         <ChatOverlay
           messages={messages}
-          isPartnerTyping={isPartnerTyping}
+          isPartnerTyping={isPartnerTyping || aiStatus === 'thinking'}
           sessionId={session?.id}
           onClose={() => setShowChat(false)}
-          sendMessage={sendMessage}
-          sendTyping={sendTyping}
+          sendMessage={(sId, text) => {
+            if (isAiSession) {
+              handleSendAiTextTurn(text);
+            } else {
+              sendMessage(sId, text);
+            }
+          }}
+          sendTyping={(sId) => {
+            if (!isAiSession) sendTyping(sId);
+          }}
         />
       )}
 
