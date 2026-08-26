@@ -576,11 +576,15 @@ export default function Chat() {
       audioContextRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
+      analyser.fftSize = 256;
       source.connect(analyser);
 
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
+
+      let sampleCount = 0;
+      let noiseFloorSum = 0;
+      let baseNoiseFloor = 3;
 
       const checkSilence = () => {
         if (!isMountedRef.current || mediaRecorder.state === 'inactive') return;
@@ -590,18 +594,29 @@ export default function Chat() {
         for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         const averageVolume = sum / bufferLength;
 
-        // Lower volume threshold to 4 to detect soft mobile speech easily
-        if (averageVolume > 4) {
+        // Dynamic noise floor calibration (first 10 samples ~ 200ms)
+        if (sampleCount < 10) {
+          noiseFloorSum += averageVolume;
+          sampleCount++;
+          if (sampleCount === 10) {
+            baseNoiseFloor = Math.max(3, Math.round(noiseFloorSum / 10));
+          }
+        }
+
+        const speechThresh = baseNoiseFloor + 3;
+        const silenceThresh = baseNoiseFloor + 1.5;
+
+        if (averageVolume > speechThresh) {
           hasSpokenRef.current = true;
           if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
           }
         } else if (hasSpokenRef.current) {
-          if (!silenceTimerRef.current) {
+          if (!silenceTimerRef.current && averageVolume <= silenceThresh) {
             silenceTimerRef.current = setTimeout(() => {
               stopAiRecording();
-            }, 1800);
+            }, 1200);
           }
         }
 
@@ -622,27 +637,31 @@ export default function Chat() {
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
-        if (audioBlob.size > 200 && (hasSpokenRef.current || audioChunksRef.current.length > 2)) {
+        if (audioBlob.size > 150) {
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
             const base64Data = (reader.result as string).split(',')[1];
-            handleSendAiTurn(base64Data, 'audio/webm');
+            if (base64Data) {
+              handleSendAiTurn(base64Data, 'audio/webm');
+            } else {
+              setAiStatus('idle');
+            }
           };
         } else {
           setAiStatus('idle');
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
       setAiStatus('listening');
 
-      // Max 10-second safety timeout so recording never gets stuck permanently
+      // Max 7-second auto-send safety timer for continuous speech
       maxRecordTimerRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopAiRecording();
         }
-      }, 10000);
+      }, 7000);
     } catch {
       setAiStatus('idle');
     }
