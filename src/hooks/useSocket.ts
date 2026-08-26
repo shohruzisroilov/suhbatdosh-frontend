@@ -3,12 +3,24 @@ import { io, Socket } from 'socket.io-client';
 import useAppStore from '../store/useAppStore';
 import { getSession } from '../api/endpoints';
 
+/**
+ * Socket origin. In dev this resolves to the page origin so Vite's `/socket.io`
+ * proxy handles it; in production it must come from VITE_API_URL.
+ */
 function resolveSocketUrl() {
-  const raw = import.meta.env.VITE_API_URL || 'https://suhbatdosh.shohruzisroilov.uz';
+  const raw = import.meta.env.VITE_API_URL?.trim();
+
+  if (!raw) {
+    if (import.meta.env.PROD) {
+      console.error('[socket] VITE_API_URL is not set — falling back to page origin.');
+    }
+    return window.location.origin;
+  }
+
   try {
     return new URL(raw, window.location.origin).origin;
   } catch {
-    return 'https://suhbatdosh.shohruzisroilov.uz';
+    return window.location.origin;
   }
 }
 
@@ -137,20 +149,27 @@ function attachListeners(sock: Socket) {
     }
   });
 
-  sock.off('reconnect');
-  sock.on('reconnect', () => {
-    console.log('Socket reconnected — reattaching listeners');
-    attachListeners(sock);
-
-    const { matchingStatus, partnerPref, screen, session } = useAppStore.getState();
-    if (matchingStatus === 'searching') {
-      sock.emit('start_matching', { partnerPref: partnerPref || 'any' });
-    } else if (screen === 'chat' && session?.id) {
-      sock.emit('join_session', { session_id: session.id });
-    }
-  });
+  // 'reconnect' is a MANAGER event in socket.io-client v3+, not a Socket event.
+  // `sock.on('reconnect', ...)` never fired, so after a dropped connection the client
+  // never re-emitted start_matching / join_session and the user was stuck.
+  sock.io.off('reconnect', onReconnect);
+  sock.io.on('reconnect', onReconnect);
 
   listenersAttached = true;
+}
+
+function onReconnect() {
+  console.log('Socket reconnected — restoring session state');
+
+  const sock = socketInstance;
+  if (!sock) return;
+
+  const { matchingStatus, partnerPref, screen, session } = useAppStore.getState();
+  if (matchingStatus === 'searching') {
+    sock.emit('start_matching', { partnerPref: partnerPref || 'any' });
+  } else if (screen === 'chat' && session?.id) {
+    sock.emit('join_session', { session_id: session.id });
+  }
 }
 
 export function useSocket() {

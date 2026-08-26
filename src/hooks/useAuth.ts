@@ -3,9 +3,15 @@ import { authTelegram, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { translate } from '../i18n';
 
-// Faqat localhost'da test mode ishlaydi
-const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// Faqat localhost'da test mode ishlaydi.
+// IS_LOCAL ilgari hisoblanardi-yu, hech qayerda ishlatilmasdi — natijada `?user=5`
+// yoki `?dev=1` production'da ham test rejimini ochib yuborardi.
+const IS_LOCAL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const IS_PROD = import.meta.env.PROD;
+
+/** Test login faqat dev build'da VA localhost'da ruxsat etiladi. */
+const TEST_LOGIN_ALLOWED = !IS_PROD && IS_LOCAL;
 
 /** Telegram WebApp.initData bo'sh kelsa bir oz kuting */
 function waitForInitData(timeoutMs = 5000): Promise<string> {
@@ -69,9 +75,9 @@ export function useAuth() {
         if (startParam === 'match' || startParam === 'mock') startParam = null;
 
         if (!initData) {
-          const testUserParam = urlParams.get('user') || urlParams.get('test_user');
-          if (!IS_PROD || testUserParam || urlParams.get('dev') === '1') {
-            // Development yoki ?user=1 Parametr berilganda test user sifatida kirish
+          if (TEST_LOGIN_ALLOWED) {
+            // Local dev: ?user=5 bilan istalgan test hisobiga kirish mumkin.
+            const testUserParam = urlParams.get('user') || urlParams.get('test_user');
             const userId = testUserParam || '1';
             initData = `test:${userId}`;
           } else {
@@ -91,7 +97,11 @@ export function useAuth() {
         try {
           authResult = await authTelegram(initData, startParam);
         } catch (apiErr) {
-          if (initData.startsWith('test')) {
+          // Offline demo user faqat local dev'da. Ilgari bu production'da ham
+          // ishlab, backend rad etganda ham UI'ni "premium foydalanuvchi kirdi"
+          // holatiga qo'yardi — keyin har bir so'rov 401 qaytarardi.
+          if (TEST_LOGIN_ALLOWED && initData.startsWith('test')) {
+            console.warn('[Auth] Backend unreachable — using local demo user');
             const testId = initData.split(':')[1] || '1';
             authResult = {
               token: 'demo-test-token',
@@ -120,7 +130,7 @@ export function useAuth() {
         try {
           meData = await getMe();
         } catch (meErr) {
-          if (initData.startsWith('test')) {
+          if (TEST_LOGIN_ALLOWED && initData.startsWith('test')) {
             meData = {
               stats: { total_sessions: 12, total_minutes: 145, avg_rating: '4.9', streakCount: 5, hasPracticedToday: true },
               recentSessions: [],

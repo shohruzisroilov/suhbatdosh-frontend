@@ -12,7 +12,8 @@ describe('Frontend i18n Translations', () => {
     const en = TRANSLATIONS.en;
     assert.ok(en, 'English translation object should exist');
     assert.equal(en['nav.home'], 'Home');
-    assert.equal(en['nav.leaderboard'], 'Top');
+    // Nav label was renamed from 'Top' to 'Ranking'; the test had not followed.
+    assert.equal(en['nav.leaderboard'], 'Ranking');
     assert.equal(en['nav.invite'], 'Invite');
     assert.equal(en['nav.profile'], 'Profile');
   });
