@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { Clock, Users, RotateCcw, Star, Sparkles } from 'lucide-react';
+import { Clock, Users, RotateCcw, Star, Sparkles, Bot, ArrowRight, Zap } from 'lucide-react';
 import { getAiStatus } from '../api/endpoints';
 
 function fmtElapsed(s: number): string {
@@ -180,34 +180,38 @@ export default function Matching() {
           <p className="mt__hint">{others ? t('match.hintMany') : t('match.hintAlone')}</p>
         </div>
 
-        {/* AI Speaking Partner Option Button during search */}
+        {/* Instant AI Speaking Partner Option Card */}
         {aiEnabled && (
-          <button
-            type="button"
+          <div
+            className="ai-partner-matching-card"
             onClick={startAiCall}
-            style={{
-              width: '100%',
-              padding: elapsed >= 6 ? '14px 18px' : '12px 16px',
-              borderRadius: '16px',
-              background: elapsed >= 6
-                ? 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)'
-                : 'linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%)',
-              border: elapsed >= 6 ? 'none' : '1px solid rgba(0, 198, 255, 0.4)',
-              color: elapsed >= 6 ? '#ffffff' : '#00C6FF',
-              fontSize: '13px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              boxShadow: elapsed >= 6 ? '0 4px 20px rgba(0, 198, 255, 0.4)' : 'none',
-              transition: 'all 0.3s ease',
-            }}
+            role="button"
+            tabIndex={0}
           >
-            <Sparkles size={18} className={elapsed >= 6 ? 'animate-pulse' : ''} />
-            <span>{elapsed >= 6 ? '⚡ Kutib qolmasdan AI bilan hoziroq gaplashish 🤖' : 'Practice speaking with Suhbatdosh AI 🤖'}</span>
-          </button>
+            <div className="ai-card-glow" />
+            
+            <div className="ai-card-header-row">
+              <div className="ai-card-badge">
+                <Zap size={12} className="fill-current text-cyan-300 animate-pulse" />
+                <span>INSTANT AI PARTNER • 24/7 ONLINE</span>
+              </div>
+            </div>
+
+            <div className="ai-card-content">
+              <div className="ai-card-icon">
+                <Bot size={28} />
+              </div>
+              <div className="ai-card-text">
+                <h3 className="ai-card-title">Practice English with AI</h3>
+                <p className="ai-card-desc">Instant voice partner • No waiting required</p>
+              </div>
+            </div>
+
+            <div className="ai-card-action">
+              <span>Start Speaking with AI Now</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
         )}
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
@@ -339,6 +343,107 @@ const Styles = React.memo(function Styles() {
         transition: background var(--t), color var(--t);
       }
       .mt__cancel:active { background: var(--surface-2); color: var(--text-primary); }
+
+      /* AI Partner Matching Card Styles */
+      .ai-partner-matching-card {
+        width: 100%;
+        margin-top: 6px;
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(3, 105, 161, 0.25) 100%);
+        border: 1.5px solid rgba(56, 189, 248, 0.45);
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+      }
+      .ai-partner-matching-card:hover, .ai-partner-matching-card:active {
+        transform: translateY(-2px) scale(1.01);
+        border-color: rgba(56, 189, 248, 0.8);
+        box-shadow: 0 12px 30px rgba(2, 132, 199, 0.35);
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(3, 105, 161, 0.35) 100%);
+      }
+      .ai-card-glow {
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      .ai-card-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .ai-card-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: rgba(56, 189, 248, 0.2);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        font-size: 10px;
+        font-weight: 700;
+        color: #38bdf8;
+        letter-spacing: 0.5px;
+      }
+      .ai-card-content {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .ai-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+        flex-shrink: 0;
+      }
+      .ai-card-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .ai-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.25;
+      }
+      .ai-card-desc {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0;
+      }
+      .ai-card-action {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: #0284c7;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      }
     `}</style>
   );
 });
