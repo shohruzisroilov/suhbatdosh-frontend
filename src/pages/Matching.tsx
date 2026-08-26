@@ -115,17 +115,17 @@ export default function Matching() {
           <span className="mt__glyph"><Users size={30} /></span>
 
           <div className="mt__copy">
-            <h2 className="mt__title">Hozircha bo'sh sherik yo'q</h2>
-            <p className="mt__desc">Kutib qolmaslik uchun AI Partner bilan speaking nutqingizni oshirishingiz va xatolaringizni tekshirishingiz mumkin!</p>
+            <h2 className="mt__title">{t('match.noneTitle')}</h2>
+            <p className="mt__desc">{t('match.noneDesc')}</p>
           </div>
 
           <button
             className="btn-primary flex items-center justify-center gap-2"
             onClick={startAiCall}
-            style={{ background: 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)' }}
+            style={{ background: 'var(--grad-ai)' }}
           >
             <Sparkles size={18} />
-            <span>AI Partner bilan mashq qilish</span>
+            <span>{t('match.practiseWithAi')}</span>
           </button>
 
           <button className="btn-secondary" onClick={startSearch}>

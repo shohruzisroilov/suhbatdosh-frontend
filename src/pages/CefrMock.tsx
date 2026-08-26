@@ -1,20 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  ArrowLeft,
-  RotateCcw,
-  Sparkles,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Award,
-  ChevronRight,
-  HelpCircle,
-  BookOpen,
-} from 'lucide-react';
+import { useT } from '../i18n';
+import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, HelpCircle, Image as ImageIcon, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 import {
   getCefrStatus,
   createCefrTest,
@@ -69,6 +55,7 @@ interface CefrFeedback {
 }
 
 export default function CefrMock(props: Partial<CefrMockProps>) {
+  const t = useT();
   const storeNavigate = useAppStore((s) => s.navigate);
   const navigate = props.navigate || storeNavigate;
   const user = useAppStore((s) => s.user);
@@ -497,7 +484,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <Clock size={15} style={{ color: '#10b981' }} />
                 <span>Davomiyligi</span>
               </div>
-              <p className="im-detail-val">~11-14 daqiqa</p>
+              <p className="im-detail-val">{t('mock.duration')}</p>
             </div>
 
             <div className="im-detail-card">
@@ -537,14 +524,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 style={{ background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%' }}
               >
                 <Sparkles size={20} />
-                <span>Tugallanmagan imtihonni davom ettirish</span>
+                <span>{t('mock.resume')}</span>
               </button>
               <button
                 className="im-btn im-btn--ghost"
                 onClick={handleAbandon}
                 style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', width: '100%' }}
               >
-                <span>Voz kechish va yangi imtihon boshlash</span>
+                <span>{t('mock.discard')}</span>
               </button>
             </div>
           ) : (
@@ -555,7 +542,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
             >
               <Sparkles size={20} />
-              <span>CEFR Mock Imtihonni Boshlash</span>
+              <span>{t('mock.startCefr')}</span>
             </button>
           )}
         </div>
@@ -581,7 +568,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Examiner Box Card */}
           <div className="im-examiner-box" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div className={`im-examiner-avatar${isSpeaking ? ' is-speaking' : ''}`} style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, boxShadow: isSpeaking ? '0 0 12px rgba(16, 185, 129, 0.5)' : 'none' }}>
-              🎙️
+              <Mic2 size={22} aria-hidden="true" />
             </div>
             <div className="im-examiner-speech" style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -598,11 +585,11 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {currentStep.pictures?.type === 'comparison' && (
             <div className="im-pictures-grid">
               <div className="im-picture-card">
-                <span className="im-pic-tag">📷 Rasm 1</span>
+                <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.picture', { n: 1 })}</span>
                 <p>{currentStep.pictures.pic1Alt}</p>
               </div>
               <div className="im-picture-card">
-                <span className="im-pic-tag">📷 Rasm 2</span>
+                <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.picture', { n: 2 })}</span>
                 <p>{currentStep.pictures.pic2Alt}</p>
               </div>
             </div>
@@ -611,7 +598,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* 2 Contextual Picture Display */}
           {currentStep.pictures?.type === 'contextual' && (
             <div className="im-picture-card im-picture-card--full">
-              <span className="im-pic-tag">🖼️ Mavzu Rasmi</span>
+              <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.topicPicture')}</span>
               <p>{currentStep.pictures.pic1Alt}</p>
             </div>
           )}
@@ -637,7 +624,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <Clock size={24} className="animate-spin text-emerald-400" />
               <div>
                 <h4>Tayyorgarlik vaqti ketmoqda: {prepTimeLeft} soniya</h4>
-                <p>Eslatmalar yozib olishingiz mumkin. Vaqt tugagach nutqni boshlang.</p>
+                <p>{t('mock.notesHint')}</p>
               </div>
             </div>
           ) : submittingAnswer ? (
@@ -710,7 +697,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         <div className="im-center-box">
           <div className="im-spinner" style={{ borderColor: '#10b981 transparent transparent transparent' }} />
           <h3>Natijalar baholanmoqda...</h3>
-          <p>Milliy sertifikat CEFR mezonlari bo'yicha to'liq tahlil etilmoqda.</p>
+          <p>{t('mock.cefrGrading')}</p>
         </div>
       )}
 
@@ -811,7 +798,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             {feedback.strengths && feedback.strengths.length > 0 && (
               <div className="im-subscore-item" style={{ borderLeft: '3px solid #10b981' }}>
                 <div className="im-subscore-head">
-                  <span className="im-subscore-name" style={{ color: '#10b981' }}>💪 Kuchli tomonlar (Strengths)</span>
+                  <span className="im-subscore-name" style={{ color: '#10b981' }}><ThumbsUp size={13} aria-hidden="true" /> {t('mock.strongPoints')}</span>
                 </div>
                 <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
                   {feedback.strengths.map((st, idx) => (
@@ -824,7 +811,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             {feedback.weaknesses && feedback.weaknesses.length > 0 && (
               <div className="im-subscore-item" style={{ borderLeft: '3px solid #ef4444' }}>
                 <div className="im-subscore-head">
-                  <span className="im-subscore-name" style={{ color: '#ef4444' }}>⚠️ Kamchiliklar (Weaknesses)</span>
+                  <span className="im-subscore-name" style={{ color: '#ef4444' }}><AlertTriangle size={13} aria-hidden="true" /> {t('mock.mainProblems')}</span>
                 </div>
                 <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
                   {feedback.weaknesses.map((wk, idx) => (
@@ -838,7 +825,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Actionable Improvement Plan */}
           {feedback.improvementPlan && feedback.improvementPlan.length > 0 && (
             <div className="im-advice-card">
-              <h3>💡 Rivojlantirish rejasi (Action Plan)</h3>
+              <h3><Lightbulb size={14} aria-hidden="true" /> {t('mock.actionPlan')}</h3>
               <ol style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '12px', lineHeight: '1.6' }}>
                 {feedback.improvementPlan.map((plan, idx) => (
                   <li key={idx}>{plan}</li>
@@ -858,7 +845,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
             >
               <RotateCcw size={18} />
-              <span>Yangi CEFR imtihon topshirish</span>
+              <span>{t('mock.retakeCefr')}</span>
             </button>
             <button className="im-btn im-btn--ghost" onClick={() => navigate('home')}>
               <span>Bosh sahifaga qaytish</span>

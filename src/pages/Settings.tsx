@@ -94,7 +94,9 @@ export default function Settings() {
         {section === 'menu' && (
           <div className="space-y-3">
             <Card
-              className="p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
+              as="button"
+              type="button"
+              className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
               onClick={() => { selectionHaptic(); setSection('level'); }}
             >
               <div className="flex items-center gap-3">
@@ -112,7 +114,9 @@ export default function Settings() {
             </Card>
 
             <Card
-              className="p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
+              as="button"
+              type="button"
+              className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
               onClick={() => { selectionHaptic(); setSection('gender'); }}
             >
               <div className="flex items-center gap-3">
@@ -130,7 +134,9 @@ export default function Settings() {
             </Card>
 
             <Card
-              className="p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
+              as="button"
+              type="button"
+              className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
               onClick={() => { selectionHaptic(); setSection('notifications'); }}
             >
               <div className="flex items-center gap-3">
@@ -156,6 +162,10 @@ export default function Settings() {
                 const selected = level === lv.value;
                 return (
                   <Card
+                    as="button"
+                    type="button"
+                    role="radio"
+                    aria-checked={level === lv.value}
                     key={lv.value}
                     onClick={() => pickLevel(lv.value)}
                     className={`p-4 cursor-pointer transition-all active:scale-[0.98] ${

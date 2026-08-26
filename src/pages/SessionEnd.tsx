@@ -5,6 +5,7 @@ import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import ReportSheet from '../components/ReportSheet';
+import Modal from '../components/Modal';
 import ReviewPrompt from '../components/ReviewPrompt';
 import { Star, Check, Flag, PartyPopper, LogOut, Flame, Sparkles, Target } from 'lucide-react';
 
@@ -130,13 +131,11 @@ export default function SessionEnd() {
         <div className="end-streak-banner scale-in">
           <div className="end-streak-badge">
             <Flame size={15} fill="#FF9F0A" className="end-flame-ico" />
-            <span>Great Practice!</span>
+            <span>{t('end.badge')}</span>
           </div>
-          <p className="end-streak-title">You're building fluency step by step! 🔥</p>
+          <p className="end-streak-title">{t('end.title')}</p>
           {durText && (
-            <p className="end-streak-sub">
-              🎯 +{durText} spoken English practice completed today.
-            </p>
+            <p className="end-streak-sub">{t('end.sub', { dur: durText })}</p>
           )}
         </div>
 
@@ -172,11 +171,15 @@ export default function SessionEnd() {
       </div>
 
       {showReviewModal && createPortal(
-        <div className="home-review-modal-backdrop" onClick={finishGoHome}>
-          <div className="home-review-modal-content scale-in" onClick={(e) => e.stopPropagation()}>
-            <ReviewPrompt forceShow={true} onClose={finishGoHome} />
-          </div>
-        </div>,
+        <Modal
+          isOpen
+          onClose={finishGoHome}
+          backdropClassName="home-review-modal-backdrop"
+          className="home-review-modal-content scale-in"
+          label={t('rp.title')}
+        >
+          <ReviewPrompt forceShow={true} onClose={finishGoHome} />
+        </Modal>,
         document.body
       )}
 

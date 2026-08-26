@@ -4,13 +4,13 @@ import { useSocket } from '../hooks/useSocket';
 import { topicsForPart, findTopic } from '../constants/speakingTopics';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
-import { Bell, Star, ChevronLeft } from 'lucide-react';
+import { Bell, Star, ChevronLeft, MessageSquare, Timer, Lightbulb } from 'lucide-react';
 import { SavedQuestion } from '../types';
 
 const PART_META = [
-  { part: 1, descKey: 'sq.part1.desc', emoji: '💬' },
-  { part: 2, descKey: 'sq.part2.desc', emoji: '⏱️' },
-  { part: 3, descKey: 'sq.part3.desc', emoji: '💡' },
+  { part: 1, descKey: 'sq.part1.desc', Icon: MessageSquare },
+  { part: 2, descKey: 'sq.part2.desc', Icon: Timer },
+  { part: 3, descKey: 'sq.part3.desc', Icon: Lightbulb },
 ];
 
 const PART_ACCENT: Record<number, string> = {
@@ -185,7 +185,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
       <div className="sq sq--parts">
         {partnerBanner}
         <div className="sq-grid">
-          {PART_META.map(({ part, descKey, emoji }) => (
+          {PART_META.map(({ part, descKey, Icon }) => (
             <button
               key={part}
               className="sq-tile"
@@ -193,7 +193,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
               onClick={() => openPart(part)}
             >
               <span className="sq-tile__num">{part}</span>
-              <span className="sq-tile__emoji">{emoji}</span>
+              <span className="sq-tile__icon"><Icon size={20} aria-hidden="true" /></span>
               <span className="sq-tile__title">{t('sq.part', { n: part })}</span>
               <span className="sq-tile__desc">{t(descKey)}</span>
             </button>
@@ -206,7 +206,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
               setView('saved');
             }}
           >
-            <span className="sq-tile__emoji">⭐</span>
+            <span className="sq-tile__icon"><Star size={20} aria-hidden="true" /></span>
             <span className="sq-tile__title">{t('sq.saved')}</span>
             <span className="sq-tile__desc">
               {savedQuestions.length
@@ -521,7 +521,10 @@ const css = `
     color: rgb(var(--acc) / 0.45);
     text-shadow: 0 1px 8px rgb(var(--acc) / 0.3);
   }
-  .sq-tile__emoji { font-size: var(--text-lg); line-height: 1; margin-bottom: var(--space-0-5); }
+  .sq-tile__icon {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--acc); line-height: 1; margin-bottom: var(--space-0-5);
+  }
   .sq-tile__title { font-size: var(--text-md); font-weight: var(--weight-heavy); color: #fff; letter-spacing: -0.2px; }
   .sq-tile__desc { font-size: var(--text-xs); color: rgba(255,255,255,0.55); line-height: 1.25; }
 
@@ -727,7 +730,7 @@ const css = `
 
   @media (max-width: 375px) {
     .sq { gap: var(--space-2); padding: 0 var(--space-3); }
-    .sq-tile__emoji { font-size: var(--text-lg); }
+    .sq-tile__icon { transform: scale(0.9); }
     .sq-tile__title { font-size: var(--text-base); }
     .sq-qrow__text { font-size: var(--text-base); }
     .sq-cue__prompt { font-size: var(--text-md); }

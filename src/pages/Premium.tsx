@@ -10,7 +10,7 @@ const AMOUNT_BY_LANG: Record<string, string> = { uz: "$2 (26 000 so'm)", ru: '$2
 export default function Premium() {
   const t = useT();
   const lang = useLang();
-  const { setUser, navigate, screenParams } = useAppStore();
+  const { user, setUser, navigate, screenParams } = useAppStore();
   const amount = AMOUNT_BY_LANG[lang] || AMOUNT_BY_LANG.uz;
   const [copied, setCopied] = useState(false);
 
@@ -122,47 +122,47 @@ export default function Premium() {
 
                 <div className="premium-table-row">
                   <div className="premium-cell feat-cell">
-                    <span className="feat-name">Suhbatdosh muloqot</span>
-                    <span className="feat-desc">Jonli sherik bilan gaplashish</span>
+                    <span className="feat-name">{t('pm.rowTalk')}</span>
+                    <span className="feat-desc">{t('pm.featLive')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">10 daq / kun</div>
-                  <div className="premium-cell pro-cell text-highlight">Cheksiz 24/7</div>
+                  <div className="premium-cell free-cell text-muted">{t('pm.freePerDay', { n: user?.dailyLimit || 10 })}</div>
+                  <div className="premium-cell pro-cell text-highlight">{t('pm.unlimited')}</div>
                 </div>
 
                 <div className="premium-table-row">
                   <div className="premium-cell feat-cell">
-                    <span className="feat-name">IELTS Speaking Mock</span>
-                    <span className="feat-desc">Part 1, 2, 3 + Band 0-9 ball</span>
+                    <span className="feat-name">{t('pm.rowIelts')}</span>
+                    <span className="feat-desc">{t('pm.rowIeltsSub')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">3 ta (Jami)</div>
-                  <div className="premium-cell pro-cell text-highlight">Kuniga 3x to'liq</div>
+                  <div className="premium-cell free-cell text-muted">{t('pm.freeTotal', { n: 3 })}</div>
+                  <div className="premium-cell pro-cell text-highlight">{t('pm.perDayFull', { n: 3 })}</div>
                 </div>
 
                 <div className="premium-table-row">
                   <div className="premium-cell feat-cell">
-                    <span className="feat-name">CEFR Multilevel Mock</span>
-                    <span className="feat-desc">Milliy Sertifikat + A1-C1</span>
+                    <span className="feat-name">{t('pm.rowCefr')}</span>
+                    <span className="feat-desc">{t('pm.rowCefrSub')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">3 ta (Jami)</div>
-                  <div className="premium-cell pro-cell text-highlight">Kuniga 3x to'liq</div>
+                  <div className="premium-cell free-cell text-muted">{t('pm.freeTotal', { n: 3 })}</div>
+                  <div className="premium-cell pro-cell text-highlight">{t('pm.perDayFull', { n: 3 })}</div>
                 </div>
 
                 <div className="premium-table-row">
                   <div className="premium-cell feat-cell">
-                    <span className="feat-name">Sherik izlash tezligi</span>
-                    <span className="feat-desc">Navbatda kutish vaqti</span>
+                    <span className="feat-name">{t('pm.rowMatch')}</span>
+                    <span className="feat-desc">{t('pm.rowMatchSub')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">Odatiy</div>
-                  <div className="premium-cell pro-cell text-highlight">Tezkor (Priority)</div>
+                  <div className="premium-cell free-cell text-muted">{t('pm.standard')}</div>
+                  <div className="premium-cell pro-cell text-highlight">{t('pm.priority')}</div>
                 </div>
 
                 <div className="premium-table-row">
                   <div className="premium-cell feat-cell">
-                    <span className="feat-name">AI Examiner Tahlili</span>
-                    <span className="feat-desc">Xatolar va tavsiyalar</span>
+                    <span className="feat-name">{t('pm.rowAi')}</span>
+                    <span className="feat-desc">{t('pm.rowAiSub')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">Bazaviy</div>
-                  <div className="premium-cell pro-cell text-highlight">To'liq & Mukammal</div>
+                  <div className="premium-cell free-cell text-muted">{t('pm.basic')}</div>
+                  <div className="premium-cell pro-cell text-highlight">{t('pm.full')}</div>
                 </div>
               </div>
             </div>

@@ -56,7 +56,9 @@ export default function BottomNav({ active }: BottomNavProps) {
                   navigate(tab.key);
                 }
               }}
-              aria-label={t(tab.label)}
+              // Which tab is selected was communicated by colour alone; aria-current
+              // is what a screen reader announces as "current page".
+              aria-current={isActive ? 'page' : undefined}
             >
               <div className="bottom-nav__icon-wrap">
                 {tab.icon}
@@ -72,7 +74,7 @@ export default function BottomNav({ active }: BottomNavProps) {
         .bottom-nav {
           position: relative; z-index: 100;
           border-top: 1px solid var(--border);
-          background: rgba(9, 13, 20, 0.92);
+          background: var(--chrome-bg);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -109,7 +111,10 @@ export default function BottomNav({ active }: BottomNavProps) {
           pointer-events: none;
         }
         .bottom-nav__label {
-          font-size: 10px; font-weight: var(--weight-bold);
+          /* Nav labels sit directly under their icon, so the icon carries the meaning
+             and the label reinforces it — 11px is acceptable here where 11px body
+             copy would not be. */
+          font-size: var(--text-2xs); font-weight: var(--weight-bold);
           letter-spacing: 0.03em; line-height: 1;
           transition: color 0.2s var(--ease-out);
         }

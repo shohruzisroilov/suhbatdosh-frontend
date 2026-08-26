@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import Modal from './Modal';
+import { useT } from '../i18n';
 import { Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 
@@ -8,7 +10,10 @@ interface Props {
   telegramId?: string | number;
 }
 
+const CHANNEL = '@shohruzblog';
+
 export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId }: Props) {
+  const t = useT();
   const [checking, setChecking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -48,7 +53,7 @@ export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId
         onSubscribed();
       } else {
         notifyHaptic('error');
-        setErrorMsg("Siz hali kanalga obuna bo'lmadingiz. Iltimos obuna bo'ling!");
+        setErrorMsg(t('sub.notJoined'));
       }
     } catch {
       // In case of error, unlock user
@@ -59,17 +64,21 @@ export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId
   };
 
   return (
-    <div className="sub-modal-backdrop fade-in">
-      <div className="sub-modal scale-in">
+    <Modal
+      isOpen
+      // Subscribing is a gate, not a suggestion: no backdrop click, no Escape.
+      dismissible={false}
+      backdropClassName="sub-modal-backdrop fade-in"
+      className="sub-modal scale-in"
+      labelledBy="sub-modal-title"
+    >
         <div className="sub-modal__icon-wrap">
           <Send size={32} className="sub-modal__send-icon" />
           <span className="sub-modal__glow" />
         </div>
 
-        <h2 className="sub-modal__title">Kanalga obuna bo'ling</h2>
-        <p className="sub-modal__desc">
-          Suhbatdosh ilovasida suhbat qurish va foydalanish uchun rasmiy <b>@shohruzblog</b> kanaliga obuna bo'lishingiz kerak.
-        </p>
+        <h2 className="sub-modal__title" id="sub-modal-title">{t('sub.title')}</h2>
+        <p className="sub-modal__desc">{t('sub.desc', { channel: CHANNEL })}</p>
 
         {errorMsg && (
           <div className="sub-modal__error">
@@ -81,21 +90,20 @@ export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId
         <div className="sub-modal__actions">
           <button className="sub-modal__btn-primary" onClick={handleOpenChannel}>
             <Send size={18} />
-            <span>Kanalga o'tish (@shohruzblog)</span>
+            <span>{t('sub.open', { channel: CHANNEL })}</span>
           </button>
 
           <button className="sub-modal__btn-secondary" onClick={handleCheckSubscription} disabled={checking}>
             {checking ? (
-              <span>Tekshirilmoqda...</span>
+              <span>{t('sub.checking')}</span>
             ) : (
               <>
                 <CheckCircle2 size={18} />
-                <span>Obunani tekshirish</span>
+                <span>{t('sub.check')}</span>
               </>
             )}
           </button>
         </div>
-      </div>
 
       <style>{`
         .sub-modal-backdrop {
@@ -186,6 +194,6 @@ export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId
         .sub-modal__btn-secondary:active { transform: scale(0.97); }
         .sub-modal__btn-secondary:disabled { opacity: 0.5; }
       `}</style>
-    </div>
+    </Modal>
   );
 }

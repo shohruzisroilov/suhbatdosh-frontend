@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Modal from './Modal';
 import { reportSession, blockSession } from '../api/endpoints';
 import { useT } from '../i18n';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
@@ -43,11 +44,18 @@ export default function ReportSheet({ sessionId, partnerName, onClose, onDone }:
   }
 
   return (
-    <div className="rs-overlay" onClick={onClose}>
-      <div className="rs-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="rs-handle" />
-        <h3 className="rs-title">{t('rep.title', { name: partnerName })}</h3>
-        <p className="rs-desc">{t('rep.desc')}</p>
+    <Modal
+      isOpen
+      onClose={busy ? undefined : onClose}
+      backdropClassName="rs-overlay"
+      className="rs-sheet"
+      labelledBy="rs-title"
+      describedBy="rs-desc"
+    >
+      <div className="rs-body">
+        <div className="rs-handle" aria-hidden="true" />
+        <h3 className="rs-title" id="rs-title">{t('rep.title', { name: partnerName })}</h3>
+        <p className="rs-desc" id="rs-desc">{t('rep.desc')}</p>
 
         <div className="rs-reasons">
           {REASONS.map((r) => (
@@ -71,6 +79,7 @@ export default function ReportSheet({ sessionId, partnerName, onClose, onDone }:
       </div>
 
       <style>{`
+        .rs-body { display: contents; }
         .rs-overlay {
           position: fixed; inset: 0; background: rgba(0,0,0,0.6);
           backdrop-filter: blur(6px);
@@ -120,6 +129,6 @@ export default function ReportSheet({ sessionId, partnerName, onClose, onDone }:
         }
         .rs-cancel:active { opacity: 0.6; }
       `}</style>
-    </div>
+    </Modal>
   );
 }

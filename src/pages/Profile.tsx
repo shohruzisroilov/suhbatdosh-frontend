@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getMe, getMyRatings, updateMe } from '../api/endpoints';
+import Modal from '../components/Modal';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
@@ -290,11 +291,16 @@ export default function Profile() {
 
       {/* Level Selector Modal */}
       {showLevelModal && (
-        <div className="ratings-modal-backdrop" onClick={() => setShowLevelModal(false)}>
-          <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ratings-modal__handle" />
+        <Modal
+          isOpen
+          onClose={() => setShowLevelModal(false)}
+          backdropClassName="ratings-modal-backdrop"
+          className="ratings-modal"
+          labelledBy="profile-level-title"
+        >
+            <div className="ratings-modal__handle" aria-hidden="true" />
             <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title">{t('settings.levelTitle')}</h2>
+              <h2 className="ratings-modal__title" id="profile-level-title">{t('settings.levelTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowLevelModal(false)}>
                 <X size={16} />
               </button>
@@ -304,7 +310,10 @@ export default function Profile() {
                 {LEVELS.map((lv) => {
                   const selected = level === lv;
                   return (
-                    <div
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
                       key={lv}
                       className={`profile__modal-option${selected ? ' profile__modal-option--selected' : ''}`}
                       onClick={() => pickLevel(lv)}
@@ -315,22 +324,26 @@ export default function Profile() {
                         <span className="profile__modal-option-sub">{t(`ob.level${lv}.sub`)}</span>
                       </div>
                       {selected && <Check size={16} className="profile__modal-check" />}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Gender Selector Modal */}
       {showGenderModal && (
-        <div className="ratings-modal-backdrop" onClick={() => setShowGenderModal(false)}>
-          <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ratings-modal__handle" />
+        <Modal
+          isOpen
+          onClose={() => setShowGenderModal(false)}
+          backdropClassName="ratings-modal-backdrop"
+          className="ratings-modal"
+          labelledBy="profile-gender-title"
+        >
+            <div className="ratings-modal__handle" aria-hidden="true" />
             <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title">{t('settings.genderTitle')}</h2>
+              <h2 className="ratings-modal__title" id="profile-gender-title">{t('settings.genderTitle')}</h2>
               <button type="button" className="ratings-modal__close" onClick={() => setShowGenderModal(false)}>
                 <X size={16} />
               </button>
@@ -340,29 +353,36 @@ export default function Profile() {
                 {GENDERS.map((g) => {
                   const selected = (g.v === 'skip' ? null : g.v) === gender;
                   return (
-                    <div
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
                       key={g.v}
                       className={`profile__modal-option${selected ? ' profile__modal-option--selected' : ''}`}
                       onClick={() => pickGender(g.v)}
                     >
                       <span className="profile__modal-option-title">{t(g.key)}</span>
                       {selected && <Check size={16} className="profile__modal-check" />}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Partner Ratings Modal */}
       {showRatingsModal && (
-        <div className="ratings-modal-backdrop" onClick={() => setShowRatingsModal(false)}>
-          <div className="ratings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ratings-modal__handle" />
+        <Modal
+          isOpen
+          onClose={() => setShowRatingsModal(false)}
+          backdropClassName="ratings-modal-backdrop"
+          className="ratings-modal"
+          labelledBy="profile-ratings-title"
+        >
+            <div className="ratings-modal__handle" aria-hidden="true" />
             <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title">{t('profile.ratingsModalTitle')}</h2>
+              <h2 className="ratings-modal__title" id="profile-ratings-title">{t('profile.ratingsModalTitle')}</h2>
               <button
                 type="button"
                 className="ratings-modal__close"
@@ -406,8 +426,7 @@ export default function Profile() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       <style>{`

@@ -82,12 +82,16 @@ export default function Home() {
           </>
         )}
 
-        {/* ── Find Partner Hero Card ── */}
-        <section className="hero fade-up" onClick={() => { tapHaptic('medium'); navigate('matching'); }}>
+        {/* ── Find Partner Hero Card ──
+            The whole card is tappable, but the only control is the button below:
+            its ::after overlay stretches across the card. That keeps one tab stop,
+            a real <button> for keyboard and screen-reader users, and an <h1> that
+            still reads as a heading — which a <section onClick> gave up entirely. */}
+        <section className="hero fade-up">
           {/* Animated background orbs */}
-          <div className="hero__orb hero__orb--1" />
-          <div className="hero__orb hero__orb--2" />
-          <div className="hero__orb hero__orb--3" />
+          <div className="hero__orb hero__orb--1" aria-hidden="true" />
+          <div className="hero__orb hero__orb--2" aria-hidden="true" />
+          <div className="hero__orb hero__orb--3" aria-hidden="true" />
 
           <div className="hero__inner">
             {/* Live badge */}
@@ -123,8 +127,9 @@ export default function Home() {
                 </div>
               </div>
               <button
+                type="button"
                 className="hero__btn"
-                onClick={(e) => { e.stopPropagation(); tapHaptic('medium'); navigate('matching'); }}
+                onClick={() => { tapHaptic('medium'); navigate('matching'); }}
               >
                 <span>{t('home.start')}</span>
                 <ChevronRight size={18} strokeWidth={2.5} />
@@ -140,7 +145,7 @@ export default function Home() {
           {/* AI Mock Examiner Grid */}
           <div className="home__mock-section">
             <div className="home__section-head">
-              <span className="eyebrow" style={{ margin: 0 }}>AI Mock Imtihonlar</span>
+              <span className="eyebrow" style={{ margin: 0 }}>{t('mock.section')}</span>
               <span className="home__section-badge">AI Examiner</span>
             </div>
 
@@ -158,10 +163,10 @@ export default function Home() {
                 </div>
                 <div className="mock-card__content">
                   <h3 className="mock-card__title">IELTS Speaking</h3>
-                  <p className="mock-card__sub">Part 1, 2, 3 AI baholash</p>
+                  <p className="mock-card__sub">{t('mock.ieltsSub')}</p>
                 </div>
                 <div className="mock-card__footer">
-                  <span>Imtihonga kirish</span>
+                  <span>{t('mock.enter')}</span>
                   <ChevronRight size={15} />
                 </div>
               </button>
@@ -179,10 +184,10 @@ export default function Home() {
                 </div>
                 <div className="mock-card__content">
                   <h3 className="mock-card__title">CEFR Multilevel</h3>
-                  <p className="mock-card__sub">Milliy Sertifikat formati</p>
+                  <p className="mock-card__sub">{t('mock.cefrSub')}</p>
                 </div>
                 <div className="mock-card__footer">
-                  <span>Imtihonga kirish</span>
+                  <span>{t('mock.enter')}</span>
                   <ChevronRight size={15} />
                 </div>
               </button>
@@ -355,7 +360,7 @@ export default function Home() {
 
         /* ── Hero / Find Partner Card ── */
         .hero {
-          position: relative; overflow: hidden;
+          position: relative; isolation: isolate; overflow: hidden;
           flex-shrink: 0;
           background: linear-gradient(145deg, #0369A1 0%, #0EA5E9 45%, #38BDF8 100%);
           border: 1px solid rgba(255, 255, 255, 0.20);
@@ -371,10 +376,29 @@ export default function Home() {
           transform: scale(0.985);
           box-shadow: 0 4px 16px rgba(3, 105, 161, 0.35), 0 1px 4px rgba(0, 0, 0, 0.15);
         }
+        /* Keyboard focus must be visible on the card, not just the button, because
+           the button's hit area is the whole card. */
+        .hero:has(.hero__btn:focus-visible) {
+          outline: 2px solid #FFFFFF;
+          outline-offset: 2px;
+        }
+        .hero__btn:focus-visible { outline: none; }
+        /* Expands the button's hit area to the whole card. Resolves against .hero,
+           which is the nearest positioned ancestor. */
+        .hero__btn::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+        }
+        /* Where :has() is unavailable the button keeps its own focus ring. */
+        @supports not selector(:has(*)) {
+          .hero__btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+        }
 
         /* Animated background orbs */
         .hero__orb {
-          position: absolute; border-radius: 50%; pointer-events: none;
+          position: absolute; z-index: -1; border-radius: 50%; pointer-events: none;
         }
         .hero__orb--1 {
           width: 180px; height: 180px;
@@ -398,7 +422,9 @@ export default function Home() {
         @keyframes orbFloat2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
         @keyframes orbFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5px,5px) scale(0.95); } }
 
-        .hero__inner { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
+        /* Deliberately unpositioned: the button's ::after overlay resolves inset:0
+           against .hero, so nothing between them may create a positioning context. */
+        .hero__inner { display: flex; flex-direction: column; gap: 12px; }
 
         /* Top row: live badge + online count */
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }

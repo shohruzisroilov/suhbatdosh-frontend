@@ -18,6 +18,12 @@
   --border:         rgba(255, 255, 255, 0.08);
   --border-strong:  rgba(255, 255, 255, 0.16);
 
+  /* Translucent chrome (bottom nav, sticky header). Separate from --bg-secondary
+     because these sit over scrolling content and need alpha for the blur to read. */
+  --chrome-bg:      rgba(9, 13, 20, 0.92);
+  --chrome-bg-soft: rgba(9, 13, 20, 0.85);
+  --glass-bg:       rgba(18, 24, 36, 0.70);
+
   --text-primary:   #F8FAFC;   /* Ultra clear white */
   --text-secondary: #94A3B8;   /* Soft slate text */
   --text-tertiary:  #64748B;   /* Dim caption text */
@@ -47,6 +53,7 @@
   /* Gradients */
   --grad-primary:   linear-gradient(135deg, #00A8FF 0%, #0066FF 100%);
   --grad-hero:      linear-gradient(135deg, rgba(0, 168, 255, 0.18) 0%, rgba(0, 102, 255, 0.05) 100%);
+  --grad-ai:        linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
   --grad-streak:    linear-gradient(135deg, #FF9F0A 0%, #FF6B00 100%);
   --grad-gold:      linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   --grad-silver:    linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
@@ -56,7 +63,11 @@
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Bricolage Grotesque', var(--font-body);
 
-  --text-xs:   11px;
+  /* 12px is the floor for anything a person has to read. --text-2xs exists only
+     for non-essential ornament (nav labels, rank superscripts) where the meaning is
+     also carried by an icon or position. */
+  --text-2xs:  11px;
+  --text-xs:   12px;
   --text-sm:   13px;
   --text-base: 15px;
   --text-md:   17px;
@@ -116,6 +127,10 @@
   --border:         rgba(15, 23, 42, 0.08);
   --border-strong:  rgba(15, 23, 42, 0.16);
 
+  --chrome-bg:      rgba(248, 250, 252, 0.92);
+  --chrome-bg-soft: rgba(248, 250, 252, 0.85);
+  --glass-bg:       rgba(255, 255, 255, 0.70);
+
   --text-primary:   #0F172A;
   --text-secondary: #475569;
   --text-tertiary:  #94A3B8;
@@ -140,6 +155,7 @@
 
   --grad-primary:   linear-gradient(135deg, #0096E6 0%, #0052CC 100%);
   --grad-hero:      linear-gradient(135deg, rgba(0, 150, 230, 0.1) 0%, rgba(0, 82, 204, 0.03) 100%);
+  --grad-ai:        linear-gradient(135deg, #0091C2 0%, #0055CC 100%);
 
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.10);
@@ -204,7 +220,7 @@ h1, h2, h3 {
   transition: transform var(--t), border-color var(--t), box-shadow var(--t);
 }
 .card--glass {
-  background: rgba(18, 24, 36, 0.7);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-strong);
@@ -306,7 +322,7 @@ h1, h2, h3 {
 .row:active { transform: scale(0.99); background: var(--surface-2); }
 .row__text  { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; }
 .row__title { font-size: var(--text-base); font-weight: var(--weight-bold); color: var(--text-primary); }
-.row__sub   { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4; }
+.row__sub   { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.4; }
 .row__ico {
   width: 38px; height: 38px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -346,7 +362,7 @@ h1, h2, h3 {
 
 /* ─── Section Divider ────────────────────────────────────────────────────── */
 .section-label {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
   color: var(--text-secondary);
   text-transform: uppercase;

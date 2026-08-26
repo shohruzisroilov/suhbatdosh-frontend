@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useAppStore from './store/useAppStore';
@@ -76,16 +77,17 @@ function AuthErrorScreen({ message }: { message: string }) {
         minHeight: '100dvh',
       }}
     >
-      <div style={{ fontSize: 48 }}>⚠️</div>
+      <AlertTriangle size={44} strokeWidth={1.75} color="var(--danger, #FF453A)" aria-hidden="true" />
       <p style={{ fontSize: 16, lineHeight: 1.5, maxWidth: 280 }}>{message}</p>
       <button
         onClick={() => window.location.reload()}
         style={{
           marginTop: 8,
+          minHeight: 44,
           padding: '12px 28px',
           borderRadius: 12,
           border: 'none',
-          background: 'var(--accent, #0088cc)',
+          background: 'var(--btn-bg, #00A8FF)',
           color: '#fff',
           fontSize: 15,
           fontWeight: 600,

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import Modal from './Modal';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { MicOff, Settings, RefreshCw, X, CheckCircle2 } from 'lucide-react';
@@ -42,8 +43,13 @@ export default function MicPermissionModal() {
   };
 
   const modalContent = (
-    <div className="mic-modal-overlay" onClick={handleClose}>
-      <div className="mic-modal-card" onClick={(e) => e.stopPropagation()}>
+    <Modal
+      isOpen
+      onClose={handleClose}
+      backdropClassName="mic-modal-overlay"
+      className="mic-modal-card"
+      labelledBy="mic-modal-title"
+    >
         {/* Close Icon Button */}
         <button
           type="button"
@@ -66,7 +72,7 @@ export default function MicPermissionModal() {
         </div>
 
         {/* Title */}
-        <h3 className="mic-modal-title">
+        <h3 className="mic-modal-title" id="mic-modal-title">
           {permissionGranted ? t('mic.grantedTitle') : t('mic.modalTitle')}
         </h3>
 
@@ -120,7 +126,6 @@ export default function MicPermissionModal() {
             {t('mic.close')}
           </button>
         </div>
-      </div>
 
       <style>{`
         .mic-modal-overlay {
@@ -332,7 +337,7 @@ export default function MicPermissionModal() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+    </Modal>
   );
 
   return createPortal(modalContent, document.body);

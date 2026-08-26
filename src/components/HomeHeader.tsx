@@ -141,7 +141,7 @@ export default function HomeHeader({
           display: flex; align-items: center; gap: var(--space-3);
           padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
           border-bottom: 1px solid var(--border);
-          background: rgba(9, 13, 20, 0.85);
+          background: var(--chrome-bg-soft);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           flex-shrink: 0; z-index: 10;

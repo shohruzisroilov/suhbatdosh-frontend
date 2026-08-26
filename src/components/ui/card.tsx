@@ -1,10 +1,20 @@
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
+type CardProps = React.HTMLAttributes<HTMLElement> & {
+  /**
+   * Element to render. Pass `as="button"` when the whole card is a control — a
+   * `<div onClick>` card is invisible to keyboard and switch users, which is how
+   * the onboarding level and gender pickers ended up unusable without a pointer.
+   */
+  as?: 'div' | 'button';
+  type?: 'button' | 'submit' | 'reset';
+};
+
+const Card = React.forwardRef<HTMLElement, CardProps>(
+  ({ className, as: Component = 'div', ...props }, ref) => (
+    <Component
+      ref={ref as never}
       className={cn(
         'rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm',
         className

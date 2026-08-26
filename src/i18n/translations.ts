@@ -448,5 +448,67 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'time.hourAgo': '{n}h ago',
     'time.yesterday': 'Yesterday',
     'time.dayAgo': '{n}d ago',
+
+    // ─── Mock exams (were hardcoded Uzbek in the page components) ───────────
+    'mock.section': 'AI mock exams',
+    'mock.duration': '~11–14 minutes',
+    'mock.resume': 'Resume your unfinished test',
+    'mock.discard': 'Discard it and start over',
+    'mock.startIelts': 'Start IELTS mock test',
+    'mock.startCefr': 'Start CEFR mock test',
+    'mock.retake': 'Take another test',
+    'mock.retakeCefr': 'Take another CEFR test',
+    'mock.notesHint': 'Make notes now. Start speaking when the timer ends.',
+    'mock.enter': 'Start test',
+    'mock.ieltsSub': 'Parts 1, 2 and 3, scored by AI',
+    'mock.cefrSub': 'National certificate format',
+    'mock.cefrGrading': 'Marking your answers against the CEFR criteria.',
+    'mock.strongPoints': 'What worked',
+    'mock.mainProblems': 'What to fix',
+    'mock.betterAnswer': 'A stronger version',
+    'mock.advice': 'What to do next',
+    'mock.actionPlan': 'Your action plan',
+    'mock.picture': 'Picture {n}',
+    'mock.topicPicture': 'Topic picture',
+
+    // ─── Session end ────────────────────────────────────────────────────────
+    'end.badge': 'Nice session',
+    'end.title': 'You are building fluency, one talk at a time.',
+    'end.sub': '{dur} of spoken English today.',
+
+    // ─── Waiting for a partner ──────────────────────────────────────────────
+    'match.noneTitle': 'Nobody is free right now',
+    'match.noneDesc': 'Practise with the AI partner while you wait — it talks back and shows you what to fix.',
+    'match.practiseWithAi': 'Practise with AI partner',
+
+    // ─── Premium comparison table ───────────────────────────────────────────
+    'pm.featLive': 'Talk with a real partner',
+    'pm.freePerDay': '{n} min / day',
+    'pm.freeTotal': '{n} total',
+    'pm.standard': 'Standard',
+    'pm.basic': 'Basic',
+    'pm.rowTalk': 'Talking',
+    'pm.rowIelts': 'IELTS Speaking mock',
+    'pm.rowIeltsSub': 'Parts 1, 2, 3 + band 0–9',
+    'pm.rowCefr': 'CEFR Multilevel mock',
+    'pm.rowCefrSub': 'National certificate format, A1–C1',
+    'pm.rowMatch': 'Partner matching',
+    'pm.rowMatchSub': 'Time spent in the queue',
+    'pm.rowAi': 'AI examiner feedback',
+    'pm.rowAiSub': 'Mistakes and what to work on',
+    'pm.unlimited': 'Unlimited, 24/7',
+    'pm.perDayFull': '{n}× a day, full test',
+    'pm.priority': 'Priority',
+    'pm.full': 'Full breakdown',
+
+    // ─── Channel gate ───────────────────────────────────────────────────────
+    'sub.title': 'Join the channel',
+    'sub.desc': 'Join {channel} to start talking on Suhbatdosh.',
+    'sub.open': 'Open {channel}',
+    'sub.checking': 'Checking…',
+    'sub.check': 'I have joined',
+    // Says what happened and what to do, in the interface's voice — no apology.
+    'sub.notJoined': 'You are not in the channel yet. Join it, then tap “I have joined”.',
+    'sub.checkFailed': 'Could not check right now. Try again in a moment.',
   },
 };

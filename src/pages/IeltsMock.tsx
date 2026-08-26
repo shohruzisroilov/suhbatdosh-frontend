@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useT } from '../i18n';
 import useAppStore from '../store/useAppStore';
 import {
   getIeltsStatus,
@@ -10,21 +11,7 @@ import {
   getTTSAudio,
 } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
-import {
-  Award,
-  Clock,
-  Mic,
-  MicOff,
-  Sparkles,
-  ChevronRight,
-  ArrowLeft,
-  RotateCcw,
-  CheckCircle2,
-  AlertCircle,
-  BookOpen,
-  Volume2,
-  VolumeX,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 
 interface ScriptStep {
   i: number;
@@ -53,6 +40,7 @@ interface TestFeedback {
 }
 
 export default function IeltsMock() {
+  const t = useT();
   const { navigate, user } = useAppStore();
 
   // Status & Quota
@@ -446,7 +434,7 @@ export default function IeltsMock() {
                   <Clock size={15} style={{ color: '#38bdf8' }} />
                   <span>Davomiyligi</span>
                 </div>
-                <p className="im-detail-val">~11-14 daqiqa</p>
+                <p className="im-detail-val">{t('mock.duration')}</p>
               </div>
 
               <div className="im-detail-card">
@@ -492,14 +480,14 @@ export default function IeltsMock() {
                 <>
                   <button className="im-btn im-btn--primary" onClick={() => loadActiveTest(status.active!)}>
                     <Sparkles size={18} />
-                    <span>Tugallanmagan imtihonni davom ettirish</span>
+                    <span>{t('mock.resume')}</span>
                   </button>
                   <button
                     className="im-btn im-btn--ghost"
                     onClick={handleAbandon}
                     style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                   >
-                    <span>Voz kechish va yangi imtihon boshlash</span>
+                    <span>{t('mock.discard')}</span>
                   </button>
                 </>
               ) : (
@@ -509,7 +497,7 @@ export default function IeltsMock() {
                   disabled={loadingStatus || (status?.remaining ?? 0) <= 0}
                 >
                   <Sparkles size={18} />
-                  <span>IELTS Mock Imtihonni Boshlash</span>
+                  <span>{t('mock.startIelts')}</span>
                 </button>
               )}
             </div>
@@ -542,7 +530,7 @@ export default function IeltsMock() {
           {/* Examiner Box */}
           <div className="im-examiner-box">
             <div className={`im-examiner-avatar${isSpeaking ? ' is-speaking' : ''}`}>
-              🎙️
+              <Mic2 size={22} aria-hidden="true" />
             </div>
             <div className="im-examiner-speech">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -739,7 +727,7 @@ export default function IeltsMock() {
               {feedback.strongPoints && feedback.strongPoints.length > 0 && (
                 <div className="im-subscore-item" style={{ borderLeft: '3px solid #10b981' }}>
                   <div className="im-subscore-head">
-                    <span className="im-subscore-name" style={{ color: '#10b981' }}>💪 Strong Points</span>
+                    <span className="im-subscore-name" style={{ color: '#10b981' }}><ThumbsUp size={13} aria-hidden="true" /> {t('mock.strongPoints')}</span>
                   </div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
                     {feedback.strongPoints.map((pt, idx) => (
@@ -751,7 +739,7 @@ export default function IeltsMock() {
               {feedback.mainProblems && feedback.mainProblems.length > 0 && (
                 <div className="im-subscore-item" style={{ borderLeft: '3px solid #ef4444' }}>
                   <div className="im-subscore-head">
-                    <span className="im-subscore-name" style={{ color: '#ef4444' }}>⚠️ Main Problems</span>
+                    <span className="im-subscore-name" style={{ color: '#ef4444' }}><AlertTriangle size={13} aria-hidden="true" /> {t('mock.mainProblems')}</span>
                   </div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
                     {feedback.mainProblems.map((pr, idx) => (
@@ -766,7 +754,7 @@ export default function IeltsMock() {
           {/* Better Answer Example */}
           {feedback.betterAnswer && (
             <div className="im-advice-card" style={{ background: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
-              <h3 style={{ color: '#38bdf8' }}>✏️ Better Answer Example</h3>
+              <h3 style={{ color: '#38bdf8' }}><PenLine size={14} aria-hidden="true" /> {t('mock.betterAnswer')}</h3>
               <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong style={{ color: '#fca5a5' }}>Original:</strong> "{feedback.betterAnswer.original}"</div>
                 <div><strong style={{ color: '#86efac' }}>Improved (Band 7.5+):</strong> "{feedback.betterAnswer.improved}"</div>
@@ -807,7 +795,7 @@ export default function IeltsMock() {
           {/* Actionable Advice */}
           {feedback.advice && (
             <div className="im-advice-card">
-              <h3>💡 Keyingi qadam uchun maslahat</h3>
+              <h3><Lightbulb size={14} aria-hidden="true" /> {t('mock.advice')}</h3>
               <p>{feedback.advice}</p>
             </div>
           )}
@@ -816,7 +804,7 @@ export default function IeltsMock() {
           <div className="im-actions">
             <button className="im-btn im-btn--primary" onClick={() => { setTestStatus('idle'); fetchStatus(); }}>
               <RotateCcw size={18} />
-              <span>Yangi imtihon topshirish</span>
+              <span>{t('mock.retake')}</span>
             </button>
             <button className="im-btn im-btn--ghost" onClick={() => navigate('home')}>
               <span>Bosh sahifaga qaytish</span>
