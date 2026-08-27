@@ -13,7 +13,25 @@ import {
 import useAppStore from '../store/useAppStore';
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
+import { pickExaminerVoice, whenVoicesReady, type ExaminerGender } from '../utils/examinerVoice';
 import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
+
+/** Uploads per answer. Each one carries the recording, so this stays small. */
+const ANSWER_SEND_ATTEMPTS = 2;
+
+/**
+ * Whether a failed send is worth repeating. A dropped connection or a server fault may
+ * well succeed next time; a request the server actively refused will be refused again,
+ * so repeating it only makes the candidate wait longer for the same message.
+ */
+function isRetriableSendError(err: any): boolean {
+  const status = err?.response?.status;
+  if (!status) return true; // No reply at all: timeout, or the connection went away.
+  return status >= 500;
+}
+
+/** The resync is a few hundred bytes; it must not wait as long as an upload. */
+const RESYNC_TIMEOUT_MS = 8_000;
 
 interface CefrMockProps {
   navigate: (screen: string) => void;
@@ -99,6 +117,16 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   // on screen and lights up the button instead — same as IELTS.
   const [loadingStatus, setLoadingStatus] = useState<boolean>(true);
   const [testId, setTestId] = useState<string | null>(null);
+  // Which voice the browser fallback should read the examiner's lines in.
+  const examinerGenderRef = useRef<ExaminerGender>('female');
+  // The question is heard, not read — the text is available on request, as in IELTS.
+  const [showTranscript, setShowTranscript] = useState(false);
+
+  // The browser populates its voice list asynchronously and reports none on the first
+  // call. Warm it on mount so the fallback has real voices to choose from if it fires.
+  useEffect(() => {
+    whenVoicesReady(() => {});
+  }, []);
   const [activeTestId, setActiveTestId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<StepData | null>(null);
   const [totalSteps, setTotalSteps] = useState<number>(9);
@@ -279,6 +307,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       if (!(await claimMicrophone())) return;
       try {
         const res = await getCefrTest(id);
+        if (res.examinerGender) examinerGenderRef.current = res.examinerGender;
         // The server calls a marked test "finished"; this looked for "completed",
         // matched nothing, and then fell through to a step that a finished test does
         // not have — so reopening a graded test showed the candidate nothing at all.
@@ -310,6 +339,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       if (!(await claimMicrophone())) return;
       try {
         const res = await createCefrTest('full');
+        if (res.examinerGender) examinerGenderRef.current = res.examinerGender;
         applyTestId(res.testId);
         setActiveTestId(res.testId);
         setTotalSteps(res.totalSteps || 9);
@@ -476,7 +506,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     const token = speechTokenRef.current;
 
     try {
-      const res = await getTTSAudio(text);
+      const res = await getTTSAudio(text, 'examiner');
       if (!mountedRef.current || token !== speechTokenRef.current || !soundEnabled) return;
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
@@ -516,6 +546,10 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-GB';
+      // Without this the browser reads the examiner in whatever voice the device
+      // lists first, which is usually male — wrong for an examiner named Sarah.
+      const preferred = pickExaminerVoice(examinerGenderRef.current, 'en-GB');
+      if (preferred) utterance.voice = preferred;
       utterance.rate = 0.95;
       utterance.onstart = () => {
         if (!token || token === speechTokenRef.current) setIsSpeaking(true);
@@ -687,7 +721,42 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     isRecordingRef.current = false;
   };
 
-  const submitAnswer = async (audioBlob: Blob | null, durationMs: number) => {
+  /**
+   * Picks the test back up from the server's own record of it.
+   *
+   * The server writes the answer and advances the step before it composes its reply,
+   * so a reply that never arrives does not mean a lost answer — it usually means the
+   * test has already moved on without the candidate being told. Returns true when the
+   * test could be resumed, false when the caller should surface the error instead.
+   */
+  const resumeFromServer = async (id: string, sentStep: number): Promise<boolean> => {
+    try {
+      const data = await getCefrTest(id, RESYNC_TIMEOUT_MS);
+      if (!mountedRef.current) return false;
+
+      if (data.status === 'active' && data.step) {
+        // A step past the one just sent means the answer did land.
+        if (data.step.i <= sentStep) return false;
+        pendingAnswerRef.current = null;
+        setSubmittingAnswer(false);
+        setErrorMsg(null);
+        applyStep(data.step);
+        beginStep(data.step);
+        return true;
+      }
+
+      // The last answer was the last question: the test is over, so mark it.
+      pendingAnswerRef.current = null;
+      setSubmittingAnswer(false);
+      void handleFinishTest();
+      return true;
+    } catch (err) {
+      console.error('Could not resync the test:', err);
+      return false;
+    }
+  };
+
+  const submitAnswer = async (audioBlob: Blob | null, durationMs: number, attempt = 1) => {
     const step = currentStepRef.current;
     const id = testIdRef.current;
     if (!id || !step) return;
@@ -716,8 +785,24 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       beginStep(res.step);
     } catch (err: any) {
       if (!mountedRef.current) return;
+      console.error(`Send CEFR answer error (attempt ${attempt}):`, err);
+
+      // Ask where the test stands before re-sending anything. The server records the
+      // answer and advances the step before it composes its reply, so the usual
+      // failure here is a reply lost on the way back — one cheap request settles that
+      // without pushing the whole recording up a connection that just dropped it.
+      if (await resumeFromServer(id, step.i)) return;
+
+      // The answer really did not land. Sending the same step again is safe: the row
+      // is written once, and a step the server has already passed comes back as the
+      // current one rather than a second recording.
+      if (isRetriableSendError(err) && attempt < ANSWER_SEND_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+        if (!mountedRef.current) return;
+        return submitAnswer(audioBlob, durationMs, attempt + 1);
+      }
+
       setSubmittingAnswer(false);
-      console.error('Send CEFR answer error:', err);
       setErrorMsg(err?.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.');
       setAnswerFailed(true);
     }
@@ -967,9 +1052,33 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>AI Examiner</span>
                 {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
               </div>
-              <p className="im-examiner-text" style={{ fontSize: '14px', margin: '4px 0 0 0', color: '#f8fafc', lineHeight: 1.4 }}>
-                {currentStep.say}
-              </p>
+              {showTranscript ? (
+                <p className="im-examiner-text" style={{ fontSize: '15px', margin: '4px 0 0 0', color: '#f8fafc', lineHeight: 1.5 }}>
+                  {currentStep.say}
+                </p>
+              ) : (
+                <p className="im-examiner-text" style={{ fontSize: '15px', margin: '4px 0 0 0', color: 'rgba(248,250,252,0.6)', fontStyle: 'italic', lineHeight: 1.5 }}>
+                  {isSpeaking ? 'Examinerni tinglang…' : 'Endi javob bering.'}
+                </p>
+              )}
+              <div className="im-examiner-actions">
+                {/* Asking the examiner to repeat is allowed in the real test. */}
+                <button
+                  type="button"
+                  className="im-mini-btn"
+                  onClick={repeatQuestion}
+                  disabled={isSpeaking || submittingAnswer}
+                >
+                  <Volume2 size={13} aria-hidden="true" /> Qayta eshitish
+                </button>
+                <button
+                  type="button"
+                  className="im-mini-btn"
+                  onClick={() => setShowTranscript((v) => !v)}
+                >
+                  {showTranscript ? 'Matnni yashirish' : 'Matnni koʻrsatish'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1027,7 +1136,12 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Question / Task Card */}
           <div className="im-question-card">
             <span className="im-part-tag">{getPartBadgeText(String(currentStep.part), currentStep.kind)}</span>
-            <h3 className="im-question-text">{currentStep.say}</h3>
+            {/* Parts 1.2 and 2 hand the candidate material to look at in the real exam,
+                so their wording stays on screen. The spoken-only parts follow the
+                transcript toggle instead of printing what the examiner just said. */}
+            {(currentStep.pictures || currentStep.prompts || showTranscript) && (
+              <h3 className="im-question-text">{currentStep.say}</h3>
+            )}
 
             {/* Prompts list for Part 2 */}
             {currentStep.prompts && (
@@ -1096,12 +1210,6 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 </>
               )}
             </div>
-          )}
-
-          {!answerFailed && !submittingAnswer && (
-            <button className="im-mini-btn" onClick={repeatQuestion} disabled={isSpeaking} style={{ marginTop: '10px' }}>
-              <Volume2 size={13} aria-hidden="true" /> Savolni qayta eshitish
-            </button>
           )}
 
           <button className="im-abandon-link" onClick={handleAbandon}>
@@ -1234,7 +1342,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <div className="im-subscore-head">
                   <span className="im-subscore-name" style={{ color: '#10b981' }}><ThumbsUp size={13} aria-hidden="true" /> {t('mock.strongPoints')}</span>
                 </div>
-                <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
                   {feedback.strengths.map((st, idx) => (
                     <li key={idx}>{st}</li>
                   ))}
@@ -1247,7 +1355,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <div className="im-subscore-head">
                   <span className="im-subscore-name" style={{ color: '#ef4444' }}><AlertTriangle size={13} aria-hidden="true" /> {t('mock.mainProblems')}</span>
                 </div>
-                <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
                   {feedback.weaknesses.map((wk, idx) => (
                     <li key={idx}>{wk}</li>
                   ))}
@@ -1260,7 +1368,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {feedback.improvementPlan && feedback.improvementPlan.length > 0 && (
             <div className="im-advice-card">
               <h3><Lightbulb size={14} aria-hidden="true" /> {t('mock.actionPlan')}</h3>
-              <ol style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '12px', lineHeight: '1.6' }}>
+              <ol style={{ margin: '8px 0 0', paddingLeft: '20px', fontSize: '15px', lineHeight: '1.65' }}>
                 {feedback.improvementPlan.map((plan, idx) => (
                   <li key={idx}>{plan}</li>
                 ))}
@@ -1677,16 +1785,31 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           font-weight: 700;
         }
 
+        /* One per row: two columns left each comment in a column too narrow to
+           read, breaking the sentences into a word or two per line. */
+        .im-examiner-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+        .im-section { display: flex; flex-direction: column; gap: 10px; }
+        .im-section-title {
+          font-size: 15px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #10b981;
+          margin: 0;
+        }
+
         .im-subscores-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
+          grid-template-columns: 1fr;
+          gap: 12px;
         }
         .im-subscore-item {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
-          padding: 12px;
+          padding: 14px 16px;
           display: flex;
           flex-direction: column;
           gap: 6px;
@@ -1697,19 +1820,19 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           align-items: center;
         }
         .im-subscore-name {
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 700;
-          color: rgba(255, 255, 255, 0.6);
+          color: rgba(255, 255, 255, 0.72);
         }
         .im-subscore-band {
-          font-size: 16px;
+          font-size: 20px;
           font-weight: 800;
           color: #10b981;
         }
         .im-subscore-comment {
-          font-size: 11px;
-          line-height: 1.4;
-          color: rgba(255, 255, 255, 0.8);
+          font-size: 14px;
+          line-height: 1.65;
+          color: rgba(255, 255, 255, 0.88);
           margin: 0;
         }
 
@@ -1720,7 +1843,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           padding: 16px;
         }
         .im-advice-card h3 {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 800;
           color: #ffffff;
           margin: 0 0 6px 0;

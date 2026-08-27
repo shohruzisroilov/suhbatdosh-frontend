@@ -1011,7 +1011,10 @@ export default function Chat() {
               <span>{t('call.waiting')}</span>
             </div>
           )}
-          <SpeakingQuestions onDetailChange={setSpeakingDetail} />
+          {/* The IELTS part cards belong to a session with a person, where the two of
+              you need something to talk about. The AI partner picks its own topic and
+              leads the turn, so they were only clutter over the call controls. */}
+          {!isAiSession && <SpeakingQuestions onDetailChange={setSpeakingDetail} />}
         </div>
       )}
 

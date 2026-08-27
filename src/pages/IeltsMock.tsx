@@ -12,8 +12,26 @@ import {
   getTTSAudio,
 } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
+import { pickExaminerVoice, whenVoicesReady, type ExaminerGender } from '../utils/examinerVoice';
 import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
 import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+
+/** Uploads per answer. Each one carries the recording, so this stays small. */
+const ANSWER_SEND_ATTEMPTS = 2;
+
+/**
+ * Whether a failed send is worth repeating. A dropped connection or a server fault may
+ * well succeed next time; a request the server actively refused will be refused again,
+ * so repeating it only makes the candidate wait longer for the same message.
+ */
+function isRetriableSendError(err: any): boolean {
+  const status = err?.response?.status;
+  if (!status) return true; // No reply at all: timeout, or the connection went away.
+  return status >= 500;
+}
+
+/** The resync is a few hundred bytes; it must not wait as long as an upload. */
+const RESYNC_TIMEOUT_MS = 8_000;
 
 interface ScriptStep {
   i: number;
@@ -87,6 +105,14 @@ export default function IeltsMock() {
 
   // Active Test State
   const [testId, setTestId] = useState<string | null>(null);
+  // Which voice the browser fallback should read the examiner's lines in.
+  const examinerGenderRef = useRef<ExaminerGender>('female');
+
+  // The browser populates its voice list asynchronously and reports none on the first
+  // call. Warm it on mount so the fallback has real voices to choose from if it fires.
+  useEffect(() => {
+    whenVoicesReady(() => {});
+  }, []);
   const [currentStep, setCurrentStep] = useState<ScriptStep | null>(null);
   // Off by default: the real test gives you no written question outside Part 2.
   const [showTranscript, setShowTranscript] = useState<boolean>(false);
@@ -198,6 +224,7 @@ export default function IeltsMock() {
       if (!(await claimMicrophone())) return;
       try {
         const data = await getIeltsTest(id);
+        if (data.examinerGender) examinerGenderRef.current = data.examinerGender;
         if (data.status === 'active' && data.step) {
           applyTestId(id);
           setTotalSteps(data.total || 0);
@@ -222,6 +249,7 @@ export default function IeltsMock() {
       if (!(await claimMicrophone())) return;
       try {
         const data = await startIeltsTest({ mode: 'full' });
+        if (data.examinerGender) examinerGenderRef.current = data.examinerGender;
         applyTestId(data.testId);
         setTotalSteps(data.total || 0);
         setEstimatedMinutes(data.estimatedMinutes || 0);
@@ -353,7 +381,7 @@ export default function IeltsMock() {
     const token = speechTokenRef.current;
 
     try {
-      const res = await getTTSAudio(text);
+      const res = await getTTSAudio(text, 'examiner');
       if (!mountedRef.current || token !== speechTokenRef.current || !soundEnabled) return;
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
@@ -393,6 +421,10 @@ export default function IeltsMock() {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
+      // Without this the browser reads the examiner in whatever voice the device
+      // lists first, which is usually male — wrong for an examiner named Sarah.
+      const preferred = pickExaminerVoice(examinerGenderRef.current, 'en-US');
+      if (preferred) utterance.voice = preferred;
       utterance.rate = 0.95;
       utterance.onstart = () => {
         if (!token || token === speechTokenRef.current) setIsSpeaking(true);
@@ -551,7 +583,43 @@ export default function IeltsMock() {
     isRecordingRef.current = false;
   };
 
-  const submitAnswer = async (blob: Blob | null, durationMs: number) => {
+  /**
+   * Picks the test back up from the server's own record of it.
+   *
+   * The server writes the answer and advances the step before it composes its reply,
+   * so a reply that never arrives does not mean a lost answer — it usually means the
+   * test has already moved on without the candidate being told. Returns true when the
+   * test could be resumed, false when the caller should surface the error instead.
+   */
+  const resumeFromServer = async (id: string, sentStep: number): Promise<boolean> => {
+    try {
+      const data = await getIeltsTest(id, RESYNC_TIMEOUT_MS);
+      if (!mountedRef.current) return false;
+
+      if (data.status === 'active' && data.step) {
+        // A step past the one just sent means the answer did land.
+        if (data.step.i <= sentStep) return false;
+        pendingAnswerRef.current = null;
+        setSubmittingAnswer(false);
+        setErrorMsg(null);
+        setRecordingMs(0);
+        applyStep(data.step);
+        beginStep(data.step);
+        return true;
+      }
+
+      // The last answer was the last question: the test is over, so mark it.
+      pendingAnswerRef.current = null;
+      setSubmittingAnswer(false);
+      void finishTestGrading();
+      return true;
+    } catch (err) {
+      console.error('Could not resync the test:', err);
+      return false;
+    }
+  };
+
+  const submitAnswer = async (blob: Blob | null, durationMs: number, attempt = 1) => {
     const step = currentStepRef.current;
     const id = testIdRef.current;
     if (!id || !step) return;
@@ -590,8 +658,24 @@ export default function IeltsMock() {
       void finishTestGrading();
     } catch (err: any) {
       if (!mountedRef.current) return;
+      console.error(`Failed to submit answer (attempt ${attempt}):`, err);
+
+      // Ask where the test stands before re-sending anything. The server records the
+      // answer and advances the step before it composes its reply, so the usual
+      // failure here is a reply lost on the way back — one cheap request settles that
+      // without pushing the whole recording up a connection that just dropped it.
+      if (await resumeFromServer(id, step.i)) return;
+
+      // The answer really did not land. Sending the same step again is safe: the row
+      // is written once, and a step the server has already passed comes back as the
+      // current one rather than a second recording.
+      if (isRetriableSendError(err) && attempt < ANSWER_SEND_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+        if (!mountedRef.current) return;
+        return submitAnswer(blob, durationMs, attempt + 1);
+      }
+
       setSubmittingAnswer(false);
-      console.error('Failed to submit answer:', err);
       const msg = err.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.';
       setErrorMsg(msg);
       setAnswerFailed(true);
@@ -993,18 +1077,22 @@ export default function IeltsMock() {
 
               {/* Prep Timer */}
               <div className="im-prep-timer">
-                <div className="im-prep-timer__info">
-                  <Clock size={16} />
-                  <span>Preparation: </span>
-                  <strong className="im-prep-timer__time">{prepTimeLeft}s</strong>
-                </div>
-                {isPrepping ? (
-                  <>
-                    <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
+                {/* The timer and the skip button share a row; the hint gets its own,
+                    because squeezed between them it wrapped one word per line. */}
+                <div className="im-prep-timer__row">
+                  <div className="im-prep-timer__info">
+                    <Clock size={16} />
+                    <span>Preparation: </span>
+                    <strong className="im-prep-timer__time">{prepTimeLeft}s</strong>
+                  </div>
+                  {isPrepping && (
                     <button type="button" className="im-mini-btn" onClick={skipPrep}>
                       <Mic size={13} aria-hidden="true" /> Tayyorman, boshlayman
                     </button>
-                  </>
+                  )}
+                </div>
+                {isPrepping ? (
+                  <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
                 ) : prepTimeLeft === 0 ? (
                   <span className="im-prep-active">Speak now.</span>
                 ) : null}
@@ -1193,7 +1281,7 @@ export default function IeltsMock() {
                   <div className="im-subscore-head">
                     <span className="im-subscore-name" style={{ color: '#10b981' }}><ThumbsUp size={13} aria-hidden="true" /> {t('mock.strongPoints')}</span>
                   </div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                  <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
                     {feedback.strongPoints.map((pt, idx) => (
                       <li key={idx}>{pt}</li>
                     ))}
@@ -1205,7 +1293,7 @@ export default function IeltsMock() {
                   <div className="im-subscore-head">
                     <span className="im-subscore-name" style={{ color: '#ef4444' }}><AlertTriangle size={13} aria-hidden="true" /> {t('mock.mainProblems')}</span>
                   </div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                  <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
                     {feedback.mainProblems.map((pr, idx) => (
                       <li key={idx}>{pr}</li>
                     ))}
@@ -1219,11 +1307,11 @@ export default function IeltsMock() {
           {feedback.betterAnswer && (
             <div className="im-advice-card" style={{ background: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
               <h3 style={{ color: '#38bdf8' }}><PenLine size={14} aria-hidden="true" /> {t('mock.betterAnswer')}</h3>
-              <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '14px', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div><strong style={{ color: '#fca5a5' }}>Original:</strong> "{feedback.betterAnswer.original}"</div>
                 <div><strong style={{ color: '#86efac' }}>Improved (Band 7.5+):</strong> "{feedback.betterAnswer.improved}"</div>
                 {feedback.betterAnswer.explanation && (
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
+                  <div style={{ fontSize: '13px', lineHeight: 1.55, color: 'rgba(255,255,255,0.72)', fontStyle: 'italic' }}>
                     Tahlil: {feedback.betterAnswer.explanation}
                   </div>
                 )}
@@ -1391,16 +1479,22 @@ const css = `
   .im-cue-card__bullets ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
 
   .im-prep-timer {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    display: flex; flex-direction: column; gap: 8px;
     background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 12px;
+  }
+  .im-prep-timer__row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
   }
   .im-prep-timer__info { font-size: 12px; display: flex; align-items: center; gap: 6px; }
   .im-prep-timer__time { font-size: 15px; color: #38bdf8; }
+  /* Scoped to this row so the other .im-mini-btn uses are left alone. */
+  .im-prep-timer .im-mini-btn { flex-shrink: 0; white-space: nowrap; }
   .im-prep-btn {
     background: #0284c7; color: #fff; border: none; padding: 6px 12px; border-radius: 8px;
     font-size: 12px; font-weight: 700; cursor: pointer;
   }
-  .im-prep-active { font-size: 11px; color: #f59e0b; font-weight: 600; }
+  .im-prep-active { font-size: 11px; color: #f59e0b; font-weight: 600; line-height: 1.5; }
 
   .im-controls { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
   .im-loading-answer {
@@ -1482,39 +1576,41 @@ const css = `
     box-shadow: 0 12px 36px rgba(2, 132, 199, 0.25);
   }
   .im-award-icon { color: #f59e0b; }
-  .im-overall-badge { font-size: 11px; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
+  .im-overall-badge { font-size: 12px; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
   .im-score-num { font-size: 54px; font-weight: 900; line-height: 1; color: #fff; }
-  .im-score-text { font-size: 13px; color: rgba(255,255,255,0.8); margin: 4px 0 0; }
+  .im-score-text { font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.85); margin: 4px 0 0; }
 
-  .im-subscores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* One per row: two columns left each comment in a column too narrow to read,
+     breaking the sentences into a word or two per line. */
+  .im-subscores-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
   .im-subscore-item {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
+    border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
   }
   .im-subscore-head { display: flex; justify-content: space-between; align-items: center; }
-  .im-subscore-name { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); }
-  .im-subscore-band { font-size: 16px; font-weight: 800; color: #38bdf8; }
-  .im-subscore-comment { font-size: 11px; line-height: 1.4; color: rgba(255,255,255,0.8); margin: 0; }
+  .im-subscore-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.72); }
+  .im-subscore-band { font-size: 20px; font-weight: 800; color: #38bdf8; }
+  .im-subscore-comment { font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.88); margin: 0; }
 
   .im-section { display: flex; flex-direction: column; gap: 10px; }
   .im-section-title {
-    font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #10b981; margin: 0;
+    font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #10b981; margin: 0;
   }
-  .im-fixes-list { display: flex; flex-direction: column; gap: 8px; }
+  .im-fixes-list { display: flex; flex-direction: column; gap: 10px; }
   .im-fix-card {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;
+    border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; font-size: 14px;
   }
   .im-fix-said { color: #fca5a5; }
   .im-fix-better { color: #86efac; }
-  .im-fix-label { font-weight: 700; margin-right: 6px; opacity: 0.8; }
-  .im-fix-card p { margin: 2px 0 0; font-weight: 600; }
-  .im-fix-why { font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic; }
+  .im-fix-label { font-weight: 700; margin-right: 6px; opacity: 0.85; }
+  .im-fix-card p { margin: 3px 0 0; font-weight: 600; line-height: 1.55; }
+  .im-fix-why { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.62); font-style: italic; }
 
   .im-advice-card {
     background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25);
     border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
   }
-  .im-advice-card h3 { font-size: 13px; font-weight: 700; color: #f59e0b; margin: 0; }
-  .im-advice-card p { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.9); margin: 0; }
+  .im-advice-card h3 { font-size: 15px; font-weight: 700; color: #f59e0b; margin: 0; }
+  .im-advice-card p { font-size: 15px; line-height: 1.65; color: rgba(255,255,255,0.92); margin: 0; }
 `;

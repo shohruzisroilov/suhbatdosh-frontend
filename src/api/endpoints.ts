@@ -55,8 +55,8 @@ export const getIeltsStatus = () => api.get('/ielts/status').then((r) => r.data)
 export const startIeltsTest = (data: Record<string, any>) =>
   api.post('/ielts/tests', data, { timeout: 60_000 }).then((r) => r.data);
 
-export const getIeltsTest = (id: string | number) =>
-  api.get(`/ielts/tests/${id}`).then((r) => r.data);
+export const getIeltsTest = (id: string | number, timeout?: number) =>
+  api.get(`/ielts/tests/${id}`, timeout ? { timeout } : undefined).then((r) => r.data);
 
 /**
  * Upload time plus the server's own budget for the follow-up question. The floor
@@ -120,8 +120,12 @@ export const getVocabularyItems = () =>
 export const deleteVocabularyItem = (id: number) =>
   api.delete(`/ai-partner/vocabulary/${id}`).then((r) => r.data);
 
-export const getTTSAudio = (text: string) =>
-  api.post('/ai-partner/tts', { text }).then((r) => r.data);
+/**
+ * `role: 'examiner'` makes the server speak in the mock examiner's own voice, matched
+ * to the gender it introduces itself with. Omitted, it uses the AI partner's voice.
+ */
+export const getTTSAudio = (text: string, role?: 'examiner') =>
+  api.post('/ai-partner/tts', { text, role }).then((r) => r.data);
 
 export const recordAiPartnerSession = (payload: {
   durationSeconds: number;
@@ -139,23 +143,25 @@ export const getCefrStatus = () =>
 export const createCefrTest = (mode: 'full' | 'quick' = 'full') =>
   api.post('/cefr/tests', { mode }, { timeout: 60_000 }).then((r) => r.data);
 
-export const getCefrTest = (id: string) =>
-  api.get(`/cefr/tests/${id}`).then((r) => r.data);
+export const getCefrTest = (id: string, timeout?: number) =>
+  api.get(`/cefr/tests/${id}`, timeout ? { timeout } : undefined).then((r) => r.data);
 
-export const sendCefrAnswer = (id: string, step: number, durationMs: number, audioBlob: Blob | null) => {
-  const headers: Record<string, string> = {};
-  let body: any = null;
-  if (audioBlob) {
-    headers['Content-Type'] = audioBlob.type || 'audio/webm';
-    body = audioBlob;
-  }
-  return api.post(`/cefr/tests/${id}/answers?step=${step}&ms=${durationMs}`, body, {
-    headers,
+/**
+ * Always posts a body with an audio content-type, even when there is no recording.
+ *
+ * A step with nothing to record — the intro, the part framings, a skipped question —
+ * used to send a `null` body, which fell through to the client's default
+ * `application/json` header. The server's global express.json() then rejected the bare
+ * `null` in strict mode, so the very first step of every test failed with
+ * "Unexpected token 'n'". An empty Blob routes to express.raw() the way IELTS does.
+ */
+export const sendCefrAnswer = (id: string, step: number, durationMs: number, audioBlob: Blob | null) =>
+  api.post(`/cefr/tests/${id}/answers?step=${step}&ms=${durationMs}`, audioBlob ?? new Blob([]), {
+    headers: { 'Content-Type': audioBlob?.type || 'audio/webm' },
     // A Part 2 answer runs to two minutes, which is a large upload on a phone. The
     // 25s default cut those off and reported a failure for an answer still in flight.
     timeout: answerTimeout(audioBlob?.size ?? 0),
   }).then((r) => r.data);
-};
 
 /**
  * Marking is a transcription catch-up plus a long model call. On the 25s default this
