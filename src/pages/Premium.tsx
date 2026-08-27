@@ -107,14 +107,14 @@ export default function Premium() {
             {/* Free vs Premium Detailed Comparison Matrix */}
             <div className="premium-matrix">
               <div className="premium-matrix-head">
-                <span className="premium-matrix-title">Imkoniyatlar taqqoslashi</span>
-                <span className="premium-matrix-sub">Bepul va Premium tarifi o'rtasidagi farqlar</span>
+                <span className="premium-matrix-title">{t('pm.matrixTitle')}</span>
+                <span className="premium-matrix-sub">{t('pm.matrixSub')}</span>
               </div>
 
               <div className="premium-table">
                 <div className="premium-table-row premium-table-header">
-                  <div className="premium-cell feat-cell">Xususiyat</div>
-                  <div className="premium-cell free-cell">Bepul (Free)</div>
+                  <div className="premium-cell feat-cell">{t('pm.colFeature')}</div>
+                  <div className="premium-cell free-cell">{t('pm.colFree')}</div>
                   <div className="premium-cell pro-cell">
                     <Star size={11} fill="currentColor" strokeWidth={0} /> Premium
                   </div>
@@ -161,7 +161,12 @@ export default function Premium() {
                     <span className="feat-name">{t('pm.rowAi')}</span>
                     <span className="feat-desc">{t('pm.rowAiSub')}</span>
                   </div>
-                  <div className="premium-cell free-cell text-muted">{t('pm.basic')}</div>
+                  {/* Marking is the same model and the same prompt for everyone, so
+                      the table says so. It used to advertise "Basic" against "Full
+                      breakdown", which was a difference that existed nowhere in the
+                      code — on a product whose whole value is a band score you can
+                      trust, that is the last place to overstate. */}
+                  <div className="premium-cell free-cell text-muted">{t('pm.full')}</div>
                   <div className="premium-cell pro-cell text-highlight">{t('pm.full')}</div>
                 </div>
               </div>

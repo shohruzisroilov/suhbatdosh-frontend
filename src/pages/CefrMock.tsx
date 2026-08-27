@@ -976,7 +976,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             {
               icon: <Sparkles size={15} aria-hidden="true" />,
               // Only the premium quota resets daily; the free one is a one-off trial.
-              label: quota && !quota.isPremium ? 'Bepul Sinov' : 'Kunlik Limit',
+              label: quota && !quota.isPremium ? t('mock.freeTrial') : t('mock.dailyLimit'),
               value: quota ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi` : '—',
               wide: true,
             },

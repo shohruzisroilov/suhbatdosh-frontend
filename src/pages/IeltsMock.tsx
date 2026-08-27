@@ -949,7 +949,7 @@ export default function IeltsMock() {
               // Free users get a one-off trial that never refills, premium users a
               // quota that resets each day — calling both "Kunlik Limit" told half of
               // them to come back tomorrow for tests they will not get.
-              label: status?.lifetime ? 'Bepul Sinov' : 'Kunlik Limit',
+              label: status?.lifetime ? t('mock.freeTrial') : t('mock.dailyLimit'),
               value: status ? `${status.remaining} / ${status.limit} ta imtihon qoldi` : '—',
               wide: true,
             },

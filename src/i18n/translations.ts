@@ -452,6 +452,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     // ─── Mock exams (were hardcoded Uzbek in the page components) ───────────
     'mock.section': 'AI mock exams',
     'mock.duration': '~11–14 minutes',
+    'mock.freeTrial': 'Free tries',
+    'mock.dailyLimit': 'Daily limit',
     'mock.durationMins': '~{n} minutes',
     'mock.resume': 'Resume your unfinished test',
     'mock.discard': 'Discard it and start over',
@@ -527,9 +529,12 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     // ─── Premium comparison table ───────────────────────────────────────────
     'pm.featLive': 'Talk with a real partner',
     'pm.freePerDay': '{n} min / day',
+    'pm.matrixTitle': 'What you get',
+    'pm.matrixSub': 'Free and Premium, side by side',
+    'pm.colFeature': 'Feature',
+    'pm.colFree': 'Free',
     'pm.freeTotal': '{n} total',
     'pm.standard': 'Standard',
-    'pm.basic': 'Basic',
     'pm.rowTalk': 'Talking',
     'pm.rowIelts': 'IELTS Speaking mock',
     'pm.rowIeltsSub': 'Parts 1, 2, 3 + band 0–9',
