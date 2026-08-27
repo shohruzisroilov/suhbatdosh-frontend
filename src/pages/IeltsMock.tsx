@@ -41,6 +41,33 @@ interface TestFeedback {
   betterAnswer?: { original: string; improved: string; explanation: string };
 }
 
+/** Wraps a callback so that whichever of several racing paths arrives first wins. */
+function once(fn: () => void): () => void {
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+}
+
+/**
+ * The longest the examiner's line could plausibly take, counting the round trip that
+ * fetches the voice as well as the speaking.
+ *
+ * This is the backstop behind every wait on speech, and it errs long on purpose:
+ * firing late costs a pause, while firing early opens the microphone over the
+ * examiner mid-sentence. It is only ever reached when speech fails to report back
+ * at all, so the slack costs nothing in a normal test.
+ */
+function speechCeilingMs(text: string): number {
+  const chars = String(text || '').length;
+  return Math.min(8000 + chars * 120, 60000);
+}
+
+/** What the examiner says when the answer has run to its limit. */
+const CUT_OFF_LINE = 'Thank you.';
+
 export default function IeltsMock() {
   const t = useT();
   const { navigate, user } = useAppStore();
@@ -90,6 +117,11 @@ export default function IeltsMock() {
   const [feedback, setFeedback] = useState<TestFeedback | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittingAnswer, setSubmittingAnswer] = useState<boolean>(false);
+  // An answer that failed to reach the server is held, not lost: the recording is
+  // still in hand, so the candidate is offered the send again rather than the test
+  // stalling on an error box with nothing to tap.
+  const [answerFailed, setAnswerFailed] = useState<boolean>(false);
+  const [gradingFailed, setGradingFailed] = useState<boolean>(false);
 
   // Which start-screen button is mid-flight, so it can say so instead of sitting
   // there looking untapped.
@@ -101,6 +133,7 @@ export default function IeltsMock() {
       stopRecordingSilently();
       stopPrepTimer();
       stopSpeech();
+      releaseStream();
     };
   }, []);
 
@@ -113,7 +146,7 @@ export default function IeltsMock() {
       // An unfinished test is offered, never resumed on its own. Resuming reopens the
       // microphone, and a browser only grants that off a tap — dropping someone
       // straight back into a test on load meant a dead mic and no way to bail out.
-      setTestId(data.active);
+      applyTestId(data.active);
     } catch (err: any) {
       console.error('Failed to load IELTS status', err);
       setStatus(null);
@@ -141,18 +174,35 @@ export default function IeltsMock() {
     }
   };
 
+  /**
+   * The microphone is asked for here, on the tap, rather than when the first question
+   * finishes being read out. Browsers only grant it in response to a gesture, and by
+   * the time the examiner has finished speaking that gesture has expired — which is
+   * how a test could open, greet the candidate, and then fail to record a word.
+   */
+  const claimMicrophone = async (): Promise<boolean> => {
+    try {
+      await ensureStream();
+      return true;
+    } catch (err) {
+      console.error('Mic access error:', err);
+      setErrorMsg('Mikrofonga ruxsat berilmadi. Testni topshirish uchun brauzer sozlamalaridan ruxsat bering.');
+      return false;
+    }
+  };
+
   const loadActiveTest = (id: string) =>
     runAction('resume', async () => {
       tapHaptic('medium');
       setErrorMsg(null);
+      if (!(await claimMicrophone())) return;
       try {
         const data = await getIeltsTest(id);
         if (data.status === 'active' && data.step) {
-          setTestId(id);
-          setCurrentStep(data.step);
+          applyTestId(id);
           setTotalSteps(data.total || 0);
           setEstimatedMinutes(data.estimatedMinutes || 0);
-          setStepIndex(data.step.i || 0);
+          applyStep(data.step);
           setTestStatus('testing');
           beginStep(data.step);
         } else if (data.feedback) {
@@ -161,7 +211,7 @@ export default function IeltsMock() {
         }
       } catch (err: any) {
         console.error('Failed to load active test', err);
-        setErrorMsg(err.response?.data?.error || 'Could not open your test. Please try again.');
+        setErrorMsg(err.response?.data?.error || 'Testni ochib bo\'lmadi. Qaytadan urinib ko\'ring.');
       }
     });
 
@@ -169,34 +219,38 @@ export default function IeltsMock() {
     runAction('start', async () => {
       tapHaptic('medium');
       setErrorMsg(null);
+      if (!(await claimMicrophone())) return;
       try {
         const data = await startIeltsTest({ mode: 'full' });
-        setTestId(data.testId);
-        setCurrentStep(data.step);
+        applyTestId(data.testId);
         setTotalSteps(data.total || 0);
         setEstimatedMinutes(data.estimatedMinutes || 0);
-        setStepIndex(0);
+        applyStep(data.step);
         setTestStatus('testing');
         beginStep(data.step);
       } catch (err: any) {
         console.error('Failed to start test', err);
-        const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
+        // The server may well have created the test before this request gave up, so
+        // look again rather than leaving a started test invisible behind an error.
+        void fetchStatus();
+        const msg = err.response?.data?.error || 'Testni boshlab bo\'lmadi. Qaytadan urinib ko\'ring.';
         setErrorMsg(msg);
       }
     });
 
   const handleAbandon = () => {
     if (!testId) return;
-    stopSpeech();
-    stopRecordingSilently();
-    stopPrepTimer();
+    haltStepMachine();
     return runAction('discard', async () => {
       tapHaptic('light');
       try {
         await abandonIeltsTest(testId);
       } catch (err) {}
-      setTestId(null);
-      setCurrentStep(null);
+      applyTestId(null);
+      applyStep(null);
+      pendingAnswerRef.current = null;
+      setAnswerFailed(false);
+      releaseStream();
       setTestStatus('idle');
       await fetchStatus();
     });
@@ -211,6 +265,73 @@ export default function IeltsMock() {
   const isRecordingRef = useRef(false);
   const isPreppingRef = useRef(false);
 
+  /**
+   * The test drives itself from timers and speech callbacks, all of which were
+   * scheduled by an earlier render. Anything they read out of `useState` is the value
+   * from that render, not the value now — which is why the recorder used to be given
+   * the previous question's time limit, why the automatic cut-off at the limit tested
+   * a stale `isRecording` and never fired, and why an answer could be posted against
+   * the wrong step index. The live values live in refs; the state exists to draw.
+   */
+  const currentStepRef = useRef<ScriptStep | null>(null);
+  const testIdRef = useRef<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const submitLockRef = useRef(false);
+  const stepTokenRef = useRef(0);
+  /** The recording behind a failed send, kept so it can be sent again. */
+  const pendingAnswerRef = useRef<{ blob: Blob | null; ms: number } | null>(null);
+
+  /**
+   * Cancels the step in flight.
+   *
+   * Every step schedules a backstop timer that opens the microphone if the examiner's
+   * voice never reports back. Leaving a test does not cancel that timer, so without
+   * retiring the step token an abandoned test would reach across and start recording
+   * on the screen the candidate had just walked back to.
+   */
+  const haltStepMachine = () => {
+    stepTokenRef.current += 1;
+    stopSpeech();
+    stopRecordingSilently();
+    stopPrepTimer();
+  };
+
+  const applyStep = (step: ScriptStep | null) => {
+    currentStepRef.current = step;
+    setCurrentStep(step);
+    if (step) setStepIndex(step.i);
+  };
+
+  const applyTestId = (id: string | null) => {
+    testIdRef.current = id;
+    setTestId(id);
+  };
+
+  /**
+   * One live microphone for the whole test.
+   *
+   * Every question used to open its own stream. On a phone that is a fresh permission
+   * check and a fresh device negotiation between each answer — a few hundred
+   * milliseconds of dead air at best, and an intermittent failure at worst, several
+   * questions into a test the candidate cannot restart.
+   */
+  const ensureStream = async (): Promise<MediaStream> => {
+    const live = streamRef.current;
+    if (live && live.getAudioTracks().some((track) => track.readyState === 'live')) return live;
+
+    live?.getTracks().forEach((track) => track.stop());
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    streamRef.current = stream;
+    return stream;
+  };
+
+  const releaseStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
@@ -218,7 +339,10 @@ export default function IeltsMock() {
 
   // Speech synthesis for AI Examiner voice (High Quality AI Voice TTS with Web Speech API fallback)
   const speakText = async (text?: string, onDone?: () => void) => {
-    if (!text) return;
+    if (!text) {
+      onDone?.();
+      return;
+    }
     // With sound off or unmounted there is nothing to wait for, so hand control straight back.
     if (!soundEnabled || !mountedRef.current) {
       onDone?.();
@@ -310,12 +434,14 @@ export default function IeltsMock() {
   };
 
   // ── Recording Logic ──
-  const startRecording = async () => {
+  const startRecording = async (step: ScriptStep) => {
+    if (isRecordingRef.current || !mountedRef.current) return;
     stopSpeech();
     tapHaptic('medium');
     setErrorMsg(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await ensureStream();
+      if (!mountedRef.current) return;
       audioChunksRef.current = [];
       const mimeType = MediaRecorder.isTypeSupported('audio/webm')
         ? 'audio/webm'
@@ -336,91 +462,158 @@ export default function IeltsMock() {
       setIsRecording(true);
       isRecordingRef.current = true;
       recordingStartTimeRef.current = Date.now();
+      setRecordingMs(0);
 
-      const maxMs = (currentStep?.maxSec || 60) * 1000;
+      // The limit belongs to the step being answered, which the caller hands in. Read
+      // off `currentStep` it was whatever the previous render held.
+      const maxMs = Math.max(step.maxSec || 60, 5) * 1000;
       recordTimerRef.current = setInterval(() => {
         const elapsed = Date.now() - recordingStartTimeRef.current;
         setRecordingMs(elapsed);
         if (elapsed >= maxMs) {
           clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
           // A real examiner cuts you off out loud rather than the recording just
-          // stopping. Submission waits for that line so it does not clip it.
-          speakText('Thank you.', () => stopRecordingAndSend());
+          // stopping. The line is said inside, once the recorder is closed: spoken
+          // first it would have been recorded, and the marker would have read the
+          // examiner's words back as the candidate's.
+          void stopRecordingAndSend({ announce: true });
         }
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('Microphone access was refused. Allow it in your settings to take the test.');
+      setErrorMsg('Mikrofonga ruxsat berilmadi. Testni topshirish uchun sozlamalardan ruxsat bering.');
     }
   };
 
-  const stopRecordingAndSend = async () => {
-    if (!mediaRecorderRef.current || !isRecording) return;
+  const stopRecordingAndSend = async (options?: { announce?: boolean }) => {
+    const step = currentStepRef.current;
+    const recorder = mediaRecorderRef.current;
+    // Guarded on the refs, not on state: the automatic cut-off runs from a timer whose
+    // captured `isRecording` is always the value from before recording started, so the
+    // old state check turned the cut-off into a no-op and a silent candidate waited
+    // for an examiner who never came back.
+    if (!recorder || !isRecordingRef.current || submitLockRef.current || !step) return;
+
+    submitLockRef.current = true;
     tapHaptic('medium');
     stopSpeech();
 
     const duration = Date.now() - recordingStartTimeRef.current;
-    clearInterval(recordTimerRef.current);
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
     setIsRecording(false);
     isRecordingRef.current = false;
     setSubmittingAnswer(true);
 
-    const recorder = mediaRecorderRef.current;
-
     await new Promise<void>((resolve) => {
-      recorder.onstop = () => {
-        recorder.stream.getTracks().forEach((track) => track.stop());
-        resolve();
-      };
-      recorder.stop();
+      // A recorder that never reports back would strand the test here forever, so the
+      // wait is bounded — whatever chunks arrived are what gets sent. The stream stays
+      // open; it belongs to the test, not to this one recording.
+      const done = once(resolve);
+      recorder.onstop = done;
+      try {
+        recorder.stop();
+      } catch {
+        done();
+      }
+      window.setTimeout(done, 2500);
     });
 
     const blob = new Blob(audioChunksRef.current, {
       type: recorder.mimeType || 'audio/webm',
     });
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = null;
+    submitLockRef.current = false;
+
+    // Not awaited: the acknowledgement plays over the upload, which is exactly the
+    // dead air it is there to cover.
+    if (options?.announce) void speakText(CUT_OFF_LINE);
 
     await submitAnswer(blob, duration);
   };
 
   const stopRecordingSilently = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && isRecordingRef.current) {
       try {
-        mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
         mediaRecorderRef.current.stop();
       } catch (e) {}
     }
-    clearInterval(recordTimerRef.current);
+    mediaRecorderRef.current = null;
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
     setIsRecording(false);
     isRecordingRef.current = false;
   };
 
   const submitAnswer = async (blob: Blob | null, durationMs: number) => {
-    if (!testId || !currentStep) return;
+    const step = currentStepRef.current;
+    const id = testIdRef.current;
+    if (!id || !step) return;
+
+    // Held until the server confirms, so a failed send can be repeated with the same
+    // recording instead of costing the candidate the answer.
+    pendingAnswerRef.current = { blob, ms: durationMs };
     setErrorMsg(null);
+    setAnswerFailed(false);
+    setSubmittingAnswer(true);
 
     try {
-      const res = await sendIeltsAnswer(testId, currentStep.i, blob, durationMs);
+      const res = await sendIeltsAnswer(id, step.i, blob, durationMs);
+      if (!mountedRef.current) return;
+      pendingAnswerRef.current = null;
       setSubmittingAnswer(false);
 
       if (res.done) {
-        // All steps finished -> trigger finish & grading!
-        finishTestGrading();
-      } else if (res.step) {
-        setCurrentStep(res.step);
-        setStepIndex(res.step.i);
-        setRecordingMs(0);
-        speakText(res.step.say || res.step.cardSay);
+        void finishTestGrading();
+        return;
       }
+
+      if (res.step) {
+        setRecordingMs(0);
+        applyStep(res.step);
+        // This is the line the whole test turned on. It used to speak the next
+        // question and stop there — no prep timer, no microphone, no way forward — so
+        // every test froze on the examiner's second question. Running the step is what
+        // opens the microphone again.
+        beginStep(res.step);
+        return;
+      }
+
+      // No next step and not done is not a state the server should produce; marking
+      // is still the right move, and beats sitting on a screen with nothing to tap.
+      void finishTestGrading();
     } catch (err: any) {
+      if (!mountedRef.current) return;
       setSubmittingAnswer(false);
       console.error('Failed to submit answer:', err);
-      const msg = err.response?.data?.error || 'Javobni yuborishda xatolik. Qaytadan urinib ko\'ring.';
+      const msg = err.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.';
       setErrorMsg(msg);
+      setAnswerFailed(true);
     }
   };
 
-  const handleNextFrame = async () => {
+  const retryAnswer = () => {
+    const pending = pendingAnswerRef.current;
+    if (!pending) return;
+    tapHaptic('medium');
+    setAnswerFailed(false);
+    void submitAnswer(pending.blob, pending.ms);
+  };
+
+  const skipAnswer = () => {
     tapHaptic('light');
+    pendingAnswerRef.current = null;
+    setAnswerFailed(false);
+    void submitAnswer(null, 0);
+  };
+
+  const handleNextFrame = async () => {
     await submitAnswer(null, 0);
   };
 
@@ -432,55 +625,120 @@ export default function IeltsMock() {
    * The microphone now opens as soon as the examiner stops talking.
    */
   const beginStep = (step: ScriptStep) => {
-    const spoken = step.say || step.cardSay;
+    stepTokenRef.current += 1;
+    const token = stepTokenRef.current;
+    const spoken = step.say || step.cardSay || '';
 
-    speakText(spoken, () => {
-      if (!mountedRef.current) return;
+    // A later step, or leaving the test, retires this one's turn.
+    const current = () => mountedRef.current && token === stepTokenRef.current;
+
+    const proceed = once(() => {
+      if (!current()) return;
 
       if (step.kind === 'cue') {
         // The card is on screen; the preparation minute starts by itself.
-        startPrepTimer();
+        startPrepTimer(step);
         return;
       }
       if (step.kind === 'frame' || step.kind === 'closing') {
         // Examiner framing needs no answer — move on rather than waiting for a tap.
-        window.setTimeout(() => { if (mountedRef.current) handleNextFrame(); }, 700);
+        window.setTimeout(() => { if (current()) void handleNextFrame(); }, 700);
         return;
       }
       // A short beat, then the microphone opens.
-      window.setTimeout(() => {
-        if (mountedRef.current && !isRecordingRef.current) startRecording();
-      }, 400);
+      window.setTimeout(() => { if (current()) void startRecording(step); }, 400);
     });
+
+    speakText(spoken, proceed);
+
+    // The test must not depend on the voice reporting back. Autoplay policy can
+    // refuse the audio outright, a tapped Repeat cancels the utterance that was going
+    // to call back, and a webview can simply drop the event — each of which used to
+    // leave the candidate on a silent screen with no microphone and no way on.
+    window.setTimeout(proceed, speechCeilingMs(spoken));
+  };
+
+  /**
+   * Asking the examiner to repeat is allowed in the real test — and must not strand it.
+   *
+   * The microphone is already open by the time anyone thinks to ask, so the part-answer
+   * is thrown away and the clock restarted. Speaking the question over a live recording
+   * would otherwise put the examiner's own words into the candidate's transcript and
+   * mark them for saying them.
+   */
+  const repeatQuestion = () => {
+    const step = currentStepRef.current;
+    if (!step || submitLockRef.current) return;
+    tapHaptic('light');
+
+    const wasRecording = isRecordingRef.current;
+    if (wasRecording) stopRecordingSilently();
+
+    const token = stepTokenRef.current;
+    const spoken = step.say || step.cardSay || '';
+    const resume = once(() => {
+      if (!mountedRef.current || token !== stepTokenRef.current || isPreppingRef.current) return;
+      const answerable = step.kind === 'question' || step.kind === 'rounding' || step.kind === 'cue';
+      if (wasRecording && answerable) void startRecording(step);
+    });
+
+    speakText(spoken, resume);
+    window.setTimeout(resume, speechCeilingMs(spoken));
   };
 
   // ── Part 2 Cue Card Timer ──
-  const startPrepTimer = () => {
+  const startPrepTimer = (step: ScriptStep) => {
     if (isPreppingRef.current) return;
+    // Leaving the test mid-preparation must not let the start line reach across and
+    // open the microphone on the screen the candidate walked back to.
+    const token = stepTokenRef.current;
+    const total = Math.max(step.prepSec || 60, 5);
+    // Counted against a deadline rather than by decrementing: a phone that throttles
+    // timers in the background used to hand back more preparation than the test allows.
+    const endsAt = Date.now() + total * 1000;
+
     setIsPrepping(true);
     isPreppingRef.current = true;
-    setPrepTimeLeft(60);
+    setPrepTimeLeft(total);
+
+    const begin = once(() => {
+      if (!mountedRef.current || token !== stepTokenRef.current) return;
+      void startRecording(step);
+    });
 
     prepTimerRef.current = setInterval(() => {
-      setPrepTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(prepTimerRef.current);
-          setIsPrepping(false);
-          isPreppingRef.current = false;
-          notifyHaptic('success');
-          // Speak start signal when prep time ends
-          if (currentStep?.startSay) {
-            speakText(currentStep.startSay, () => {
-              if (mountedRef.current && !isRecordingRef.current) startRecording();
-            });
-          } else if (mountedRef.current && !isRecordingRef.current) {
-            startRecording();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      setPrepTimeLeft(left);
+      if (left > 0) return;
+
+      stopPrepTimer();
+      notifyHaptic('success');
+      if (step.startSay) {
+        speakText(step.startSay, begin);
+        window.setTimeout(begin, speechCeilingMs(step.startSay));
+      } else {
+        begin();
+      }
+    }, 250);
+  };
+
+  /** Lets a candidate who has finished their notes start early instead of waiting out the clock. */
+  const skipPrep = () => {
+    const step = currentStepRef.current;
+    if (!step || !isPreppingRef.current) return;
+    tapHaptic('medium');
+    stopPrepTimer();
+    setPrepTimeLeft(0);
+    const token = stepTokenRef.current;
+    const begin = once(() => {
+      if (mountedRef.current && token === stepTokenRef.current) void startRecording(step);
+    });
+    if (step.startSay) {
+      speakText(step.startSay, begin);
+      window.setTimeout(begin, speechCeilingMs(step.startSay));
+    } else {
+      begin();
+    }
   };
 
   const stopPrepTimer = () => {
@@ -489,24 +747,41 @@ export default function IeltsMock() {
       prepTimerRef.current = null;
     }
     setIsPrepping(false);
+    isPreppingRef.current = false;
   };
 
   // ── Test Finish & AI Marking ──
-  const finishTestGrading = async () => {
-    if (!testId) return;
-    stopSpeech();
+  const finishTestGrading = async (attempt = 1) => {
+    const id = testIdRef.current;
+    if (!id) return;
+
+    haltStepMachine();
+    releaseStream();
     setTestStatus('grading');
+    setErrorMsg(null);
+    setGradingFailed(false);
 
     try {
-      const res = await finishIeltsTest(testId);
+      const res = await finishIeltsTest(id);
+      if (!mountedRef.current) return;
       setFeedback(res.feedback);
       setTestStatus('results');
       notifyHaptic('success');
     } catch (err: any) {
+      if (!mountedRef.current) return;
       console.error('Grading error:', err);
-      setTestStatus('testing');
-      const msg = err.response?.data?.error || 'Baholashda xatolik yuz berdi. Qaytadan urinib ko\'ring.';
-      setErrorMsg(msg);
+
+      // Marking carries on server-side even when this request gives up waiting, and
+      // the result is stored against the test — so one quiet retry usually collects a
+      // finished band rather than starting the work again.
+      if (attempt < 2) {
+        await new Promise((resolve) => window.setTimeout(resolve, 4000));
+        if (!mountedRef.current) return;
+        return finishTestGrading(attempt + 1);
+      }
+
+      setGradingFailed(true);
+      setErrorMsg(err.response?.data?.error || 'Baholashda xatolik yuz berdi. Qayta urinib ko\'ring.');
     }
   };
 
@@ -587,7 +862,10 @@ export default function IeltsMock() {
             },
             {
               icon: <Sparkles size={15} aria-hidden="true" />,
-              label: 'Kunlik Limit',
+              // Free users get a one-off trial that never refills, premium users a
+              // quota that resets each day — calling both "Kunlik Limit" told half of
+              // them to come back tomorrow for tests they will not get.
+              label: status?.lifetime ? 'Bepul Sinov' : 'Kunlik Limit',
               value: status ? `${status.remaining} / ${status.limit} ta imtihon qoldi` : '—',
               wide: true,
             },
@@ -680,8 +958,8 @@ export default function IeltsMock() {
                 <button
                   type="button"
                   className="im-mini-btn"
-                  onClick={() => speakText(currentStep.say || currentStep.cardSay)}
-                  disabled={isSpeaking}
+                  onClick={repeatQuestion}
+                  disabled={isSpeaking || submittingAnswer}
                 >
                   <Volume2 size={13} aria-hidden="true" /> Repeat
                 </button>
@@ -721,7 +999,12 @@ export default function IeltsMock() {
                   <strong className="im-prep-timer__time">{prepTimeLeft}s</strong>
                 </div>
                 {isPrepping ? (
-                  <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
+                  <>
+                    <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
+                    <button type="button" className="im-mini-btn" onClick={skipPrep}>
+                      <Mic size={13} aria-hidden="true" /> Tayyorman, boshlayman
+                    </button>
+                  </>
                 ) : prepTimeLeft === 0 ? (
                   <span className="im-prep-active">Speak now.</span>
                 ) : null}
@@ -749,7 +1032,19 @@ export default function IeltsMock() {
 
           {/* Controls Area */}
           <div className="im-controls">
-            {submittingAnswer ? (
+            {answerFailed ? (
+              // Without this the test simply stopped: an error box, "Getting ready…",
+              // and nothing to tap but End the test.
+              <div className="im-retry-controls">
+                <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
+                  <RotateCcw size={20} />
+                  <span>Javobni qayta yuborish</span>
+                </button>
+                <button className="im-mini-btn" onClick={skipAnswer}>
+                  Bu savolni o'tkazib yuborish
+                </button>
+              </div>
+            ) : submittingAnswer ? (
               <div className="im-loading-answer">
                 <div className="im-spinner" />
                 <span>Sending your answer…</span>
@@ -762,7 +1057,7 @@ export default function IeltsMock() {
                     <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
                   </div>
                   {/* The examiner stops you at the limit; this is for finishing early. */}
-                  <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
+                  <button className="im-rec-btn im-rec-btn--stop" onClick={() => void stopRecordingAndSend()}>
                     <MicOff size={22} />
                     <span>I've finished</span>
                   </button>
@@ -797,6 +1092,35 @@ export default function IeltsMock() {
 
   // 3. GRADING LOADING SCREEN
   if (testStatus === 'grading') {
+    if (gradingFailed) {
+      return (
+        <div className="im-page">
+          {renderHeader()}
+          <div className="im-content">
+            <div className="im-error-box">
+              <AlertCircle size={16} />
+              <span>{errorMsg || 'Baholashda xatolik yuz berdi.'}</span>
+            </div>
+            {/* The answers are safe on the server, so this retries the marking rather
+                than the test — nobody has to speak for twenty minutes again. */}
+            <p className="im-grading-note">
+              Javoblaringiz saqlangan. Baholashni qaytadan boshlash uchun bosing.
+            </p>
+            <div className="im-retry-controls">
+              <button className="im-rec-btn im-rec-btn--retry" onClick={() => void finishTestGrading()}>
+                <RotateCcw size={20} />
+                <span>Baholashni qayta urinish</span>
+              </button>
+              <button className="im-mini-btn" onClick={() => navigate('mock')}>
+                Keyinroq qaytaman
+              </button>
+            </div>
+          </div>
+          <style>{css}</style>
+        </div>
+      );
+    }
+
     return (
       <div className="im-page">
         <MockLoading
@@ -1123,6 +1447,15 @@ const css = `
   .im-rec-btn:active { transform: scale(0.98); }
   .im-rec-btn--start { background: #10b981; color: #fff; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3); }
   .im-rec-btn--stop { background: #ef4444; color: #fff; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3); }
+  .im-rec-btn--retry { background: #38bdf8; color: #04222f; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3); }
+
+  .im-retry-controls {
+    width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center;
+  }
+  .im-grading-note {
+    margin: 12px 0; font-size: 13px; line-height: 1.6; text-align: center;
+    color: rgba(255,255,255,0.7);
+  }
 
   .im-rec-active { display: flex; flex-direction: column; gap: 10px; align-items: center; }
   .im-rec-timer {

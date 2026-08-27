@@ -47,14 +47,25 @@ export const blockSession = (id: string | number) =>
 // ─── IELTS Speaking mock ────────────────────────────────────────────────────
 export const getIeltsStatus = () => api.get('/ielts/status').then((r) => r.data);
 
+/**
+ * Starting a test can wait on a freshly written paper, which the server bounds but
+ * cannot make instant. The client's 25s default cut that off mid-flight and reported
+ * a failure for a test that had in fact been created.
+ */
 export const startIeltsTest = (data: Record<string, any>) =>
-  api.post('/ielts/tests', data).then((r) => r.data);
+  api.post('/ielts/tests', data, { timeout: 60_000 }).then((r) => r.data);
 
 export const getIeltsTest = (id: string | number) =>
   api.get(`/ielts/tests/${id}`).then((r) => r.data);
 
+/**
+ * Upload time plus the server's own budget for the follow-up question. The floor
+ * matters: a short answer used to get a 20s allowance for work the server is allowed
+ * to spend six seconds on top of the upload, so a slow connection failed an answer
+ * that would have landed.
+ */
 export const answerTimeout = (bytes: number) =>
-  Math.min(20_000 + Math.ceil(bytes / 1024) * 80, 60_000);
+  Math.min(45_000 + Math.ceil(bytes / 1024) * 80, 90_000);
 
 export const sendIeltsAnswer = (
   id: string | number,
@@ -124,8 +135,9 @@ export const recordAiPartnerSession = (payload: {
 export const getCefrStatus = () =>
   api.get('/cefr/status').then((r) => r.data);
 
+/** Same reasoning as startIeltsTest: the paper may still be being written. */
 export const createCefrTest = (mode: 'full' | 'quick' = 'full') =>
-  api.post('/cefr/tests', { mode }).then((r) => r.data);
+  api.post('/cefr/tests', { mode }, { timeout: 60_000 }).then((r) => r.data);
 
 export const getCefrTest = (id: string) =>
   api.get(`/cefr/tests/${id}`).then((r) => r.data);
@@ -139,11 +151,19 @@ export const sendCefrAnswer = (id: string, step: number, durationMs: number, aud
   }
   return api.post(`/cefr/tests/${id}/answers?step=${step}&ms=${durationMs}`, body, {
     headers,
+    // A Part 2 answer runs to two minutes, which is a large upload on a phone. The
+    // 25s default cut those off and reported a failure for an answer still in flight.
+    timeout: answerTimeout(audioBlob?.size ?? 0),
   }).then((r) => r.data);
 };
 
-export const finishCefrTest = (id: string) =>
-  api.post(`/cefr/tests/${id}/finish`).then((r) => r.data);
+/**
+ * Marking is a transcription catch-up plus a long model call. On the 25s default this
+ * request could not succeed on a full test — it timed out every time, while the server
+ * quietly finished and stored the result nobody was still waiting for.
+ */
+export const finishCefrTest = (id: string, timeout = 180_000) =>
+  api.post(`/cefr/tests/${id}/finish`, {}, { timeout }).then((r) => r.data);
 
 export const abandonCefrTest = (id: string) =>
   api.post(`/cefr/tests/${id}/abandon`).then((r) => r.data);

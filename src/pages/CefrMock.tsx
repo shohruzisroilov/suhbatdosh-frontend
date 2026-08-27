@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useT } from '../i18n';
-import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, HelpCircle, Image as ImageIcon, Layers, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, Clock, HelpCircle, Image as ImageIcon, Layers, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 import {
   getCefrStatus,
   createCefrTest,
@@ -56,6 +56,35 @@ interface CefrFeedback {
   improvementPlan: string[];
 }
 
+/** Wraps a callback so that whichever of several racing paths arrives first wins. */
+function once(fn: () => void): () => void {
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+}
+
+/**
+ * The longest the examiner's line could plausibly take, counting the round trip that
+ * fetches the voice as well as the speaking.
+ *
+ * This is the backstop behind every wait on speech, and it errs long on purpose:
+ * firing late costs a pause, while firing early opens the microphone over the examiner
+ * mid-sentence. It is only reached when speech fails to report back at all.
+ */
+function speechCeilingMs(text: string): number {
+  const chars = String(text || '').length;
+  return Math.min(8000 + chars * 120, 60000);
+}
+
+/** What the examiner says when the answer has run to its limit. */
+const CUT_OFF_LINE = 'Thank you.';
+
+/** What the examiner says when preparation time is up, as in the real exam. */
+const BEGIN_LINE = 'Your preparation time is over. Please begin speaking now.';
+
 export default function CefrMock(props: Partial<CefrMockProps>) {
   const t = useT();
   const storeNavigate = useAppStore((s) => s.navigate);
@@ -108,7 +137,80 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   // Which start-screen button is mid-flight, so it can say so instead of sitting
   // there looking untapped.
   const [busyAction, setBusyAction] = useState<MockBusyAction>(null);
+  // An answer that failed to reach the server is held, not lost: the recording is still
+  // in hand, so the candidate is offered the send again rather than the test stalling.
+  const [answerFailed, setAnswerFailed] = useState<boolean>(false);
+  const [gradingFailed, setGradingFailed] = useState<boolean>(false);
   const mountedRef = useRef(true);
+
+  /**
+   * The test drives itself from timers and speech callbacks, all of which were
+   * scheduled by an earlier render, so anything they read out of `useState` is the
+   * value from that render rather than the value now. That is why the recorder was
+   * given the previous question's time limit and why the duration posted with every
+   * answer was whatever `recordingMs` held before recording started — almost always
+   * zero, which is what the marker was then shown. The live values live in refs.
+   */
+  const currentStepRef = useRef<StepData | null>(null);
+  const testIdRef = useRef<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isRecordingRef = useRef(false);
+  const isPreppingRef = useRef(false);
+  const submitLockRef = useRef(false);
+  const stepTokenRef = useRef(0);
+  /** The recording behind a failed send, kept so it can be sent again. */
+  const pendingAnswerRef = useRef<{ blob: Blob | null; ms: number } | null>(null);
+
+  const applyStep = (step: StepData | null) => {
+    currentStepRef.current = step;
+    setCurrentStep(step);
+  };
+
+  const applyTestId = (id: string | null) => {
+    testIdRef.current = id;
+    setTestId(id);
+  };
+
+  /**
+   * One live microphone for the whole test.
+   *
+   * Every question used to open its own stream and stop its tracks on the way out. On
+   * a phone that is a fresh permission check and a fresh device negotiation between
+   * each answer — dead air at best, an intermittent failure at worst, several
+   * questions into a test the candidate cannot restart.
+   */
+  const ensureStream = async (): Promise<MediaStream> => {
+    const live = streamRef.current;
+    if (live && live.getAudioTracks().some((track) => track.readyState === 'live')) return live;
+
+    live?.getTracks().forEach((track) => track.stop());
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    streamRef.current = stream;
+    return stream;
+  };
+
+  const releaseStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  /**
+   * The browser only grants the microphone in response to a tap, and the first question
+   * opens it from a speech callback seconds later — by then the gesture has expired on
+   * some webviews. Ask here, while the tap is still in hand.
+   */
+  const claimMicrophone = async (): Promise<boolean> => {
+    try {
+      await ensureStream();
+      return true;
+    } catch (err) {
+      console.error('Mic access error:', err);
+      setErrorMsg('Mikrofonga ruxsat berilmadi. Imtihon uchun brauzer sozlamalaridan ruxsat bering.');
+      return false;
+    }
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -119,7 +221,9 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     fetchStatus();
     return () => {
       stopSpeech();
+      stopRecordingSilently();
       clearTimers();
+      releaseStream();
     };
   }, []);
 
@@ -135,7 +239,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       const res = await getCefrStatus();
       setQuota(res.quota);
       if (res.activeTest) {
-        setTestId(res.activeTest.id);
+        applyTestId(res.activeTest.id);
         setActiveTestId(res.activeTest.id);
       } else {
         setActiveTestId(null);
@@ -172,19 +276,27 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     runAction('resume', async () => {
       tapHaptic('medium');
       setErrorMsg(null);
+      if (!(await claimMicrophone())) return;
       try {
         const res = await getCefrTest(id);
-        if (res.status === 'completed' && res.feedback) {
+        // The server calls a marked test "finished"; this looked for "completed",
+        // matched nothing, and then fell through to a step that a finished test does
+        // not have — so reopening a graded test showed the candidate nothing at all.
+        if (res.feedback) {
           setFeedback(res.feedback);
           setTestStatus('results');
-        } else if (res.step) {
-          setTestId(res.testId);
+          return;
+        }
+        if (res.step) {
+          applyTestId(res.testId);
           setTotalSteps(res.totalSteps || 9);
           setEstimatedMinutes(res.estimatedMinutes || 0);
-          setCurrentStep(res.step);
+          applyStep(res.step);
           setTestStatus('testing');
-          handleStepTransition(res.step);
+          beginStep(res.step);
+          return;
         }
+        setErrorMsg('Bu imtihonni davom ettirib bo\'lmadi.');
       } catch (err: any) {
         console.error('Load active test error:', err);
         setErrorMsg(err?.response?.data?.error || 'Imtihonni yuklashda xatolik.');
@@ -195,66 +307,170 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     runAction('start', async () => {
       tapHaptic('medium');
       setErrorMsg(null);
+      if (!(await claimMicrophone())) return;
       try {
         const res = await createCefrTest('full');
-        setTestId(res.testId);
+        applyTestId(res.testId);
         setActiveTestId(res.testId);
         setTotalSteps(res.totalSteps || 9);
         setEstimatedMinutes(res.estimatedMinutes || 0);
-        setCurrentStep(res.step);
+        applyStep(res.step);
         setTestStatus('testing');
-
-        if (res.step) {
-          handleStepTransition(res.step);
-        }
+        if (res.step) beginStep(res.step);
       } catch (err: any) {
         console.error('Start CEFR test error:', err);
+        // The server may well have created the test before this request gave up, so
+        // look again rather than leaving a started test invisible behind an error.
+        void fetchStatus();
         const msg = err?.response?.data?.error || 'Imtihonni boshlashda xatolik yuz berdi.';
         setErrorMsg(msg);
       }
     });
 
-  const handleStepTransition = (step: StepData) => {
-    clearTimers();
-    setIsRecording(false);
+  /**
+   * Runs a step the way an examiner would: speak, then wait for the candidate.
+   *
+   * The old version spoke the question, started the preparation clock, and stopped
+   * there — the microphone only ever opened if the candidate found and pressed a
+   * button, and when preparation ran out nothing happened at all. A real Multilevel
+   * examiner does not wait to be asked, so the recorder now opens by itself.
+   */
+  const beginStep = (step: StepData) => {
+    stepTokenRef.current += 1;
+    const token = stepTokenRef.current;
+    if (prepTimerRef.current) clearInterval(prepTimerRef.current);
+    setIsPrepping(false);
+    isPreppingRef.current = false;
     setRecordingMs(0);
 
-    // Speak question text if sound enabled
-    if (soundEnabled && step.say) {
-      speakText(step.say);
-    }
+    // A later step, or leaving the test, retires this one's turn.
+    const current = () => mountedRef.current && token === stepTokenRef.current;
+    const spoken = step.say || '';
 
-    // Check if step requires prep timer (Part 2 or Part 3 task frame)
-    if (step.prepSec && step.prepSec > 0) {
-      startPrepTimer(step.prepSec);
-    } else {
-      setIsPrepping(false);
-    }
+    const proceed = once(() => {
+      if (!current()) return;
+
+      if (step.kind === 'frame' || step.kind === 'closing') {
+        // Examiner framing needs no answer — move on rather than waiting for a tap.
+        window.setTimeout(() => { if (current()) void handleNextFrame(); }, 700);
+        return;
+      }
+      if (step.prepSec && step.prepSec > 0) {
+        startPrepTimer(step);
+        return;
+      }
+      window.setTimeout(() => { if (current()) void startRecording(step); }, 400);
+    });
+
+    speakText(spoken, proceed);
+
+    // The test must not depend on the voice reporting back. Autoplay policy can refuse
+    // the audio outright and a webview can simply drop the event — either of which
+    // used to leave the candidate on a silent screen with nothing happening.
+    window.setTimeout(proceed, speechCeilingMs(spoken));
   };
 
-  const startPrepTimer = (sec: number) => {
+  const startPrepTimer = (step: StepData) => {
+    if (isPreppingRef.current) return;
+    // Leaving the test mid-preparation must not let the finishing line reach across
+    // and open the microphone on the screen the candidate walked back to.
+    const token = stepTokenRef.current;
+    const total = Math.max(step.prepSec || 60, 5);
+    // Counted against a deadline rather than by decrementing: a phone that throttles
+    // timers in the background used to hand back more preparation than the exam allows.
+    const endsAt = Date.now() + total * 1000;
+
     setIsPrepping(true);
-    setPrepTimeLeft(sec);
-    if (prepTimerRef.current) clearInterval(prepTimerRef.current);
+    isPreppingRef.current = true;
+    setPrepTimeLeft(total);
+
+    const begin = once(() => {
+      if (mountedRef.current && token === stepTokenRef.current) void startRecording(step);
+    });
 
     prepTimerRef.current = setInterval(() => {
-      setPrepTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(prepTimerRef.current);
-          setIsPrepping(false);
-          tapHaptic('medium');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      setPrepTimeLeft(left);
+      if (left > 0) return;
+
+      stopPrepTimer();
+      notifyHaptic('success');
+      speakText(BEGIN_LINE, begin);
+      window.setTimeout(begin, speechCeilingMs(BEGIN_LINE));
+    }, 250);
+  };
+
+  /** Lets a candidate who has finished their notes start early instead of waiting out the clock. */
+  const skipPrep = () => {
+    const step = currentStepRef.current;
+    if (!step || !isPreppingRef.current) return;
+    tapHaptic('medium');
+    stopPrepTimer();
+    setPrepTimeLeft(0);
+    const token = stepTokenRef.current;
+    const begin = once(() => {
+      if (mountedRef.current && token === stepTokenRef.current) void startRecording(step);
+    });
+    speakText(BEGIN_LINE, begin);
+    window.setTimeout(begin, speechCeilingMs(BEGIN_LINE));
+  };
+
+  const stopPrepTimer = () => {
+    if (prepTimerRef.current) {
+      clearInterval(prepTimerRef.current);
+      prepTimerRef.current = null;
+    }
+    setIsPrepping(false);
+    isPreppingRef.current = false;
+  };
+
+  /**
+   * Cancels the step in flight.
+   *
+   * Every step schedules a backstop timer that opens the microphone if the examiner's
+   * voice never reports back. Leaving a test does not cancel that timer, so without
+   * retiring the step token an abandoned test would reach across and start recording
+   * on the screen the candidate had just walked back to.
+   */
+  const haltStepMachine = () => {
+    stepTokenRef.current += 1;
+    stopSpeech();
+    stopRecordingSilently();
+    stopPrepTimer();
+  };
+
+  /** Asking for a repeat is allowed — and must not strand the test. */
+  const repeatQuestion = () => {
+    const step = currentStepRef.current;
+    if (!step || submitLockRef.current) return;
+    tapHaptic('light');
+
+    // The microphone is already open by the time anyone thinks to ask, so the part
+    // answer is thrown away and the clock restarted. Speaking over a live recording
+    // would put the examiner's own words into the candidate's transcript.
+    const wasRecording = isRecordingRef.current;
+    if (wasRecording) stopRecordingSilently();
+
+    const token = stepTokenRef.current;
+    const spoken = step.say || '';
+    const resume = once(() => {
+      if (!mountedRef.current || token !== stepTokenRef.current || isPreppingRef.current) return;
+      if (wasRecording) void startRecording(step);
+    });
+    speakText(spoken, resume);
+    window.setTimeout(resume, speechCeilingMs(spoken));
   };
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechTokenRef = useRef(0);
 
-  const speakText = async (text?: string) => {
-    if (!soundEnabled || !text || !mountedRef.current) return;
+  const speakText = async (text?: string, onDone?: () => void) => {
+    // With sound off or nothing to say there is nothing to wait for, so hand control
+    // straight back — the step machine is waiting on this callback.
+    if (!soundEnabled || !text || !mountedRef.current) {
+      onDone?.();
+      return;
+    }
     stopSpeech();
     speechTokenRef.current += 1;
     const token = speechTokenRef.current;
@@ -270,26 +486,32 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         };
         audio.onended = () => {
           audioRef.current = null;
-          if (token === speechTokenRef.current && mountedRef.current) setIsSpeaking(false);
+          if (token === speechTokenRef.current && mountedRef.current) {
+            setIsSpeaking(false);
+            onDone?.();
+          }
         };
         audio.onerror = () => {
           audioRef.current = null;
           if (token === speechTokenRef.current && mountedRef.current) {
             setIsSpeaking(false);
-            fallbackSpeech(text, token);
+            fallbackSpeech(text, onDone, token);
           }
         };
         await audio.play();
         return;
       }
-      fallbackSpeech(text, token);
+      fallbackSpeech(text, onDone, token);
     } catch {
-      fallbackSpeech(text, token);
+      fallbackSpeech(text, onDone, token);
     }
   };
 
-  const fallbackSpeech = (text: string, token?: number) => {
-    if (!soundEnabled || !text || !mountedRef.current || (token !== undefined && token !== speechTokenRef.current) || !('speechSynthesis' in window)) return;
+  const fallbackSpeech = (text: string, onDone?: () => void, token?: number) => {
+    if (!soundEnabled || !text || !mountedRef.current || (token !== undefined && token !== speechTokenRef.current) || !('speechSynthesis' in window)) {
+      onDone?.();
+      return;
+    }
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -299,14 +521,21 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         if (!token || token === speechTokenRef.current) setIsSpeaking(true);
       };
       utterance.onend = () => {
-        if (!token || token === speechTokenRef.current) setIsSpeaking(false);
+        if (!token || token === speechTokenRef.current) {
+          setIsSpeaking(false);
+          onDone?.();
+        }
       };
       utterance.onerror = () => {
-        if (!token || token === speechTokenRef.current) setIsSpeaking(false);
+        if (!token || token === speechTokenRef.current) {
+          setIsSpeaking(false);
+          onDone?.();
+        }
       };
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis error:', e);
+      onDone?.();
     }
   };
 
@@ -334,21 +563,30 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       setSoundEnabled(false);
     } else {
       setSoundEnabled(true);
-      if (currentStep?.say) {
-        speakText(currentStep.say);
+      // Not while the microphone is open: the question would be recorded as though the
+      // candidate had said it.
+      if (currentStepRef.current?.say && !isRecordingRef.current) {
+        void speakText(currentStepRef.current.say);
       }
     }
   };
 
-  const startRecording = async () => {
+  const startRecording = async (step: StepData) => {
+    if (isRecordingRef.current || !mountedRef.current) return;
     tapHaptic('heavy');
     stopSpeech();
-    audioChunksRef.current = [];
-    setRecordingMs(0);
+    setErrorMsg(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
+      const stream = await ensureStream();
+      if (!mountedRef.current) return;
+      audioChunksRef.current = [];
+      const preferred = getSupportedMimeType();
+      // An empty string is not a valid mimeType — passing it through threw and killed
+      // the recording outright. No option at all lets the browser pick its own.
+      const recorder = preferred
+        ? new MediaRecorder(stream, { mimeType: preferred })
+        : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -359,14 +597,23 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
 
       recorder.start(100);
       setIsRecording(true);
+      isRecordingRef.current = true;
       recordingStartTimeRef.current = Date.now();
+      setRecordingMs(0);
 
-      const maxMs = (currentStep?.maxSec || 60) * 1000;
+      // The limit belongs to the step being answered, which the caller hands in. Read
+      // off `currentStep` it was whatever the previous render held.
+      const maxMs = Math.max(step.maxSec || 60, 5) * 1000;
       recordTimerRef.current = setInterval(() => {
         const elapsed = Date.now() - recordingStartTimeRef.current;
         setRecordingMs(elapsed);
         if (elapsed >= maxMs) {
-          stopRecordingAndSend();
+          clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+          // The examiner cuts you off out loud. The line is said inside, once the
+          // recorder is closed: spoken first it would have been recorded, and the
+          // marker would have read the examiner's words back as the candidate's.
+          void stopRecordingAndSend({ announce: true });
         }
       }, 200);
     } catch (err: any) {
@@ -375,53 +622,124 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     }
   };
 
-  const stopRecordingAndSend = async () => {
+  const stopRecordingAndSend = async (options?: { announce?: boolean }) => {
+    const recorder = mediaRecorderRef.current;
+    // Guarded on the refs, not on state: the automatic cut-off runs from a timer whose
+    // captured state is always the value from before recording started.
+    if (!recorder || !isRecordingRef.current || submitLockRef.current) return;
+
+    submitLockRef.current = true;
     tapHaptic('medium');
-    if (recordTimerRef.current) clearInterval(recordTimerRef.current);
+    stopSpeech();
 
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+    // Measured, not read out of `recordingMs`. The cut-off timer's copy of that state
+    // was fixed at zero, so every automatically ended answer was posted as zero
+    // seconds long and marked as though the candidate had said nothing.
+    const duration = Date.now() - recordingStartTimeRef.current;
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
     }
-
     setIsRecording(false);
+    isRecordingRef.current = false;
     setSubmittingAnswer(true);
 
-    setTimeout(async () => {
-      const audioBlob =
-        audioChunksRef.current.length > 0
-          ? new Blob(audioChunksRef.current, { type: audioChunksRef.current[0].type })
-          : null;
+    await new Promise<void>((resolve) => {
+      // Waiting a flat 300ms was a race: the recorder had not always flushed its last
+      // chunk, so the tail of the answer went missing. Wait for the event, bounded so
+      // a recorder that never reports back cannot strand the test.
+      const done = once(resolve);
+      recorder.onstop = done;
+      try {
+        recorder.stop();
+      } catch {
+        done();
+      }
+      window.setTimeout(done, 2500);
+    });
 
-      await submitAnswer(audioBlob);
-      setSubmittingAnswer(false);
-    }, 300);
+    const audioBlob = audioChunksRef.current.length
+      ? new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+      : null;
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = null;
+    submitLockRef.current = false;
+
+    // Not awaited: the acknowledgement plays over the upload, which is exactly the
+    // dead air it is there to cover.
+    if (options?.announce) void speakText(CUT_OFF_LINE);
+
+    await submitAnswer(audioBlob, duration);
   };
 
-  const submitAnswer = async (audioBlob: Blob | null) => {
-    if (!testId || !currentStep) return;
+  const stopRecordingSilently = () => {
+    if (mediaRecorderRef.current && isRecordingRef.current) {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+    }
+    mediaRecorderRef.current = null;
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    setIsRecording(false);
+    isRecordingRef.current = false;
+  };
+
+  const submitAnswer = async (audioBlob: Blob | null, durationMs: number) => {
+    const step = currentStepRef.current;
+    const id = testIdRef.current;
+    if (!id || !step) return;
+
+    // Held until the server confirms, so a failed send can be repeated with the same
+    // recording instead of costing the candidate the answer.
+    pendingAnswerRef.current = { blob: audioBlob, ms: durationMs };
+    setErrorMsg(null);
+    setAnswerFailed(false);
+    setSubmittingAnswer(true);
 
     try {
-      const durationMs = recordingMs;
-      const res = await sendCefrAnswer(testId, currentStep.i, durationMs, audioBlob);
+      const res = await sendCefrAnswer(id, step.i, durationMs, audioBlob);
+      if (!mountedRef.current) return;
+      pendingAnswerRef.current = null;
+      setSubmittingAnswer(false);
 
       if (res.done || !res.step) {
-        handleFinishTest();
-      } else {
-        setCurrentStep(res.step);
-        handleStepTransition(res.step);
+        void handleFinishTest();
+        return;
       }
+
+      applyStep(res.step);
+      // Running the step is what speaks the next question and opens the microphone
+      // again. Setting the state alone left the test sitting there.
+      beginStep(res.step);
     } catch (err: any) {
+      if (!mountedRef.current) return;
+      setSubmittingAnswer(false);
       console.error('Send CEFR answer error:', err);
-      setErrorMsg('Javobni yuborishda xatolik. Qaytadan urinib ko\'ring.');
+      setErrorMsg(err?.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.');
+      setAnswerFailed(true);
     }
+  };
+
+  const retryAnswer = () => {
+    const pending = pendingAnswerRef.current;
+    if (!pending) return;
+    tapHaptic('medium');
+    setAnswerFailed(false);
+    void submitAnswer(pending.blob, pending.ms);
+  };
+
+  const skipAnswer = () => {
+    tapHaptic('light');
+    pendingAnswerRef.current = null;
+    setAnswerFailed(false);
+    void submitAnswer(null, 0);
   };
 
   const handleNextFrame = async () => {
-    tapHaptic('light');
-    setSubmittingAnswer(true);
-    await submitAnswer(null);
-    setSubmittingAnswer(false);
+    await submitAnswer(null, 0);
   };
 
   const getPartBadgeText = (part: string, kind?: string) => {
@@ -434,28 +752,44 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     return `PART ${part}`;
   };
 
-  const handleFinishTest = async () => {
-    if (!testId) return;
+  const handleFinishTest = async (attempt = 1) => {
+    const id = testIdRef.current;
+    if (!id) return;
+
+    haltStepMachine();
+    releaseStream();
     setTestStatus('grading');
-    stopSpeech();
+    setErrorMsg(null);
+    setGradingFailed(false);
 
     try {
-      const res = await finishCefrTest(testId);
+      const res = await finishCefrTest(id);
+      if (!mountedRef.current) return;
       setFeedback(res.feedback);
       setTestStatus('results');
       notifyHaptic('success');
     } catch (err: any) {
+      if (!mountedRef.current) return;
       console.error('CEFR Grading error:', err);
-      setTestStatus('testing');
-      setErrorMsg('Natijalarni hisoblashda xatolik yuz berdi. Qayta urining.');
+
+      // Marking carries on server-side even when this request gives up waiting, and
+      // the result is stored against the test — so one quiet retry usually collects a
+      // finished evaluation rather than starting the work again.
+      if (attempt < 2) {
+        await new Promise((resolve) => window.setTimeout(resolve, 4000));
+        if (!mountedRef.current) return;
+        return handleFinishTest(attempt + 1);
+      }
+
+      setGradingFailed(true);
+      setErrorMsg(err?.response?.data?.error || 'Natijalarni hisoblashda xatolik yuz berdi.');
     }
   };
 
   const handleAbandon = () => {
     if (!testId) return;
     if (!window.confirm('Imtihondan chiqmoqchimisiz? Ushbu urinish bekor qilinadi.')) return;
-    stopSpeech();
-    clearTimers();
+    haltStepMachine();
     return runAction('discard', async () => {
       tapHaptic('light');
       try {
@@ -463,9 +797,12 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       } catch (err) {
         console.error('Abandon error:', err);
       }
-      setTestId(null);
+      applyTestId(null);
       setActiveTestId(null);
-      setCurrentStep(null);
+      applyStep(null);
+      pendingAnswerRef.current = null;
+      setAnswerFailed(false);
+      releaseStream();
       setTestStatus('idle');
       await fetchStatus();
     });
@@ -553,7 +890,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             },
             {
               icon: <Sparkles size={15} aria-hidden="true" />,
-              label: 'Kunlik Limit',
+              // Only the premium quota resets daily; the free one is a one-off trial.
+              label: quota && !quota.isPremium ? 'Bepul Sinov' : 'Kunlik Limit',
               value: quota ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi` : '—',
               wide: true,
             },
@@ -701,72 +1039,69 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             )}
           </div>
 
-          {/* Prep Timer Card / Submitting / Frame / Recording Controls */}
-          {isPrepping ? (
-            <div className="im-prep-card">
-              <Clock size={24} className="animate-spin text-emerald-400" />
-              <div>
-                <h4>Tayyorgarlik vaqti ketmoqda: {prepTimeLeft} soniya</h4>
-                <p>{t('mock.notesHint')}</p>
-              </div>
+          {/* The examiner runs the exam: it speaks, then records, then moves on. The
+              only controls the candidate needs are finishing early, asking for a
+              repeat, and getting out — plus a way back when something goes wrong. */}
+          {answerFailed ? (
+            <div className="im-retry-controls">
+              <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
+                <RotateCcw size={20} />
+                <span>Javobni qayta yuborish</span>
+              </button>
+              <button className="im-mini-btn" onClick={skipAnswer}>
+                Bu savolni o'tkazib yuborish
+              </button>
             </div>
           ) : submittingAnswer ? (
             <div className="im-submitting-box">
               <div className="im-spinner" />
-              <span>Javobingiz tahlil qilinmoqda...</span>
+              <span>Javobingiz yuborilmoqda...</span>
             </div>
-          ) : currentStep.kind === 'frame' || currentStep.kind === 'closing' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <div className="im-recording-controls">
-                {!isRecording ? (
-                  <button className="im-rec-btn im-rec-btn--start" onClick={startRecording} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                    <Mic size={24} />
-                    <span>Javob berish (Ovoz yozish)</span>
-                  </button>
-                ) : (
-                  <div className="im-rec-active">
-                    <div className="im-rec-timer">
-                      <span className="im-rec-dot" />
-                      <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
-                    </div>
-                    <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
-                      <MicOff size={22} />
-                      <span>Javobni tugatish va yuborish</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-              {!isRecording && (
-                <button
-                  className="im-btn im-btn--ghost"
-                  onClick={handleNextFrame}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  <span>Tushundim, keyingisiga o'tish</span>
-                  <ChevronRight size={18} />
+          ) : isPrepping ? (
+            <div className="im-prep-card">
+              <Clock size={24} className="animate-spin text-emerald-400" />
+              <div style={{ flex: 1 }}>
+                <h4>Tayyorgarlik vaqti: {prepTimeLeft} soniya</h4>
+                <p>{t('mock.notesHint')}</p>
+                <button className="im-mini-btn" onClick={skipPrep} style={{ marginTop: '8px' }}>
+                  <Mic size={13} aria-hidden="true" /> Tayyorman, boshlayman
                 </button>
-              )}
+              </div>
+            </div>
+          ) : isRecording ? (
+            <div className="im-recording-controls">
+              <div className="im-rec-active">
+                <div className="im-rec-timer">
+                  <span className="im-rec-dot" />
+                  <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
+                </div>
+                {/* The examiner stops you at the limit; this is for finishing early. */}
+                <button className="im-rec-btn im-rec-btn--stop" onClick={() => void stopRecordingAndSend()}>
+                  <MicOff size={22} />
+                  <span>Javobni tugatdim</span>
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="im-recording-controls">
-              {!isRecording ? (
-                <button className="im-rec-btn im-rec-btn--start" onClick={startRecording} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                  <Mic size={24} />
-                  <span>Javob berishni boshlash</span>
-                </button>
+            <div className="im-waiting-note">
+              {isSpeaking ? (
+                <>
+                  <Volume2 size={15} aria-hidden="true" />
+                  <span>Examiner gapirmoqda…</span>
+                </>
               ) : (
-                <div className="im-rec-active">
-                  <div className="im-rec-timer">
-                    <span className="im-rec-dot" />
-                    <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
-                  </div>
-                  <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
-                    <MicOff size={22} />
-                    <span>Javobni tugatish va yuborish</span>
-                  </button>
-                </div>
+                <>
+                  <Mic size={15} aria-hidden="true" />
+                  <span>Tayyorlanmoqda…</span>
+                </>
               )}
             </div>
+          )}
+
+          {!answerFailed && !submittingAnswer && (
+            <button className="im-mini-btn" onClick={repeatQuestion} disabled={isSpeaking} style={{ marginTop: '10px' }}>
+              <Volume2 size={13} aria-hidden="true" /> Savolni qayta eshitish
+            </button>
           )}
 
           <button className="im-abandon-link" onClick={handleAbandon}>
@@ -776,8 +1111,28 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       )}
 
       {/* 4. GRADING / EVALUATING STATE */}
-      {testStatus === 'grading' && (
+      {testStatus === 'grading' && !gradingFailed && (
         <MockLoading accent="cefr" label="Natijalar baholanmoqda…" sublabel={t('mock.cefrGrading')} />
+      )}
+
+      {testStatus === 'grading' && gradingFailed && (
+        <div className="im-content">
+          {/* Grading failure used to drop the candidate back onto the test screen with
+              an error and no way to ask for the result again. The answers are safe on
+              the server, so this retries the marking, not the exam. */}
+          <p className="im-grading-note">
+            Javoblaringiz saqlangan. Baholashni qaytadan boshlash uchun bosing.
+          </p>
+          <div className="im-retry-controls">
+            <button className="im-rec-btn im-rec-btn--retry" onClick={() => void handleFinishTest()}>
+              <RotateCcw size={20} />
+              <span>Baholashni qayta urinish</span>
+            </button>
+            <button className="im-mini-btn" onClick={() => navigate('mock')}>
+              Keyinroq qaytaman
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 5. RESULTS STATE */}
@@ -1189,6 +1544,52 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: #ffffff;
           box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        }
+        .im-rec-btn--retry {
+          background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+          color: #04231a;
+          box-shadow: 0 4px 20px rgba(52, 211, 153, 0.35);
+        }
+
+        .im-retry-controls {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+        }
+        .im-mini-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 7px 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .im-mini-btn:disabled { opacity: 0.45; cursor: default; }
+        .im-waiting-note {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          min-height: 48px;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .im-grading-note {
+          margin: 12px 0;
+          font-size: 13px;
+          line-height: 1.6;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .im-rec-active {
