@@ -1,3 +1,4 @@
+import { Bot } from 'lucide-react';
 import React from 'react';
 import Avatar from './Avatar';
 import { useT } from '../i18n';
@@ -44,18 +45,29 @@ interface SessionRowProps {
     partner_avatar_url?: string;
     started_at?: string;
     ended_at?: string;
+    /** 'ai' rows have no partner user, so there is no name or avatar to show. */
+    kind?: string;
   };
 }
 
 export default function SessionRow({ session: s }: SessionRowProps) {
   const t = useT();
   const dur = duration(s.started_at, s.ended_at);
+  const isAi = s.kind === 'ai';
 
   return (
     <div className="session-row">
-      <Avatar name={s.partner_name} avatarUrl={s.partner_avatar_url} size={40} />
+      {isAi ? (
+        <span className="session-row__ai-avatar">
+          <Bot size={20} aria-hidden="true" />
+        </span>
+      ) : (
+        <Avatar name={s.partner_name} avatarUrl={s.partner_avatar_url} size={40} />
+      )}
       <div className="session-row__info">
-        <span className="session-row__name">{s.partner_name}</span>
+        <span className="session-row__name">
+          {isAi ? t('ai.partnerName') : s.partner_name}
+        </span>
         <span className="session-row__sub">
           {t('lang.en')}
           {dur ? ` · ${dur}` : ''}
@@ -64,6 +76,12 @@ export default function SessionRow({ session: s }: SessionRowProps) {
       <span className="session-row__date">{timeAgo(s.ended_at, t)}</span>
 
       <style>{`
+        .session-row__ai-avatar {
+          width: 40px; height: 40px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: var(--radius-full);
+          background: var(--btn-bg-soft); color: var(--btn-bg);
+        }
         .session-row {
           display: flex; align-items: center; gap: var(--space-3);
           padding: var(--space-3) var(--space-4);

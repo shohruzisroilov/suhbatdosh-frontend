@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const SILENCE_RMS = 0.012;
-const SILENCE_AFTER_SPEECH_MS = 2800;
+// How long to wait after speech stops before sending the turn.
+//
+// This is dead air the person sits through on every single turn, and it lands on
+// top of transcription, the model reply and speech. At 2800ms the whole round trip
+// was 6-10s, which reads as a form being submitted rather than someone answering.
+// 1200ms is long enough to ride out a mid-sentence thinking pause without cutting
+// people off.
+const SILENCE_AFTER_SPEECH_MS = 1200;
 const NO_SPEECH_TIMEOUT_MS = 12_000;
 const TICK_MS = 100;
 const SPEECH_BITRATE = 32_000;

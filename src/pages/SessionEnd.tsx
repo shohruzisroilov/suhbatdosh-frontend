@@ -43,6 +43,7 @@ export default function SessionEnd() {
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   const isAi        = !!screenParams?.isAi || !!session?.isAi;
+  const aiStats     = screenParams?.aiStats || null;
   const sessionId   = screenParams?.sessionId || session?.id;
   const partnerName = isAi ? 'Suhbatdosh AI' : (session?.partnerName || t('common.yourPartner'));
   const reason      = screenParams?.reason;
@@ -138,6 +139,27 @@ export default function SessionEnd() {
             <p className="end-streak-sub">{t('end.sub', { dur: durText })}</p>
           )}
         </div>
+
+        {/* What the AI session produced. A practice session used to end with nothing
+            to show for it — no numbers, no sense that anything had been done. */}
+        {isAi && aiStats && (
+          <div className="end-ai-stats fade-up">
+            <div className="end-ai-stat">
+              <span className="end-ai-stat__value num">{aiStats.turnCount ?? 0}</span>
+              <span className="end-ai-stat__label">{t('ai.endTurnsLabel')}</span>
+            </div>
+            <div className="end-ai-stat">
+              <span className="end-ai-stat__value num">{aiStats.wordsSpoken ?? 0}</span>
+              <span className="end-ai-stat__label">{t('ai.endWordsLabel')}</span>
+            </div>
+            {aiStats.avgWpm ? (
+              <div className="end-ai-stat">
+                <span className="end-ai-stat__value num">{aiStats.avgWpm}</span>
+                <span className="end-ai-stat__label">{t('ai.endWpmLabel')}</span>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         {!submitted ? (
           <div className="end-rate fade-up">
@@ -255,6 +277,29 @@ export default function SessionEnd() {
         .end-actions { display: flex; flex-direction: column; gap: var(--space-1-5); width: 100%; }
 
         /* ── Post-Session Celebration Banner ── */
+        .end-ai-stats {
+          display: flex; gap: var(--space-2);
+          margin: var(--space-3) 0;
+        }
+        .end-ai-stat {
+          flex: 1;
+          display: flex; flex-direction: column; align-items: center; gap: 2px;
+          padding: var(--space-3) var(--space-2);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
+          background: var(--bg-secondary);
+        }
+        .end-ai-stat__value {
+          font-family: var(--font-display);
+          font-size: var(--text-lg); font-weight: var(--weight-heavy);
+          color: var(--text-primary); line-height: 1;
+        }
+        .end-ai-stat__label {
+          font-size: var(--text-2xs); font-weight: var(--weight-bold);
+          text-transform: uppercase; letter-spacing: 0.06em;
+          color: var(--text-secondary); text-align: center;
+        }
+
         .end-streak-banner {
           width: 100%;
           border-radius: var(--radius-lg);

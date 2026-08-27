@@ -89,6 +89,7 @@ export const getAiStatus = () => api.get('/ai-partner/status').then((r) => r.dat
 
 export const sendAIPartnerTurn = (payload: {
   text?: string;
+  topic?: string | null;
   audioBase64?: string;
   audioMimeType?: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -111,8 +112,13 @@ export const deleteVocabularyItem = (id: number) =>
 export const getTTSAudio = (text: string) =>
   api.post('/ai-partner/tts', { text }).then((r) => r.data);
 
-export const recordAiPartnerSession = (durationSeconds: number) =>
-  api.post('/ai-partner/session-end', { durationSeconds }).then((r) => r.data);
+export const recordAiPartnerSession = (payload: {
+  durationSeconds: number;
+  /** Sent so the server can write the recap the next session reads back. */
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Per-turn words-per-minute, averaged server-side for the end screen. */
+  wpmSamples?: number[];
+}) => api.post('/ai-partner/session-end', payload).then((r) => r.data);
 
 // CEFR Multilevel Mock Examiner Endpoints
 export const getCefrStatus = () =>

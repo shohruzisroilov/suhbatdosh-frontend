@@ -5,6 +5,7 @@ import { endSession, sendAIPartnerTurn, getTTSAudio, recordAiPartnerSession } fr
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
 import VocabPrompt, { type VocabItem } from '../components/VocabPrompt';
+import AiTopicPicker from '../components/AiTopicPicker';
 import CallControls from '../components/CallControls';
 import ChatOverlay from '../components/ChatOverlay';
 import EndSessionSheet from '../components/EndSessionSheet';
@@ -336,6 +337,10 @@ export default function Chat() {
   // AI Voice State
   const [aiStatus, setAiStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [aiVocab, setAiVocab] = useState<VocabItem | null>(null);
+  const [aiTopic, setAiTopic] = useState<string | null>(null);
+  const [topicChosen, setTopicChosen] = useState(false);
+  // Pace samples accumulate across the session and are averaged server-side.
+  const wpmSamplesRef = useRef<number[]>([]);
   const [aiHistory, setAiHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -473,6 +478,7 @@ export default function Chat() {
         audioMimeType,
         history: aiHistory,
         userLevel: user?.level ? String(user.level) : undefined,
+        topic: aiTopic,
       });
 
       const userText = res.transcription || 'Voice message';
@@ -510,6 +516,7 @@ export default function Chat() {
       });
 
       setAiVocab(res.vocab?.word ? res.vocab : null);
+      if (res.metrics?.wordsPerMinute > 0) wpmSamplesRef.current.push(res.metrics.wordsPerMinute);
 
       notifyHaptic('success');
       speakAiText(aiResponse, audioUrl);
@@ -551,6 +558,7 @@ export default function Chat() {
         text: userText,
         history: aiHistory,
         userLevel: user?.level ? String(user.level) : undefined,
+        topic: aiTopic,
       });
 
       const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
@@ -573,6 +581,7 @@ export default function Chat() {
       ]);
 
       setAiVocab(res.vocab?.word ? res.vocab : null);
+      if (res.metrics?.wordsPerMinute > 0) wpmSamplesRef.current.push(res.metrics.wordsPerMinute);
 
       notifyHaptic('success');
       speakAiText(aiResponse, audioUrl);
@@ -773,8 +782,16 @@ export default function Chat() {
     cleanupAiAudio();
 
     if (isAiSession) {
+      let aiStats: any = null;
       try {
-        const res = await recordAiPartnerSession(elapsed);
+        // The transcript goes with it: the server writes the recap that the next
+        // session reads back, and returns the numbers for the end screen.
+        const res = await recordAiPartnerSession({
+          durationSeconds: elapsed,
+          history: aiHistory,
+          wpmSamples: wpmSamplesRef.current,
+        });
+        aiStats = res?.stats || null;
         if (res?.user) {
           updateUser(res.user);
         } else if (res?.addedMinutes) {
@@ -789,7 +806,7 @@ export default function Chat() {
         navigate('matching');
         return;
       }
-      navigate('session_end', { sessionId: 'ai_session', elapsed, isAi: true });
+      navigate('session_end', { sessionId: 'ai_session', elapsed, isAi: true, aiStats });
       return;
     }
 
@@ -944,9 +961,17 @@ export default function Chat() {
       {/* ── Speaking section — audio mode ── */}
       {!camOn && (
         <div className="call-body">
+          {/* Asked once, before the first turn: an empty prompt is the hardest place
+              for a learner to start from. */}
+          {isAiSession && !topicChosen && (
+            <AiTopicPicker
+              onPick={(topic) => { setAiTopic(topic); setTopicChosen(true); }}
+            />
+          )}
+
           {/* Sits between turns rather than interrupting: the partner never stops the
               conversation to teach, so this is where a session leaves something behind. */}
-          {isAiSession && aiVocab && (
+          {isAiSession && topicChosen && aiVocab && (
             <VocabPrompt item={aiVocab} onDone={() => setAiVocab(null)} />
           )}
           {!partnerConnected && (

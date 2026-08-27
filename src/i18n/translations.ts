@@ -480,6 +480,13 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'ai.title': 'AI speaking partner',
     'ai.sub': 'Talk any time — it replies at your level',
     'ai.start': 'Start talking',
+    'ai.partnerName': 'Suhbatdosh AI',
+    'ai.topicLabel': 'What shall we talk about?',
+    'ai.topicSkip': 'Just start talking',
+    'ai.endTitle': 'Practice done',
+    'ai.endTurnsLabel': 'Times you spoke',
+    'ai.endWordsLabel': 'Words',
+    'ai.endWpmLabel': 'Words / min',
 
     'nav.mock': 'Exams',
     'profile.inviteSub': 'Get free Premium days for each friend',
