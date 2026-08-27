@@ -452,6 +452,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     // ─── Mock exams (were hardcoded Uzbek in the page components) ───────────
     'mock.section': 'AI mock exams',
     'mock.duration': '~11–14 minutes',
+    'mock.durationMins': '~{n} minutes',
     'mock.resume': 'Resume your unfinished test',
     'mock.discard': 'Discard it and start over',
     'mock.startIelts': 'Start IELTS mock test',
@@ -470,6 +471,10 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.actionPlan': 'Your action plan',
     'mock.picture': 'Picture {n}',
     'mock.topicPicture': 'Topic picture',
+    // Used while the pool has no image for a task: the label has to match what is
+    // actually shown, and the examiner question says "situations" in the same case.
+    'mock.situation': 'Situation {letter}',
+    'mock.context': 'Context',
     'mock.pageSub': 'Full speaking tests, marked by an AI examiner.',
     'mock.ieltsParts': 'Parts 1, 2, 3',
     'mock.cefrParts': '4 parts',

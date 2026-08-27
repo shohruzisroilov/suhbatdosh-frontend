@@ -60,7 +60,11 @@ export default function IeltsMock() {
   // Active Test State
   const [testId, setTestId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<ScriptStep | null>(null);
+  // Off by default: the real test gives you no written question outside Part 2.
+  const [showTranscript, setShowTranscript] = useState<boolean>(false);
+  const [notes, setNotes] = useState<string>('');
   const [totalSteps, setTotalSteps] = useState<number>(0);
+  const [estimatedMinutes, setEstimatedMinutes] = useState<number>(0);
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'grading' | 'results'>('idle');
 
@@ -118,9 +122,10 @@ export default function IeltsMock() {
         setTestId(id);
         setCurrentStep(data.step);
         setTotalSteps(data.total || 0);
+        setEstimatedMinutes(data.estimatedMinutes || 0);
         setStepIndex(data.step.i || 0);
         setTestStatus('testing');
-        speakText(data.step.say || data.step.cardSay);
+        beginStep(data.step);
       } else if (data.feedback) {
         setFeedback(data.feedback);
         setTestStatus('results');
@@ -138,12 +143,13 @@ export default function IeltsMock() {
       setTestId(data.testId);
       setCurrentStep(data.step);
       setTotalSteps(data.total || 0);
+      setEstimatedMinutes(data.estimatedMinutes || 0);
       setStepIndex(0);
       setTestStatus('testing');
-      speakText(data.step.say || data.step.cardSay);
+      beginStep(data.step);
     } catch (err: any) {
       console.error('Failed to start test', err);
-      const msg = err.response?.data?.error || 'Imtihonni boshlashda xatolik yuz berdi.';
+      const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
       setErrorMsg(msg);
     }
   };
@@ -162,9 +168,25 @@ export default function IeltsMock() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Mirrors of state that the async speech callbacks read: they fire long after the
+  // render that scheduled them, so the captured state value would be stale.
+  const mountedRef = useRef(true);
+  const isRecordingRef = useRef(false);
+  const isPreppingRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   // Speech synthesis for AI Examiner voice (High Quality AI Voice TTS with Web Speech API fallback)
-  const speakText = async (text?: string) => {
-    if (!soundEnabled || !text) return;
+  const speakText = async (text?: string, onDone?: () => void) => {
+    if (!text) return;
+    // With sound off there is nothing to wait for, so hand control straight back.
+    if (!soundEnabled) {
+      onDone?.();
+      return;
+    }
     stopSpeech();
     try {
       const res = await getTTSAudio(text);
@@ -172,32 +194,37 @@ export default function IeltsMock() {
         const audio = new Audio(res.audioUrl);
         audioRef.current = audio;
         audio.onplay = () => setIsSpeaking(true);
-        audio.onended = () => setIsSpeaking(false);
+        audio.onended = () => { setIsSpeaking(false); onDone?.(); };
         audio.onerror = () => {
           setIsSpeaking(false);
-          fallbackSpeech(text);
+          fallbackSpeech(text, onDone);
         };
         await audio.play();
         return;
       }
+      fallbackSpeech(text, onDone);
     } catch {
-      fallbackSpeech(text);
+      fallbackSpeech(text, onDone);
     }
   };
 
-  const fallbackSpeech = (text: string) => {
-    if (!soundEnabled || !text || !('speechSynthesis' in window)) return;
+  const fallbackSpeech = (text: string, onDone?: () => void) => {
+    if (!soundEnabled || !text || !('speechSynthesis' in window)) {
+      onDone?.();
+      return;
+    }
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = () => { setIsSpeaking(false); onDone?.(); };
+      utterance.onerror = () => { setIsSpeaking(false); onDone?.(); };
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis error:', e);
+      onDone?.();
     }
   };
 
@@ -239,6 +266,7 @@ export default function IeltsMock() {
 
       recorder.start(100);
       setIsRecording(true);
+      isRecordingRef.current = true;
       recordingStartTimeRef.current = Date.now();
 
       const maxMs = (currentStep?.maxSec || 60) * 1000;
@@ -246,12 +274,15 @@ export default function IeltsMock() {
         const elapsed = Date.now() - recordingStartTimeRef.current;
         setRecordingMs(elapsed);
         if (elapsed >= maxMs) {
-          stopRecordingAndSend();
+          clearInterval(recordTimerRef.current);
+          // A real examiner cuts you off out loud rather than the recording just
+          // stopping. Submission waits for that line so it does not clip it.
+          speakText('Thank you.', () => stopRecordingAndSend());
         }
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('Mikrofonga ruxsat berilmadi. Sozlamalardan mikrofonga ruxsat bering.');
+      setErrorMsg('Microphone access was refused. Allow it in your settings to take the test.');
     }
   };
 
@@ -263,6 +294,7 @@ export default function IeltsMock() {
     const duration = Date.now() - recordingStartTimeRef.current;
     clearInterval(recordTimerRef.current);
     setIsRecording(false);
+    isRecordingRef.current = false;
     setSubmittingAnswer(true);
 
     const recorder = mediaRecorderRef.current;
@@ -291,6 +323,7 @@ export default function IeltsMock() {
     }
     clearInterval(recordTimerRef.current);
     setIsRecording(false);
+    isRecordingRef.current = false;
   };
 
   const submitAnswer = async (blob: Blob | null, durationMs: number) => {
@@ -323,11 +356,41 @@ export default function IeltsMock() {
     await submitAnswer(null, 0);
   };
 
+  /**
+   * Runs a step the way an examiner would: speak, then wait for the candidate.
+   *
+   * Every answer used to need a "start recording" tap first, which meant unlimited
+   * silent thinking time before the clock began and no conversational rhythm at all.
+   * The microphone now opens as soon as the examiner stops talking.
+   */
+  const beginStep = (step: ScriptStep) => {
+    const spoken = step.say || step.cardSay;
+
+    speakText(spoken, () => {
+      if (!mountedRef.current) return;
+
+      if (step.kind === 'cue') {
+        // The card is on screen; the preparation minute starts by itself.
+        startPrepTimer();
+        return;
+      }
+      if (step.kind === 'frame' || step.kind === 'closing') {
+        // Examiner framing needs no answer — move on rather than waiting for a tap.
+        window.setTimeout(() => { if (mountedRef.current) handleNextFrame(); }, 700);
+        return;
+      }
+      // A short beat, then the microphone opens.
+      window.setTimeout(() => {
+        if (mountedRef.current && !isRecordingRef.current) startRecording();
+      }, 400);
+    });
+  };
+
   // ── Part 2 Cue Card Timer ──
   const startPrepTimer = () => {
-    stopSpeech();
-    tapHaptic('medium');
+    if (isPreppingRef.current) return;
     setIsPrepping(true);
+    isPreppingRef.current = true;
     setPrepTimeLeft(60);
 
     prepTimerRef.current = setInterval(() => {
@@ -335,10 +398,15 @@ export default function IeltsMock() {
         if (prev <= 1) {
           clearInterval(prepTimerRef.current);
           setIsPrepping(false);
+          isPreppingRef.current = false;
           notifyHaptic('success');
           // Speak start signal when prep time ends
           if (currentStep?.startSay) {
-            speakText(currentStep.startSay);
+            speakText(currentStep.startSay, () => {
+              if (mountedRef.current && !isRecordingRef.current) startRecording();
+            });
+          } else if (mountedRef.current && !isRecordingRef.current) {
+            startRecording();
           }
           return 0;
         }
@@ -383,7 +451,7 @@ export default function IeltsMock() {
 
   const getIeltsPartBadgeText = (part: number, kind: string) => {
     if (kind === 'frame') return 'KIRISH • Examiner Yo\'riqnomasi';
-    if (kind === 'closing') return 'YAKUN • Imtihon Tugadi';
+    if (kind === 'closing') return 'END • Test finished';
     if (part === 1) return 'PART 1 • Kirish & Shaxsiy Savollar';
     if (part === 2) return 'PART 2 • Cue Card Topshirig\'i';
     if (part === 3) return 'PART 3 • Erkin Muhokama & Tahlil';
@@ -428,7 +496,7 @@ export default function IeltsMock() {
               IELTS Speaking Mock Exam
             </h3>
             <p className="im-desc" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 16px 0', textAlign: 'center' }}>
-              Rasmiy IELTS Speaking formati bo'yicha (Part 1, Part 2 Cue Card, va Part 3 Discussion) to'liq AI topshirish va band ballni aniqlash.
+              A full IELTS Speaking test — Part 1, the Part 2 cue card and the Part 3 discussion — marked by an AI examiner on the four official criteria.
             </p>
 
             <div className="im-details-grid">
@@ -437,7 +505,7 @@ export default function IeltsMock() {
                   <Clock size={15} style={{ color: '#38bdf8' }} />
                   <span>Davomiyligi</span>
                 </div>
-                <p className="im-detail-val">{t('mock.duration')}</p>
+                <p className="im-detail-val">{estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration')}</p>
               </div>
 
               <div className="im-detail-card">
@@ -451,7 +519,7 @@ export default function IeltsMock() {
               <div className="im-detail-card im-detail-card--full">
                 <div className="im-detail-head">
                   <BookOpen size={15} style={{ color: '#38bdf8' }} />
-                  <span>Format & Bo'limlar</span>
+                  <span>Format</span>
                 </div>
                 <p className="im-detail-val">Part 1 (Intro) + Part 2 (Cue Card) + Part 3 (Discussion)</p>
               </div>
@@ -514,7 +582,6 @@ export default function IeltsMock() {
   // 2. TESTING SCREEN (Part 1, 2, 3 questions)
   if (testStatus === 'testing' && currentStep) {
     const isCueCard = currentStep.kind === 'cue';
-    const isFrame = currentStep.kind === 'frame' || currentStep.kind === 'closing';
 
     return (
       <div className="im-page">
@@ -538,11 +605,33 @@ export default function IeltsMock() {
             <div className="im-examiner-speech">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="im-examiner-name">AI Examiner</span>
-                {isSpeaking && <span style={{ fontSize: '11px', color: '#38bdf8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#38bdf8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> speaking…</span>}
               </div>
-              <p className="im-examiner-text">
-                {currentStep.say || currentStep.cardSay}
-              </p>
+              {showTranscript ? (
+                <p className="im-examiner-text">{currentStep.say || currentStep.cardSay}</p>
+              ) : (
+                <p className="im-examiner-text im-examiner-text--hidden">
+                  {isSpeaking ? 'Listen to the examiner…' : 'Answer now.'}
+                </p>
+              )}
+              <div className="im-examiner-actions">
+                {/* Asking the examiner to repeat is allowed in the real test. */}
+                <button
+                  type="button"
+                  className="im-mini-btn"
+                  onClick={() => speakText(currentStep.say || currentStep.cardSay)}
+                  disabled={isSpeaking}
+                >
+                  <Volume2 size={13} aria-hidden="true" /> Repeat
+                </button>
+                <button
+                  type="button"
+                  className="im-mini-btn"
+                  onClick={() => setShowTranscript((v) => !v)}
+                >
+                  {showTranscript ? 'Hide text' : 'Show text'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -567,17 +656,25 @@ export default function IeltsMock() {
               <div className="im-prep-timer">
                 <div className="im-prep-timer__info">
                   <Clock size={16} />
-                  <span>Tayyorgarlik vaqti (1 min): </span>
+                  <span>Preparation: </span>
                   <strong className="im-prep-timer__time">{prepTimeLeft}s</strong>
                 </div>
-                {!isPrepping && prepTimeLeft > 0 ? (
-                  <button className="im-prep-btn" onClick={startPrepTimer}>
-                    Tayyorgarlikni boshlash
-                  </button>
-                ) : isPrepping ? (
-                  <span className="im-prep-active">O'ylash va notes olish vaqti ketmoqda...</span>
+                {isPrepping ? (
+                  <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
+                ) : prepTimeLeft === 0 ? (
+                  <span className="im-prep-active">Speak now.</span>
                 ) : null}
               </div>
+
+              {/* The real test hands you paper and a pencil for this minute. */}
+              <textarea
+                className="im-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Your notes…"
+                rows={4}
+                aria-label="Notes for Part 2"
+              />
             </div>
           )}
 
@@ -594,60 +691,41 @@ export default function IeltsMock() {
             {submittingAnswer ? (
               <div className="im-loading-answer">
                 <div className="im-spinner" />
-                <span>Javob yuborilmoqda...</span>
+                <span>Sending your answer…</span>
               </div>
-            ) : isFrame ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                <div className="im-recording-controls">
-                  {!isRecording ? (
-                    <button className="im-rec-btn im-rec-btn--start" onClick={startRecording}>
-                      <Mic size={24} />
-                      <span>Javob berish (Ovoz yozish)</span>
-                    </button>
-                  ) : (
-                    <div className="im-rec-active">
-                      <div className="im-rec-timer">
-                        <span className="im-rec-dot" />
-                        <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
-                      </div>
-                      <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
-                        <MicOff size={22} />
-                        <span>Javobni tugatish va yuborish</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {!isRecording && (
-                  <button className="im-btn im-btn--ghost" onClick={handleNextFrame} style={{ width: '100%', justifyContent: 'center' }}>
-                    <span>Tushundim, keyingisiga o'tish</span>
-                    <ChevronRight size={18} />
+            ) : isRecording ? (
+              <div className="im-recording-controls">
+                <div className="im-rec-active">
+                  <div className="im-rec-timer">
+                    <span className="im-rec-dot" />
+                    <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
+                  </div>
+                  {/* The examiner stops you at the limit; this is for finishing early. */}
+                  <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
+                    <MicOff size={22} />
+                    <span>I've finished</span>
                   </button>
-                )}
+                </div>
+              </div>
+            ) : isPrepping ? (
+              <div className="im-waiting-note">
+                <Clock size={15} aria-hidden="true" />
+                <span>Preparing — {prepTimeLeft}s left</span>
+              </div>
+            ) : isSpeaking ? (
+              <div className="im-waiting-note">
+                <Volume2 size={15} aria-hidden="true" />
+                <span>The examiner is speaking…</span>
               </div>
             ) : (
-              <div className="im-recording-controls">
-                {!isRecording ? (
-                  <button className="im-rec-btn im-rec-btn--start" onClick={startRecording}>
-                    <Mic size={24} />
-                    <span>Javob berishni boshlash</span>
-                  </button>
-                ) : (
-                  <div className="im-rec-active">
-                    <div className="im-rec-timer">
-                      <span className="im-rec-dot" />
-                      <span>{formatSecs(recordingMs)} / {formatSecs((currentStep?.maxSec || 60) * 1000)}</span>
-                    </div>
-                    <button className="im-rec-btn im-rec-btn--stop" onClick={stopRecordingAndSend}>
-                      <MicOff size={22} />
-                      <span>Javobni tugatish va yuborish</span>
-                    </button>
-                  </div>
-                )}
+              <div className="im-waiting-note">
+                <Mic size={15} aria-hidden="true" />
+                <span>Getting ready…</span>
               </div>
             )}
 
             <button className="im-abandon-link" onClick={handleAbandon}>
-              Imtihonni to'xtatish
+              End the test
             </button>
           </div>
         </div>
@@ -664,7 +742,7 @@ export default function IeltsMock() {
           <div className="im-grading-spinner" />
           <h2 className="im-grading-title">AI Examiner Baholamoqda...</h2>
           <p className="im-grading-sub">
-            Aytgan gaplaringiz Fluency, Lexical Resource, Grammar va Pronunciation mezonlari bo'yicha tahlil qilinmoqda. Biroz kuting.
+            Your answers are being marked on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment.
           </p>
         </div>
         <style>{css}</style>
@@ -781,7 +859,7 @@ export default function IeltsMock() {
                 {feedback.fixes.map((fix, idx) => (
                   <div key={idx} className="im-fix-card">
                     <div className="im-fix-said">
-                      <span className="im-fix-label">Siz aytgan so'z:</span>
+                      <span className="im-fix-label">You said:</span>
                       <p>"{fix.said}"</p>
                     </div>
                     <div className="im-fix-better">
@@ -1029,6 +1107,31 @@ const css = `
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .im-recording-controls { width: 100%; }
+  .im-examiner-text--hidden { opacity: 0.55; font-style: italic; }
+  .im-examiner-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .im-mini-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    min-height: 30px; padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75);
+    font-size: 11px; font-weight: 700;
+  }
+  .im-mini-btn:disabled { opacity: 0.4; }
+  .im-notes {
+    width: 100%; margin-top: 10px; padding: 10px;
+    border-radius: 10px; resize: vertical;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 13px; line-height: 1.5;
+  }
+  .im-notes::placeholder { color: rgba(255,255,255,0.35); }
+  .im-waiting-note {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 48px;
+    color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600;
+  }
   .im-rec-btn {
     width: 100%; min-height: 52px; border-radius: 16px; border: none; font-size: 15px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;

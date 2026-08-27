@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useT } from '../i18n';
-import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, HelpCircle, Image as ImageIcon, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, HelpCircle, Image as ImageIcon, Layers, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 import {
   getCefrStatus,
   createCefrTest,
@@ -69,6 +69,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   const [activeTestId, setActiveTestId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<StepData | null>(null);
   const [totalSteps, setTotalSteps] = useState<number>(9);
+  const [estimatedMinutes, setEstimatedMinutes] = useState<number>(0);
 
   // Quota Status
   const [quota, setQuota] = useState<{
@@ -145,6 +146,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       } else if (res.step) {
         setTestId(res.testId);
         setTotalSteps(res.totalSteps || 9);
+        setEstimatedMinutes(res.estimatedMinutes || 0);
         setCurrentStep(res.step);
         setTestStatus('testing');
         handleStepTransition(res.step);
@@ -167,6 +169,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       setTestId(res.testId);
       setActiveTestId(res.testId);
       setTotalSteps(res.totalSteps || 9);
+      setEstimatedMinutes(res.estimatedMinutes || 0);
       setCurrentStep(res.step);
       setTestStatus('testing');
 
@@ -487,7 +490,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <Clock size={15} style={{ color: '#10b981' }} />
                 <span>Davomiyligi</span>
               </div>
-              <p className="im-detail-val">{t('mock.duration')}</p>
+              <p className="im-detail-val">{estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration')}</p>
             </div>
 
             <div className="im-detail-card">
@@ -584,24 +587,53 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             </div>
           </div>
 
-          {/* 1.2 Comparison Pictures Display */}
+          {/* Part 1.2 — two scenes to compare.
+              Labelled by what is actually on screen: "Picture 1" next to nothing to
+              look at contradicts the question, which asks about situations whenever
+              the pool has no image for this pair. Real images drop in later and the
+              labels follow automatically. */}
           {currentStep.pictures?.type === 'comparison' && (
             <div className="im-pictures-grid">
-              <div className="im-picture-card">
-                <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.picture', { n: 1 })}</span>
-                <p>{currentStep.pictures.pic1Alt}</p>
-              </div>
-              <div className="im-picture-card">
-                <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.picture', { n: 2 })}</span>
-                <p>{currentStep.pictures.pic2Alt}</p>
-              </div>
+              {([
+                { url: currentStep.pictures.pic1Url, alt: currentStep.pictures.pic1Alt, n: 1, letter: 'A' },
+                { url: currentStep.pictures.pic2Url, alt: currentStep.pictures.pic2Alt, n: 2, letter: 'B' },
+              ] as const).map((side) => (
+                <div className="im-picture-card" key={side.n}>
+                  <span className="im-pic-tag">
+                    {side.url ? (
+                      <>
+                        <ImageIcon size={12} aria-hidden="true" /> {t('mock.picture', { n: side.n })}
+                      </>
+                    ) : (
+                      <>
+                        <Layers size={12} aria-hidden="true" /> {t('mock.situation', { letter: side.letter })}
+                      </>
+                    )}
+                  </span>
+                  {side.url ? <img src={side.url} alt={side.alt || ''} /> : null}
+                  <p>{side.alt}</p>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* 2 Contextual Picture Display */}
+          {/* Part 2 — the scene the topic sits in. */}
           {currentStep.pictures?.type === 'contextual' && (
             <div className="im-picture-card im-picture-card--full">
-              <span className="im-pic-tag"><ImageIcon size={12} aria-hidden="true" /> {t('mock.topicPicture')}</span>
+              <span className="im-pic-tag">
+                {currentStep.pictures.pic1Url ? (
+                  <>
+                    <ImageIcon size={12} aria-hidden="true" /> {t('mock.topicPicture')}
+                  </>
+                ) : (
+                  <>
+                    <Layers size={12} aria-hidden="true" /> {t('mock.context')}
+                  </>
+                )}
+              </span>
+              {currentStep.pictures.pic1Url ? (
+                <img src={currentStep.pictures.pic1Url} alt={currentStep.pictures.pic1Alt || ''} />
+              ) : null}
               <p>{currentStep.pictures.pic1Alt}</p>
             </div>
           )}
@@ -1104,6 +1136,18 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
+        }
+        /* Real exam images drop straight in once the pool carries URLs; until then the
+           caption alone is shown and the question asks about "situations", not pictures. */
+        .im-picture-card img,
+        .im-picture-single img {
+          display: block;
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          object-fit: cover;
+          border-radius: 8px;
+          margin: 6px 0;
+          background: rgba(255, 255, 255, 0.06);
         }
         .im-picture-card {
           background: rgba(255, 255, 255, 0.04);
