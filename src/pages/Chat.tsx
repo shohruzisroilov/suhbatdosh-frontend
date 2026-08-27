@@ -350,6 +350,8 @@ export default function Chat() {
   const hasSpokenRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechTokenRef = useRef(0);
 
   const handleSpeaking = useCallback((you: boolean, partner: boolean) => {
     setYouSpeaking(you);
@@ -389,6 +391,16 @@ export default function Chat() {
   }, [isAiSession]);
 
   function cleanupAiAudio() {
+    speechTokenRef.current += 1;
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+        audioRef.current.load();
+      } catch {}
+      audioRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try { mediaRecorderRef.current.stop(); } catch {}
     }
@@ -398,51 +410,70 @@ export default function Chat() {
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       try { audioContextRef.current.close(); } catch {}
     }
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setAiStatus('idle');
   }
 
   async function speakAiText(text: string, preloadedAudioUrl?: string | null) {
     if (!isMountedRef.current) return;
+    cleanupAiAudio();
+    speechTokenRef.current += 1;
+    const token = speechTokenRef.current;
+
     setAiStatus('speaking');
 
     if (preloadedAudioUrl) {
+      if (!isMountedRef.current || token !== speechTokenRef.current) return;
       const audio = new Audio(preloadedAudioUrl);
+      audioRef.current = audio;
       audio.onended = () => {
-        if (isMountedRef.current && micOn) {
+        audioRef.current = null;
+        if (isMountedRef.current && token === speechTokenRef.current && micOn) {
           startAiRecording();
-        } else {
+        } else if (isMountedRef.current && token === speechTokenRef.current) {
           setAiStatus('idle');
         }
       };
       audio.onerror = () => {
-        if (isMountedRef.current && micOn) startAiRecording();
+        audioRef.current = null;
+        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
       };
       audio.play().catch(() => {
-        if (isMountedRef.current && micOn) startAiRecording();
+        audioRef.current = null;
+        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
       });
       return;
     }
 
     try {
       const res = await getTTSAudio(text);
+      if (!isMountedRef.current || token !== speechTokenRef.current) return;
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
+        audioRef.current = audio;
         audio.onended = () => {
-          if (isMountedRef.current && micOn) {
+          audioRef.current = null;
+          if (isMountedRef.current && token === speechTokenRef.current && micOn) {
             startAiRecording();
-          } else {
+          } else if (isMountedRef.current && token === speechTokenRef.current) {
             setAiStatus('idle');
           }
         };
         audio.onerror = () => {
-          if (isMountedRef.current && micOn) startAiRecording();
+          audioRef.current = null;
+          if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
         };
         await audio.play();
         return;
       }
     } catch {}
 
-    if ('speechSynthesis' in window) {
+    if (!isMountedRef.current || token !== speechTokenRef.current) return;
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const spokenText = text
         .replace(/Suhbatdosh AI/gi, 'Soohbahtdosh A I')
         .replace(/Suhbatdosh/gi, 'Soohbahtdosh')
@@ -453,18 +484,18 @@ export default function Chat() {
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
       utterance.onend = () => {
-        if (isMountedRef.current && micOn) {
+        if (isMountedRef.current && token === speechTokenRef.current && micOn) {
           startAiRecording();
-        } else {
+        } else if (isMountedRef.current && token === speechTokenRef.current) {
           setAiStatus('idle');
         }
       };
       utterance.onerror = () => {
-        if (isMountedRef.current && micOn) startAiRecording();
+        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
       };
       window.speechSynthesis.speak(utterance);
     } else {
-      if (isMountedRef.current && micOn) startAiRecording();
+      if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
     }
   }
 

@@ -251,39 +251,59 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   };
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechTokenRef = useRef(0);
 
   const speakText = async (text?: string) => {
-    if (!soundEnabled || !text) return;
+    if (!soundEnabled || !text || !mountedRef.current) return;
     stopSpeech();
+    speechTokenRef.current += 1;
+    const token = speechTokenRef.current;
+
     try {
       const res = await getTTSAudio(text);
+      if (!mountedRef.current || token !== speechTokenRef.current || !soundEnabled) return;
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
         audioRef.current = audio;
-        audio.onplay = () => setIsSpeaking(true);
-        audio.onended = () => setIsSpeaking(false);
+        audio.onplay = () => {
+          if (token === speechTokenRef.current && mountedRef.current) setIsSpeaking(true);
+        };
+        audio.onended = () => {
+          audioRef.current = null;
+          if (token === speechTokenRef.current && mountedRef.current) setIsSpeaking(false);
+        };
         audio.onerror = () => {
-          setIsSpeaking(false);
-          fallbackSpeech(text);
+          audioRef.current = null;
+          if (token === speechTokenRef.current && mountedRef.current) {
+            setIsSpeaking(false);
+            fallbackSpeech(text, token);
+          }
         };
         await audio.play();
         return;
       }
+      fallbackSpeech(text, token);
     } catch {
-      fallbackSpeech(text);
+      fallbackSpeech(text, token);
     }
   };
 
-  const fallbackSpeech = (text: string) => {
-    if (!soundEnabled || !text || !('speechSynthesis' in window)) return;
+  const fallbackSpeech = (text: string, token?: number) => {
+    if (!soundEnabled || !text || !mountedRef.current || (token !== undefined && token !== speechTokenRef.current) || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-GB';
       utterance.rate = 0.95;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onstart = () => {
+        if (!token || token === speechTokenRef.current) setIsSpeaking(true);
+      };
+      utterance.onend = () => {
+        if (!token || token === speechTokenRef.current) setIsSpeaking(false);
+      };
+      utterance.onerror = () => {
+        if (!token || token === speechTokenRef.current) setIsSpeaking(false);
+      };
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis error:', e);
@@ -291,13 +311,17 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   };
 
   const stopSpeech = () => {
+    speechTokenRef.current += 1;
     if (audioRef.current) {
       try {
         audioRef.current.pause();
-        audioRef.current = null;
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+        audioRef.current.load();
       } catch {}
+      audioRef.current = null;
     }
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
@@ -430,6 +454,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   const handleAbandon = () => {
     if (!testId) return;
     if (!window.confirm('Imtihondan chiqmoqchimisiz? Ushbu urinish bekor qilinadi.')) return;
+    stopSpeech();
+    clearTimers();
     return runAction('discard', async () => {
       tapHaptic('light');
       try {

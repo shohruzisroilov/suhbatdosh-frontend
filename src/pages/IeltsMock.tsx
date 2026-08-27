@@ -187,6 +187,9 @@ export default function IeltsMock() {
 
   const handleAbandon = () => {
     if (!testId) return;
+    stopSpeech();
+    stopRecordingSilently();
+    stopPrepTimer();
     return runAction('discard', async () => {
       tapHaptic('light');
       try {
@@ -200,6 +203,7 @@ export default function IeltsMock() {
   };
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechTokenRef = useRef(0);
 
   // Mirrors of state that the async speech callbacks read: they fire long after the
   // render that scheduled them, so the captured state value would be stale.
@@ -215,34 +219,49 @@ export default function IeltsMock() {
   // Speech synthesis for AI Examiner voice (High Quality AI Voice TTS with Web Speech API fallback)
   const speakText = async (text?: string, onDone?: () => void) => {
     if (!text) return;
-    // With sound off there is nothing to wait for, so hand control straight back.
-    if (!soundEnabled) {
+    // With sound off or unmounted there is nothing to wait for, so hand control straight back.
+    if (!soundEnabled || !mountedRef.current) {
       onDone?.();
       return;
     }
     stopSpeech();
+    speechTokenRef.current += 1;
+    const token = speechTokenRef.current;
+
     try {
       const res = await getTTSAudio(text);
+      if (!mountedRef.current || token !== speechTokenRef.current || !soundEnabled) return;
       if (res?.ok && res?.audioUrl) {
         const audio = new Audio(res.audioUrl);
         audioRef.current = audio;
-        audio.onplay = () => setIsSpeaking(true);
-        audio.onended = () => { setIsSpeaking(false); onDone?.(); };
+        audio.onplay = () => {
+          if (token === speechTokenRef.current && mountedRef.current) setIsSpeaking(true);
+        };
+        audio.onended = () => {
+          audioRef.current = null;
+          if (token === speechTokenRef.current && mountedRef.current) {
+            setIsSpeaking(false);
+            onDone?.();
+          }
+        };
         audio.onerror = () => {
-          setIsSpeaking(false);
-          fallbackSpeech(text, onDone);
+          audioRef.current = null;
+          if (token === speechTokenRef.current && mountedRef.current) {
+            setIsSpeaking(false);
+            fallbackSpeech(text, onDone, token);
+          }
         };
         await audio.play();
         return;
       }
-      fallbackSpeech(text, onDone);
+      fallbackSpeech(text, onDone, token);
     } catch {
-      fallbackSpeech(text, onDone);
+      fallbackSpeech(text, onDone, token);
     }
   };
 
-  const fallbackSpeech = (text: string, onDone?: () => void) => {
-    if (!soundEnabled || !text || !('speechSynthesis' in window)) {
+  const fallbackSpeech = (text: string, onDone?: () => void, token?: number) => {
+    if (!soundEnabled || !text || !mountedRef.current || (token !== undefined && token !== speechTokenRef.current) || !('speechSynthesis' in window)) {
       onDone?.();
       return;
     }
@@ -251,9 +270,21 @@ export default function IeltsMock() {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.95;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => { setIsSpeaking(false); onDone?.(); };
-      utterance.onerror = () => { setIsSpeaking(false); onDone?.(); };
+      utterance.onstart = () => {
+        if (!token || token === speechTokenRef.current) setIsSpeaking(true);
+      };
+      utterance.onend = () => {
+        if (!token || token === speechTokenRef.current) {
+          setIsSpeaking(false);
+          onDone?.();
+        }
+      };
+      utterance.onerror = () => {
+        if (!token || token === speechTokenRef.current) {
+          setIsSpeaking(false);
+          onDone?.();
+        }
+      };
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis error:', e);
@@ -262,13 +293,17 @@ export default function IeltsMock() {
   };
 
   const stopSpeech = () => {
+    speechTokenRef.current += 1;
     if (audioRef.current) {
       try {
         audioRef.current.pause();
-        audioRef.current = null;
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+        audioRef.current.load();
       } catch {}
+      audioRef.current = null;
     }
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
