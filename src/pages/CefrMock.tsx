@@ -13,6 +13,7 @@ import {
 import useAppStore from '../store/useAppStore';
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
+import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
 
 interface CefrMockProps {
   navigate: (screen: string) => void;
@@ -64,7 +65,10 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   useTelegramBackButton(() => storeNavigate('mock'));
 
   // Test status
-  const [testStatus, setTestStatus] = useState<'loading' | 'idle' | 'testing' | 'grading' | 'results'>('loading');
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'grading' | 'results'>('idle');
+  // Only the first status call blanks the screen. Starting or resuming keeps the card
+  // on screen and lights up the button instead — same as IELTS.
+  const [loadingStatus, setLoadingStatus] = useState<boolean>(true);
   const [testId, setTestId] = useState<string | null>(null);
   const [activeTestId, setActiveTestId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<StepData | null>(null);
@@ -101,6 +105,16 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittingAnswer, setSubmittingAnswer] = useState<boolean>(false);
 
+  // Which start-screen button is mid-flight, so it can say so instead of sitting
+  // there looking untapped.
+  const [busyAction, setBusyAction] = useState<MockBusyAction>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   useEffect(() => {
     fetchStatus();
     return () => {
@@ -115,7 +129,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   };
 
   const fetchStatus = async () => {
-    setTestStatus('loading');
+    setLoadingStatus(true);
     setErrorMsg(null);
     try {
       const res = await getCefrStatus();
@@ -126,63 +140,79 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       } else {
         setActiveTestId(null);
       }
-      setTestStatus('idle');
     } catch (err: any) {
       console.error('CEFR Status error:', err);
-      setErrorMsg('CEFR holatini yuklashda xatolik yuz berdi.');
+      setQuota(null);
+      setErrorMsg(t('mock.statusFailed'));
+    } finally {
+      setLoadingStatus(false);
       setTestStatus('idle');
     }
   };
 
-  const loadActiveTest = async (id: string) => {
-    tapHaptic('medium');
-    setTestStatus('loading');
-    setErrorMsg(null);
+  // One tap, one test. A double tap used to fire two create requests: the server hands
+  // back the same test both times, but the client then ran its opening step twice —
+  // two examiner voices over each other and two prep timers counting down. The ref
+  // closes the window between the taps that state alone would leave open.
+  const actionLockRef = useRef(false);
+
+  const runAction = async (name: Exclude<MockBusyAction, null>, fn: () => Promise<void>) => {
+    if (actionLockRef.current) return;
+    actionLockRef.current = true;
+    setBusyAction(name);
     try {
-      const res = await getCefrTest(id);
-      if (res.status === 'completed' && res.feedback) {
-        setFeedback(res.feedback);
-        setTestStatus('results');
-      } else if (res.step) {
+      await fn();
+    } finally {
+      actionLockRef.current = false;
+      if (mountedRef.current) setBusyAction(null);
+    }
+  };
+
+  const loadActiveTest = (id: string) =>
+    runAction('resume', async () => {
+      tapHaptic('medium');
+      setErrorMsg(null);
+      try {
+        const res = await getCefrTest(id);
+        if (res.status === 'completed' && res.feedback) {
+          setFeedback(res.feedback);
+          setTestStatus('results');
+        } else if (res.step) {
+          setTestId(res.testId);
+          setTotalSteps(res.totalSteps || 9);
+          setEstimatedMinutes(res.estimatedMinutes || 0);
+          setCurrentStep(res.step);
+          setTestStatus('testing');
+          handleStepTransition(res.step);
+        }
+      } catch (err: any) {
+        console.error('Load active test error:', err);
+        setErrorMsg(err?.response?.data?.error || 'Imtihonni yuklashda xatolik.');
+      }
+    });
+
+  const handleStartTest = () =>
+    runAction('start', async () => {
+      tapHaptic('medium');
+      setErrorMsg(null);
+      try {
+        const res = await createCefrTest('full');
         setTestId(res.testId);
+        setActiveTestId(res.testId);
         setTotalSteps(res.totalSteps || 9);
         setEstimatedMinutes(res.estimatedMinutes || 0);
         setCurrentStep(res.step);
         setTestStatus('testing');
-        handleStepTransition(res.step);
-      } else {
-        setTestStatus('idle');
-      }
-    } catch (err: any) {
-      console.error('Load active test error:', err);
-      setErrorMsg('Imtihonni yuklashda xatolik.');
-      setTestStatus('idle');
-    }
-  };
 
-  const handleStartTest = async () => {
-    tapHaptic('medium');
-    setTestStatus('loading');
-    setErrorMsg(null);
-    try {
-      const res = await createCefrTest('full');
-      setTestId(res.testId);
-      setActiveTestId(res.testId);
-      setTotalSteps(res.totalSteps || 9);
-      setEstimatedMinutes(res.estimatedMinutes || 0);
-      setCurrentStep(res.step);
-      setTestStatus('testing');
-
-      if (res.step) {
-        handleStepTransition(res.step);
+        if (res.step) {
+          handleStepTransition(res.step);
+        }
+      } catch (err: any) {
+        console.error('Start CEFR test error:', err);
+        const msg = err?.response?.data?.error || 'Imtihonni boshlashda xatolik yuz berdi.';
+        setErrorMsg(msg);
       }
-    } catch (err: any) {
-      console.error('Start CEFR test error:', err);
-      const msg = err?.response?.data?.error || 'Imtihonni boshlashda xatolik yuz berdi.';
-      setErrorMsg(msg);
-      setTestStatus('idle');
-    }
-  };
+    });
 
   const handleStepTransition = (step: StepData) => {
     clearTimers();
@@ -274,7 +304,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   };
 
   const toggleSound = () => {
-    tapHaptic('light');
+    // The header button already fires the tap haptic.
     if (soundEnabled) {
       stopSpeech();
       setSoundEnabled(false);
@@ -397,19 +427,22 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     }
   };
 
-  const handleAbandon = async () => {
+  const handleAbandon = () => {
     if (!testId) return;
-    tapHaptic('light');
     if (!window.confirm('Imtihondan chiqmoqchimisiz? Ushbu urinish bekor qilinadi.')) return;
-
-    try {
-      await abandonCefrTest(testId);
+    return runAction('discard', async () => {
+      tapHaptic('light');
+      try {
+        await abandonCefrTest(testId);
+      } catch (err) {
+        console.error('Abandon error:', err);
+      }
       setTestId(null);
+      setActiveTestId(null);
+      setCurrentStep(null);
       setTestStatus('idle');
-      fetchStatus();
-    } catch (err) {
-      console.error('Abandon error:', err);
-    }
+      await fetchStatus();
+    });
   };
 
   const getSupportedMimeType = (): string => {
@@ -445,118 +478,107 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   return (
     <div className="im-container">
       {/* Top Navigation */}
-      <div className="im-header">
-        <button className="im-icon-btn" onClick={() => { tapHaptic('light'); navigate('mock'); }}>
-          <ArrowLeft size={20} />
-        </button>
-        <div className="im-header-title">
-          <h2>CEFR Multilevel Speaking Mock</h2>
-          <span className="im-badge">CEFR Mock</span>
-        </div>
-        <button className="im-icon-btn" onClick={toggleSound}>
-          {soundEnabled ? <Volume2 size={20} className="text-sky-400" /> : <VolumeX size={20} className="text-gray-400" />}
-        </button>
-      </div>
+      <MockHeader
+        accent="cefr"
+        title="CEFR Multilevel Mock"
+        soundEnabled={soundEnabled}
+        onBack={() => navigate('mock')}
+        onToggleSound={toggleSound}
+      />
 
-      {errorMsg && (
-        <div className="im-error-banner">
-          <AlertTriangle size={18} />
+      {/* The start screen carries its own error inside the card; the banner is for
+          everything after it. */}
+      {errorMsg && testStatus !== 'idle' && (
+        <div className="im-error-banner" role="alert">
+          <AlertTriangle size={18} aria-hidden="true" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* 1. LOADING STATE */}
-      {testStatus === 'loading' && (
-        <div className="im-center-box">
-          <div className="im-spinner" />
-          <p>CEFR Multilevel tayyorlanmoqda...</p>
-        </div>
+      {/* 1. LOADING STATE — the status call decides what the card can say, so the card
+          waits for it rather than showing numbers that change under the reader. */}
+      {testStatus === 'idle' && loadingStatus && (
+        <MockLoading accent="cefr" label={t('mock.preparing')} />
       )}
 
       {/* 2. IDLE / START SCREEN */}
-      {testStatus === 'idle' && (
-        <div className="im-start-card">
-          <div className="im-hero-ico" style={{ background: 'rgba(16, 185, 129, 0.16)', color: '#10b981' }}>
-            <Award size={40} />
-          </div>
-          <h3>CEFR Multilevel Speaking Mock</h3>
-          <p className="im-desc">
-            Milliy Sertifikat formati bo'yicha (Part 1.1, Part 1.2 Rasm tahlili, Part 2 B2, va Part 3 C1) to'liq AI topshirish va darajani aniqlash.
-          </p>
-
-          <div className="im-details-grid">
-            <div className="im-detail-card">
-              <div className="im-detail-head">
-                <Clock size={15} style={{ color: '#10b981' }} />
-                <span>Davomiyligi</span>
-              </div>
-              <p className="im-detail-val">{estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration')}</p>
-            </div>
-
-            <div className="im-detail-card">
-              <div className="im-detail-head">
-                <Award size={15} style={{ color: '#10b981' }} />
-                <span>Baholash</span>
-              </div>
-              <p className="im-detail-val">Max 75 ball (A1 - C1)</p>
-            </div>
-
-            <div className="im-detail-card im-detail-card--full">
-              <div className="im-detail-head">
-                <BookOpen size={15} style={{ color: '#10b981' }} />
-                <span>Format & Bo'limlar</span>
-              </div>
-              <p className="im-detail-val">Part 1.1 (A1-A2) + Part 1.2 (Rasm) + Part 2 (B2) + Part 3 (C1)</p>
-            </div>
-
-            <div className="im-detail-card im-detail-card--full">
-              <div className="im-detail-head">
-                <Sparkles size={15} style={{ color: '#10b981' }} />
-                <span>Kunlik Limit</span>
-              </div>
-              <p className="im-detail-val">
-                {quota
-                  ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi`
-                  : '3 / 3 ta imtihon qoldi'}
-              </p>
-            </div>
-          </div>
-
-          {activeTestId ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '12px' }}>
-              <button
-                className="im-btn im-btn--primary"
-                onClick={() => loadActiveTest(activeTestId)}
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%' }}
-              >
-                <Sparkles size={20} />
-                <span>{t('mock.resume')}</span>
-              </button>
-              <button
-                className="im-btn im-btn--ghost"
-                onClick={handleAbandon}
-                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', width: '100%' }}
-              >
-                <span>{t('mock.discard')}</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              className="im-btn im-btn--primary"
-              onClick={handleStartTest}
-              disabled={quota ? quota.remaining <= 0 : false}
-              style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
-            >
-              <Sparkles size={20} />
-              <span>{t('mock.startCefr')}</span>
-            </button>
-          )}
-        </div>
+      {testStatus === 'idle' && !loadingStatus && (
+        <MockIntroCard
+          accent="cefr"
+          hero={<Award size={40} aria-hidden="true" />}
+          title="CEFR Multilevel Speaking Mock"
+          description="Milliy Sertifikat formati bo'yicha (Part 1.1, Part 1.2 Rasm tahlili, Part 2 B2, va Part 3 C1) to'liq AI topshirish va darajani aniqlash."
+          details={[
+            {
+              icon: <Clock size={15} aria-hidden="true" />,
+              label: 'Davomiyligi',
+              value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
+            },
+            {
+              icon: <Award size={15} aria-hidden="true" />,
+              label: 'Baholash',
+              value: 'Max 75 ball (A1 - C1)',
+            },
+            {
+              icon: <BookOpen size={15} aria-hidden="true" />,
+              label: "Format & Bo'limlar",
+              value: 'Part 1.1 (A1-A2) + Part 1.2 (Rasm) + Part 2 (B2) + Part 3 (C1)',
+              wide: true,
+            },
+            {
+              icon: <Sparkles size={15} aria-hidden="true" />,
+              label: 'Kunlik Limit',
+              value: quota ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi` : '—',
+              wide: true,
+            },
+          ]}
+          error={errorMsg}
+          note={quota && quota.remaining <= 0 ? t('mock.quotaHint') : null}
+          busy={busyAction}
+          resume={
+            activeTestId
+              ? {
+                  label: t('mock.resume'),
+                  busyLabel: t('mock.opening'),
+                  icon: <Sparkles size={18} aria-hidden="true" />,
+                  onClick: () => loadActiveTest(activeTestId),
+                }
+              : undefined
+          }
+          start={
+            activeTestId
+              ? undefined
+              : !quota
+              ? {
+                  // Nothing loaded, so there is nothing to start — offer the retry a
+                  // dead start button would leave people without.
+                  label: t('common.tryAgain'),
+                  icon: <RotateCcw size={18} aria-hidden="true" />,
+                  onClick: () => fetchStatus(),
+                }
+              : {
+                  label: quota.remaining <= 0 ? t('mock.noQuota') : t('mock.startCefr'),
+                  busyLabel: t('mock.starting'),
+                  icon: <Sparkles size={18} aria-hidden="true" />,
+                  onClick: handleStartTest,
+                  disabled: quota.remaining <= 0,
+                }
+          }
+          discard={
+            activeTestId
+              ? {
+                  label: t('mock.discard'),
+                  busyLabel: t('mock.discarding'),
+                  onClick: handleAbandon,
+                }
+              : undefined
+          }
+        />
       )}
 
       {/* 3. TESTING STATE */}
       {testStatus === 'testing' && currentStep && (
-        <div className="im-test-box">
+        <div className="im-content im-test-box">
           {/* Progress Tracker */}
           <div className="im-progress-bar-wrap">
             <div className="im-progress-info">
@@ -729,16 +751,12 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
 
       {/* 4. GRADING / EVALUATING STATE */}
       {testStatus === 'grading' && (
-        <div className="im-center-box">
-          <div className="im-spinner" style={{ borderColor: '#10b981 transparent transparent transparent' }} />
-          <h3>Natijalar baholanmoqda...</h3>
-          <p>{t('mock.cefrGrading')}</p>
-        </div>
+        <MockLoading accent="cefr" label="Natijalar baholanmoqda…" sublabel={t('mock.cefrGrading')} />
       )}
 
       {/* 5. RESULTS STATE */}
       {testStatus === 'results' && feedback && (
-        <div className="im-results-card">
+        <div className="im-content im-results-card">
           {/* Header Score Badge */}
           <div className="im-result-header" style={{ background: getCefrBadgeStyle(feedback.cefrLevel).bg }}>
             <span className="im-result-title">🇺🇿 CEFR Multilevel Speaking Mock Result</span>
@@ -900,73 +918,32 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           padding-bottom: env(safe-area-inset-bottom, 16px);
         }
 
-        .im-header {
+        .im-error-banner {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 14px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(12px);
-          position: sticky;
-          top: 0;
-          z-index: 20;
+          align-items: flex-start;
+          gap: 8px;
+          margin: 12px 16px 0;
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: rgba(239, 68, 68, 0.14);
+          border: 1px solid rgba(239, 68, 68, 0.30);
+          color: #fca5a5;
+          font-size: 12.5px;
+          line-height: 1.45;
         }
-        .im-header-left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .im-icon-btn {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: #ffffff;
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: background 0.15s ease;
-        }
-        .im-icon-btn:active {
-          transform: scale(0.94);
-        }
-        .im-title-box h2 {
-          font-size: 15px;
-          font-weight: 800;
-          margin: 0;
-          color: #ffffff;
-          line-height: 1.2;
-        }
-        .im-title-box p {
-          font-size: 11px;
-          color: #10b981;
-          margin: 2px 0 0;
-          font-weight: 600;
-        }
+        .im-error-banner svg { flex-shrink: 0; margin-top: 1px; }
 
         .im-content {
           flex: 1;
           padding: 16px;
           display: flex;
           flex-direction: column;
-          max-width: 520px;
+          max-width: 500px;
           margin: 0 auto;
           width: 100%;
           box-sizing: border-box;
         }
 
-        .im-center-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          min-height: 60vh;
-          gap: 16px;
-        }
         .im-spinner {
           width: 44px;
           height: 44px;
@@ -976,90 +953,6 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .im-start-card {
-          background: linear-gradient(145deg, rgba(16, 24, 38, 0.95), rgba(10, 16, 26, 0.98));
-          border: 1px solid rgba(16, 185, 129, 0.3);
-          border-radius: 24px;
-          padding: 24px 20px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(16, 185, 129, 0.12);
-        }
-        .im-hero-ico {
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 16px;
-          border: 1px solid rgba(16, 185, 129, 0.4);
-          box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
-        }
-        .im-start-card h3 {
-          font-size: 20px;
-          font-weight: 800;
-          margin: 0 0 8px 0;
-          color: #ffffff;
-        }
-        .im-desc {
-          font-size: 13px;
-          color: #94a3b8;
-          line-height: 1.5;
-          margin: 0 0 16px 0;
-        }
-        .im-quota-badge {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(16, 185, 129, 0.12);
-          border: 1px solid rgba(16, 185, 129, 0.3);
-          color: #10b981;
-          padding: 8px 14px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 700;
-          margin-bottom: 20px;
-        }
-
-        .im-details-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          width: 100%;
-          margin-bottom: 20px;
-        }
-        .im-detail-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          padding: 12px 14px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          text-align: left;
-        }
-        .im-detail-card--full {
-          grid-column: span 2;
-        }
-        .im-detail-head {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 11px;
-          font-weight: 700;
-          color: #94a3b8;
-        }
-        .im-detail-val {
-          font-size: 13px;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0;
-          line-height: 1.3;
-        }
 
         .im-btn {
           width: 100%;

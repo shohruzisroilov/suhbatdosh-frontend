@@ -457,6 +457,16 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.discard': 'Discard it and start over',
     'mock.startIelts': 'Start IELTS mock test',
     'mock.startCefr': 'Start CEFR mock test',
+
+    // Every wait on a mock screen names itself, so the two exams never differ on
+    // whether tapping something looks like it worked.
+    'mock.preparing': 'Getting your test ready…',
+    'mock.starting': 'Starting your test…',
+    'mock.opening': 'Opening your test…',
+    'mock.discarding': 'Discarding…',
+    'mock.statusFailed': 'Could not load your test status. Check your connection and try again.',
+    'mock.noQuota': 'No tests left today',
+    'mock.quotaHint': 'You have used all of today\'s tests. They reset tomorrow.',
     'mock.retake': 'Take another test',
     'mock.retakeCefr': 'Take another CEFR test',
     'mock.notesHint': 'Make notes now. Start speaking when the timer ends.',

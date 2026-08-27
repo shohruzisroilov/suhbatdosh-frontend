@@ -12,6 +12,7 @@ import {
   getTTSAudio,
 } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
+import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
 import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 
 interface ScriptStep {
@@ -90,6 +91,10 @@ export default function IeltsMock() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittingAnswer, setSubmittingAnswer] = useState<boolean>(false);
 
+  // Which start-screen button is mid-flight, so it can say so instead of sitting
+  // there looking untapped.
+  const [busyAction, setBusyAction] = useState<MockBusyAction>(null);
+
   useEffect(() => {
     fetchStatus();
     return () => {
@@ -101,69 +106,97 @@ export default function IeltsMock() {
 
   const fetchStatus = async () => {
     setLoadingStatus(true);
+    setErrorMsg(null);
     try {
       const data = await getIeltsStatus();
       setStatus(data);
-      if (data.active) {
-        setTestId(data.active);
-        loadActiveTest(data.active);
-      }
+      // An unfinished test is offered, never resumed on its own. Resuming reopens the
+      // microphone, and a browser only grants that off a tap — dropping someone
+      // straight back into a test on load meant a dead mic and no way to bail out.
+      setTestId(data.active);
     } catch (err: any) {
       console.error('Failed to load IELTS status', err);
+      setStatus(null);
+      setErrorMsg(t('mock.statusFailed'));
     } finally {
       setLoadingStatus(false);
     }
   };
 
-  const loadActiveTest = async (id: string) => {
+  // One tap, one test. A double tap used to fire two start requests: the server hands
+  // back the same test both times, but the client then ran its opening step twice —
+  // two examiner voices over each other and two recorders fighting for the mic. The
+  // ref closes the window between the taps that state alone would leave open.
+  const actionLockRef = useRef(false);
+
+  const runAction = async (name: Exclude<MockBusyAction, null>, fn: () => Promise<void>) => {
+    if (actionLockRef.current) return;
+    actionLockRef.current = true;
+    setBusyAction(name);
     try {
-      const data = await getIeltsTest(id);
-      if (data.status === 'active' && data.step) {
-        setTestId(id);
+      await fn();
+    } finally {
+      actionLockRef.current = false;
+      if (mountedRef.current) setBusyAction(null);
+    }
+  };
+
+  const loadActiveTest = (id: string) =>
+    runAction('resume', async () => {
+      tapHaptic('medium');
+      setErrorMsg(null);
+      try {
+        const data = await getIeltsTest(id);
+        if (data.status === 'active' && data.step) {
+          setTestId(id);
+          setCurrentStep(data.step);
+          setTotalSteps(data.total || 0);
+          setEstimatedMinutes(data.estimatedMinutes || 0);
+          setStepIndex(data.step.i || 0);
+          setTestStatus('testing');
+          beginStep(data.step);
+        } else if (data.feedback) {
+          setFeedback(data.feedback);
+          setTestStatus('results');
+        }
+      } catch (err: any) {
+        console.error('Failed to load active test', err);
+        setErrorMsg(err.response?.data?.error || 'Could not open your test. Please try again.');
+      }
+    });
+
+  const handleStartTest = () =>
+    runAction('start', async () => {
+      tapHaptic('medium');
+      setErrorMsg(null);
+      try {
+        const data = await startIeltsTest({ mode: 'full' });
+        setTestId(data.testId);
         setCurrentStep(data.step);
         setTotalSteps(data.total || 0);
         setEstimatedMinutes(data.estimatedMinutes || 0);
-        setStepIndex(data.step.i || 0);
+        setStepIndex(0);
         setTestStatus('testing');
         beginStep(data.step);
-      } else if (data.feedback) {
-        setFeedback(data.feedback);
-        setTestStatus('results');
+      } catch (err: any) {
+        console.error('Failed to start test', err);
+        const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
+        setErrorMsg(msg);
       }
-    } catch (err: any) {
-      console.error('Failed to load active test', err);
-    }
-  };
+    });
 
-  const handleStartTest = async () => {
-    tapHaptic('medium');
-    setErrorMsg(null);
-    try {
-      const data = await startIeltsTest({ mode: 'full' });
-      setTestId(data.testId);
-      setCurrentStep(data.step);
-      setTotalSteps(data.total || 0);
-      setEstimatedMinutes(data.estimatedMinutes || 0);
-      setStepIndex(0);
-      setTestStatus('testing');
-      beginStep(data.step);
-    } catch (err: any) {
-      console.error('Failed to start test', err);
-      const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
-      setErrorMsg(msg);
-    }
-  };
-
-  const handleAbandon = async () => {
+  const handleAbandon = () => {
     if (!testId) return;
-    tapHaptic('light');
-    try {
-      await abandonIeltsTest(testId);
-    } catch (err) {}
-    setTestId(null);
-    setCurrentStep(null);
-    setTestStatus('idle');
-    fetchStatus();
+    return runAction('discard', async () => {
+      tapHaptic('light');
+      try {
+        await abandonIeltsTest(testId);
+      } catch (err) {}
+      setTestId(null);
+      setCurrentStep(null);
+      setTestStatus('idle');
+      await fetchStatus();
+    });
   };
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -460,120 +493,113 @@ export default function IeltsMock() {
 
   // Render Header
   const renderHeader = () => (
-    <div className="im-header">
-      <button className="im-back-btn" onClick={() => navigate('mock')}>
-        <ArrowLeft size={18} />
-      </button>
-      <div className="im-header__title">
-        <Sparkles size={16} className="im-sparkle" />
-        <span>IELTS AI Mock Examiner</span>
-      </div>
-      <button
-        className="im-sound-btn"
-        onClick={() => {
-          const next = !soundEnabled;
-          setSoundEnabled(next);
-          if (!next) stopSpeech();
-        }}
-      >
-        {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-      </button>
-    </div>
+    <MockHeader
+      accent="ielts"
+      title="IELTS AI Mock Examiner"
+      soundEnabled={soundEnabled}
+      onBack={() => navigate('mock')}
+      onToggleSound={() => {
+        const next = !soundEnabled;
+        setSoundEnabled(next);
+        if (!next) stopSpeech();
+      }}
+    />
   );
 
   // 1. IDLE SCREEN (Quota & Start)
   if (testStatus === 'idle') {
+    // The status call decides what the card can say — how many tests are left, whether
+    // one is unfinished. Drawing the card before it lands would show numbers that then
+    // change under the reader, so the wait is shown instead. CEFR waits the same way.
+    if (loadingStatus) {
+      return (
+        <div className="im-page">
+          {renderHeader()}
+          <MockLoading accent="ielts" label={t('mock.preparing')} />
+          <style>{css}</style>
+        </div>
+      );
+    }
+
+    const statusFailed = !status;
+    const outOfTests = !!status && status.remaining <= 0;
+
     return (
       <div className="im-page">
         {renderHeader()}
 
-        <div className="im-content">
-          <div className="im-start-card">
-            <div className="im-hero-ico" style={{ background: 'rgba(56, 189, 248, 0.16)', color: '#38bdf8' }}>
-              <Award size={40} />
-            </div>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px 0', color: '#fff' }}>
-              IELTS Speaking Mock Exam
-            </h3>
-            <p className="im-desc" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 16px 0', textAlign: 'center' }}>
-              A full IELTS Speaking test — Part 1, the Part 2 cue card and the Part 3 discussion — marked by an AI examiner on the four official criteria.
-            </p>
+        <MockIntroCard
+          accent="ielts"
+          hero={<Award size={40} aria-hidden="true" />}
+          title="IELTS Speaking Mock Exam"
+          description="A full IELTS Speaking test — Part 1, the Part 2 cue card and the Part 3 discussion — marked by an AI examiner on the four official criteria."
+          details={[
+            {
+              icon: <Clock size={15} aria-hidden="true" />,
+              label: 'Davomiyligi',
+              value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
+            },
+            {
+              icon: <Award size={15} aria-hidden="true" />,
+              label: 'Baholash',
+              value: 'Band 0 - 9.0 (IELTS)',
+            },
+            {
+              icon: <BookOpen size={15} aria-hidden="true" />,
+              label: 'Format',
+              value: 'Part 1 (Intro) + Part 2 (Cue Card) + Part 3 (Discussion)',
+              wide: true,
+            },
+            {
+              icon: <Sparkles size={15} aria-hidden="true" />,
+              label: 'Kunlik Limit',
+              value: status ? `${status.remaining} / ${status.limit} ta imtihon qoldi` : '—',
+              wide: true,
+            },
+          ]}
+          error={errorMsg}
+          note={outOfTests ? t('mock.quotaHint') : null}
+          busy={busyAction}
+          resume={
+            status?.active
+              ? {
+                  label: t('mock.resume'),
+                  busyLabel: t('mock.opening'),
+                  icon: <Sparkles size={18} aria-hidden="true" />,
+                  onClick: () => loadActiveTest(status.active!),
+                }
+              : undefined
+          }
+          start={
+            status?.active
+              ? undefined
+              : statusFailed
+              ? {
+                  // Nothing loaded, so there is nothing to start — offer the retry the
+                  // dead, greyed-out start button used to leave people without.
+                  label: t('common.tryAgain'),
+                  icon: <RotateCcw size={18} aria-hidden="true" />,
+                  onClick: () => fetchStatus(),
+                }
+              : {
+                  label: outOfTests ? t('mock.noQuota') : t('mock.startIelts'),
+                  busyLabel: t('mock.starting'),
+                  icon: <Sparkles size={18} aria-hidden="true" />,
+                  onClick: handleStartTest,
+                  disabled: outOfTests,
+                }
+          }
+          discard={
+            status?.active
+              ? {
+                  label: t('mock.discard'),
+                  busyLabel: t('mock.discarding'),
+                  onClick: handleAbandon,
+                }
+              : undefined
+          }
+        />
 
-            <div className="im-details-grid">
-              <div className="im-detail-card">
-                <div className="im-detail-head">
-                  <Clock size={15} style={{ color: '#38bdf8' }} />
-                  <span>Davomiyligi</span>
-                </div>
-                <p className="im-detail-val">{estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration')}</p>
-              </div>
-
-              <div className="im-detail-card">
-                <div className="im-detail-head">
-                  <Award size={15} style={{ color: '#38bdf8' }} />
-                  <span>Baholash</span>
-                </div>
-                <p className="im-detail-val">Band 0 - 9.0 (IELTS)</p>
-              </div>
-
-              <div className="im-detail-card im-detail-card--full">
-                <div className="im-detail-head">
-                  <BookOpen size={15} style={{ color: '#38bdf8' }} />
-                  <span>Format</span>
-                </div>
-                <p className="im-detail-val">Part 1 (Intro) + Part 2 (Cue Card) + Part 3 (Discussion)</p>
-              </div>
-
-              <div className="im-detail-card im-detail-card--full">
-                <div className="im-detail-head">
-                  <Sparkles size={15} style={{ color: '#38bdf8' }} />
-                  <span>Kunlik Limit</span>
-                </div>
-                <p className="im-detail-val">
-                  {status
-                    ? `${status.remaining} / ${status.limit} ta imtihon qoldi`
-                    : '3 / 3 ta imtihon qoldi'}
-                </p>
-              </div>
-            </div>
-
-            {/* Error notice */}
-            {errorMsg && (
-              <div className="im-error-box" style={{ width: '100%', marginBottom: '14px' }}>
-                <AlertCircle size={16} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="im-actions" style={{ width: '100%' }}>
-              {status?.active ? (
-                <>
-                  <button className="im-btn im-btn--primary" onClick={() => loadActiveTest(status.active!)}>
-                    <Sparkles size={18} />
-                    <span>{t('mock.resume')}</span>
-                  </button>
-                  <button
-                    className="im-btn im-btn--ghost"
-                    onClick={handleAbandon}
-                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
-                  >
-                    <span>{t('mock.discard')}</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="im-btn im-btn--primary"
-                  onClick={handleStartTest}
-                  disabled={loadingStatus || (status?.remaining ?? 0) <= 0}
-                >
-                  <Sparkles size={18} />
-                  <span>{t('mock.startIelts')}</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
         <style>{css}</style>
       </div>
     );
@@ -737,14 +763,12 @@ export default function IeltsMock() {
   // 3. GRADING LOADING SCREEN
   if (testStatus === 'grading') {
     return (
-      <div className="im-page im-page--center">
-        <div className="im-grading-card">
-          <div className="im-grading-spinner" />
-          <h2 className="im-grading-title">AI Examiner Baholamoqda...</h2>
-          <p className="im-grading-sub">
-            Your answers are being marked on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment.
-          </p>
-        </div>
+      <div className="im-page">
+        <MockLoading
+          accent="ielts"
+          label="AI Examiner baholamoqda…"
+          sublabel="Your answers are being marked on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment."
+        />
         <style>{css}</style>
       </div>
     );
@@ -910,84 +934,8 @@ const css = `
     align-items: center; justify-content: center; padding: 24px;
   }
 
-  .im-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px);
-    position: sticky; top: 0; z-index: 10;
-  }
-  .im-back-btn, .im-sound-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.08); color: #fff; border: none; cursor: pointer;
-  }
-  .im-header__title {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 15px; font-weight: 700; color: #fff;
-  }
-  .im-sparkle { color: #38bdf8; }
-
   .im-content {
     padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box;
-  }
-
-  .im-start-card {
-    background: linear-gradient(145deg, rgba(16, 24, 38, 0.95), rgba(10, 16, 26, 0.98));
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    border-radius: 24px;
-    padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(56, 189, 248, 0.12);
-  }
-  .im-hero-ico {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
-  }
-
-  .im-details-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-    margin-bottom: 20px;
-  }
-  .im-detail-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-align: left;
-  }
-  .im-detail-card--full {
-    grid-column: span 2;
-  }
-  .im-detail-head {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #94a3b8;
-  }
-  .im-detail-val {
-    font-size: 13px;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    line-height: 1.3;
   }
 
   .im-hero-card {
@@ -1157,16 +1105,6 @@ const css = `
   }
 
   /* Grading Screen */
-  .im-grading-card {
-    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;
-    max-width: 320px;
-  }
-  .im-grading-spinner {
-    width: 56px; height: 56px; border: 4px solid rgba(255,255,255,0.1);
-    border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite;
-  }
-  .im-grading-title { font-size: 20px; font-weight: 800; margin: 0; }
-  .im-grading-sub { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; margin: 0; }
 
   /* Results Screen */
   .im-result-score-card {
