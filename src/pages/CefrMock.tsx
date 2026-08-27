@@ -14,6 +14,7 @@ import useAppStore from '../store/useAppStore';
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import { pickExaminerVoice, whenVoicesReady, type ExaminerGender } from '../utils/examinerVoice';
+import { describeAnswerError } from '../utils/answerError';
 import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
 
 /** Uploads per answer. Each one carries the recording, so this stays small. */
@@ -618,9 +619,19 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       const preferred = getSupportedMimeType();
       // An empty string is not a valid mimeType — passing it through threw and killed
       // the recording outright. No option at all lets the browser pick its own.
+
+      // Speech, not music. Left to itself the browser picks a music-grade bitrate —
+      // on iOS that is AAC at around 128 kbps, which turns a two-minute Part 2 answer
+      // into nearly 2 MB and takes longer to upload over a weak mobile connection than
+      // the request is allowed to wait. 32 kbps mono is well above what the
+      // transcription models need and cuts the upload about fourfold.
+      const AUDIO_BITS_PER_SECOND = 32_000;
       const recorder = preferred
-        ? new MediaRecorder(stream, { mimeType: preferred })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(stream, {
+            mimeType: preferred,
+            audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
+          })
+        : new MediaRecorder(stream, { audioBitsPerSecond: AUDIO_BITS_PER_SECOND });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -803,7 +814,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       }
 
       setSubmittingAnswer(false);
-      setErrorMsg(err?.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.');
+      setErrorMsg(describeAnswerError(err));
       setAnswerFailed(true);
     }
   };

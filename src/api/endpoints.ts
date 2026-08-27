@@ -63,9 +63,15 @@ export const getIeltsTest = (id: string | number, timeout?: number) =>
  * matters: a short answer used to get a 20s allowance for work the server is allowed
  * to spend six seconds on top of the upload, so a slow connection failed an answer
  * that would have landed.
+ *
+ * The per-kilobyte allowance assumes a weak mobile uplink rather than a good one —
+ * 80ms/KB works out to 100 kbps, which is optimistic for two bars of LTE, and the old
+ * 90s ceiling cut off Part 2 answers that were still in flight. Giving up early is the
+ * expensive mistake here: the server writes the answer as soon as the upload lands, so
+ * waiting longer costs a slower failure while quitting early costs the answer.
  */
 export const answerTimeout = (bytes: number) =>
-  Math.min(45_000 + Math.ceil(bytes / 1024) * 80, 90_000);
+  Math.min(45_000 + Math.ceil(bytes / 1024) * 120, 120_000);
 
 export const sendIeltsAnswer = (
   id: string | number,

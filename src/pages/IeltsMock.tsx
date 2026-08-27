@@ -13,6 +13,7 @@ import {
 } from '../api/endpoints';
 import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import { pickExaminerVoice, whenVoicesReady, type ExaminerGender } from '../utils/examinerVoice';
+import { describeAnswerError } from '../utils/answerError';
 import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
 import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 
@@ -481,7 +482,16 @@ export default function IeltsMock() {
         ? 'audio/mp4'
         : 'audio/aac';
 
-      const recorder = new MediaRecorder(stream, { mimeType });
+      // Speech, not music. Left to itself the browser picks a music-grade bitrate —
+      // on iOS that is AAC at around 128 kbps, which turns a two-minute Part 2 answer
+      // into nearly 2 MB and takes longer to upload over a weak mobile connection than
+      // the request is allowed to wait. 32 kbps mono is well above what the
+      // transcription models need and cuts the upload about fourfold.
+      const AUDIO_BITS_PER_SECOND = 32_000;
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+        audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
+      });
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -676,8 +686,7 @@ export default function IeltsMock() {
       }
 
       setSubmittingAnswer(false);
-      const msg = err.response?.data?.error || 'Javobni yuborishda xatolik. Qayta yuborib ko\'ring.';
-      setErrorMsg(msg);
+      setErrorMsg(describeAnswerError(err));
       setAnswerFailed(true);
     }
   };
