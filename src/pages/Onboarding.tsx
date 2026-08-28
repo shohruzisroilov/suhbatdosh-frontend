@@ -106,7 +106,7 @@ export default function Onboarding() {
                     aria-checked={active}
                     onClick={() => pickLevel(n)}
                     className={`w-full text-left p-3.5 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--btn-bg)] bg-[var(--bg-secondary)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg)]'
+                      active ? 'border-[var(--btn-bg)] bg-[var(--btn-bg-soft)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ export default function Onboarding() {
                     aria-checked={active}
                     onClick={() => pickGender(g.v)}
                     className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--btn-bg)] bg-[var(--bg-secondary)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg)]'
+                      active ? 'border-[var(--btn-bg)] bg-[var(--btn-bg-soft)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">

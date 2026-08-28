@@ -204,50 +204,50 @@ export default function HomeHeader({
         /* Level Selector Modal */
         .hh-level-modal {
           width: 90%; max-width: 380px;
-          background: #111827; border: 1px solid rgba(255, 255, 255, 0.12);
+          background: var(--bg-secondary); border: 1px solid var(--border);
           border-radius: 20px; padding: 20px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+          box-shadow: var(--shadow-md);
         }
         .hh-level-header {
           display: flex; align-items: center; justify-content: space-between;
           margin-bottom: 6px;
         }
         .hh-level-header h3 {
-          font-size: 18px; font-weight: 700; color: #fff; margin: 0;
+          font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0;
         }
         .hh-level-close {
-          background: rgba(255,255,255,0.08); border: none; color: #9ca3af;
+          background: var(--surface-2); border: none; color: var(--text-secondary);
           width: 30px; height: 30px; border-radius: 50%; display: flex;
           align-items: center; justify-content: center; cursor: pointer;
         }
         .hh-level-desc {
-          font-size: 13px; color: #9ca3af; margin: 0 0 16px 0; line-height: 1.4;
+          font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.4;
         }
         .hh-level-list {
           display: flex; flex-direction: column; gap: 8px;
         }
         .hh-level-item {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08); color: #e5e7eb;
+          padding: 12px 14px; border-radius: 12px; background: var(--surface-2);
+          border: 1px solid var(--border); color: var(--text-primary);
           cursor: pointer; transition: all 0.2s ease; text-align: left;
         }
         .hh-level-item:active { transform: scale(0.98); }
         .hh-level-item.active {
-          background: rgba(0, 168, 255, 0.15);
-          border-color: rgba(0, 168, 255, 0.5);
-          color: #38bdf8;
+          background: var(--btn-bg-soft);
+          border-color: var(--btn-bg);
+          color: var(--btn-bg);
         }
         .hh-level-item-left { display: flex; align-items: center; gap: 10px; }
         .hh-level-code {
           font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 6px;
-          background: rgba(255,255,255,0.1); color: #fff;
+          background: var(--surface-3); color: var(--text-primary);
         }
         .hh-level-item.active .hh-level-code {
-          background: #0284c7; color: #fff;
+          background: var(--btn-bg); color: var(--btn-text);
         }
         .hh-level-name { font-size: 14px; font-weight: 600; }
-        .hh-level-check { color: #38bdf8; }
+        .hh-level-check { color: var(--btn-bg); }
       `}</style>
     </>
   );

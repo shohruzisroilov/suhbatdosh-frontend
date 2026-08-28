@@ -270,8 +270,8 @@ const MOCK_CSS = `
   .mk-header {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 23, 42, 0.72);
+    border-bottom: 1px solid var(--border);
+    background: var(--chrome-bg-soft);
     backdrop-filter: blur(12px);
     position: sticky; top: 0; z-index: 20;
   }
@@ -279,16 +279,16 @@ const MOCK_CSS = `
     width: 38px; height: 38px; flex-shrink: 0;
     border-radius: 12px;
     display: inline-flex; align-items: center; justify-content: center;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    color: #ffffff; cursor: pointer;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-primary); cursor: pointer;
     transition: transform 0.12s ease, background 0.15s ease;
   }
-  .mk-icon-btn:active { transform: scale(0.94); background: rgba(255, 255, 255, 0.12); }
+  .mk-icon-btn:active { transform: scale(0.94); background: var(--surface-3); }
   .mk-header__title {
     flex: 1; min-width: 0;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    font-size: 15px; font-weight: 700; color: #ffffff;
+    font-size: 15px; font-weight: 700; color: var(--text-primary);
   }
   .mk-header__title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mk-header__spark { color: var(--mk-accent); flex-shrink: 0; }
@@ -300,14 +300,14 @@ const MOCK_CSS = `
   }
   .mk-spinner {
     width: 40px; height: 40px; border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.12);
+    border: 3px solid var(--border-strong);
     border-top-color: var(--mk-accent);
     animation: mkSpin 0.8s linear infinite;
   }
   @keyframes mkSpin { to { transform: rotate(360deg); } }
-  .mk-center__label { margin: 0; font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .mk-center__label { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary); }
   .mk-center__sub {
-    margin: -4px 0 0; font-size: 13px; line-height: 1.5; color: #94a3b8;
+    margin: -4px 0 0; font-size: 13px; line-height: 1.5; color: var(--text-secondary);
     max-width: 320px;
   }
 
@@ -316,12 +316,12 @@ const MOCK_CSS = `
     padding: 16px; box-sizing: border-box;
   }
   .mk-card {
-    background: linear-gradient(145deg, rgba(16, 24, 38, 0.96), rgba(10, 16, 26, 0.98));
+    background: var(--bg-secondary);
     border: 1px solid var(--mk-soft);
     border-radius: 24px;
     padding: 24px 20px;
     display: flex; flex-direction: column; align-items: center; text-align: center;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px var(--mk-glow);
+    box-shadow: var(--shadow-md), 0 0 24px var(--mk-glow);
     animation: mkRise 0.28s ease both;
   }
   @keyframes mkRise {
@@ -336,32 +336,32 @@ const MOCK_CSS = `
     box-shadow: 0 0 20px var(--mk-glow);
     margin-bottom: 16px;
   }
-  .mk-card__title { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: #ffffff; line-height: 1.25; }
-  .mk-card__desc { font-size: 13px; line-height: 1.55; color: #94a3b8; margin: 0 0 18px; }
+  .mk-card__title { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-primary); line-height: 1.25; }
+  .mk-card__desc { font-size: 13px; line-height: 1.55; color: var(--text-secondary); margin: 0 0 18px; }
 
   .mk-details {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
   }
   .mk-detail {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: 14px; padding: 12px 14px;
     display: flex; flex-direction: column; gap: 4px; text-align: left;
   }
   .mk-detail--wide { grid-column: span 2; }
   .mk-detail__head {
     display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 700; color: #94a3b8;
+    font-size: 11px; font-weight: 700; color: var(--text-secondary);
   }
   .mk-detail__head svg { color: var(--mk-accent); flex-shrink: 0; }
-  .mk-detail__val { font-size: 13px; font-weight: 700; color: #ffffff; margin: 0; line-height: 1.35; }
+  .mk-detail__val { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.35; }
 
   .mk-error {
     margin-top: 16px; width: 100%; box-sizing: border-box;
     display: flex; align-items: flex-start; gap: 8px; text-align: left;
-    background: rgba(239, 68, 68, 0.14);
+    background: var(--danger-bg);
     border: 1px solid rgba(239, 68, 68, 0.30);
-    color: #fca5a5; padding: 10px 12px; border-radius: 12px;
+    color: var(--danger); padding: 10px 12px; border-radius: 12px;
     font-size: 12.5px; line-height: 1.45;
   }
   .mk-error svg { flex-shrink: 0; margin-top: 1px; }
@@ -383,11 +383,11 @@ const MOCK_CSS = `
     box-shadow: 0 6px 20px var(--mk-glow);
   }
   .mk-btn--ghost {
-    background: rgba(255, 255, 255, 0.07); color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: var(--surface-2); color: var(--text-primary);
+    border: 1px solid var(--border);
   }
   .mk-btn--danger {
-    background: rgba(239, 68, 68, 0.12); color: #f87171;
+    background: var(--danger-bg); color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.24);
   }
   /* currentColor with a cut-out top works on every button variant. */
@@ -398,7 +398,7 @@ const MOCK_CSS = `
     animation: mkSpin 0.7s linear infinite;
   }
 
-  .mk-note { margin: 12px 0 0; font-size: 12px; line-height: 1.45; color: #64748b; }
+  .mk-note { margin: 12px 0 0; font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
 
   @media (prefers-reduced-motion: reduce) {
     .mk-card { animation: none; }

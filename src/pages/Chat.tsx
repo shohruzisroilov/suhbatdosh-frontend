@@ -1071,9 +1071,12 @@ export default function Chat() {
         .call-screen {
           --bg: #080C14;
           --bg-secondary: rgba(255,255,255,0.07);
+          --surface-2: rgba(255,255,255,0.12);
+          --surface-3: rgba(255,255,255,0.20);
           --text-primary: #ffffff;
           --text-secondary: rgba(255,255,255,0.55);
           --border: rgba(255,255,255,0.1);
+          --border-strong: rgba(255,255,255,0.2);
           position: relative;
           width: 100%; height: 100%;
           background: #080C14;

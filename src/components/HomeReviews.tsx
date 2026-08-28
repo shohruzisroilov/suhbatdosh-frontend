@@ -171,8 +171,8 @@ export default function HomeReviews() {
           width: 100%;
           padding: 16px;
           border-radius: 20px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -187,9 +187,9 @@ export default function HomeReviews() {
           gap: 6px;
           padding: 9px 14px;
           border-radius: 12px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.85);
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          color: var(--text-primary);
           font-size: 12px;
           font-weight: 600;
           cursor: pointer;
@@ -197,7 +197,7 @@ export default function HomeReviews() {
         }
         .home-reviews-footer-btn:active {
           transform: scale(0.98);
-          background: rgba(255, 255, 255, 0.1);
+          background: var(--surface-3);
         }
 
         .home-reviews-header {
@@ -229,7 +229,7 @@ export default function HomeReviews() {
         .home-reviews-title {
           font-size: 15px;
           font-weight: 700;
-          color: #ffffff;
+          color: var(--text-primary);
           margin: 0;
         }
 
@@ -272,8 +272,8 @@ export default function HomeReviews() {
           scroll-snap-align: start;
           padding: 12px;
           border-radius: 14px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--surface-2);
+          border: 1px solid var(--border);
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -308,7 +308,7 @@ export default function HomeReviews() {
         .home-review-name {
           font-size: 12px;
           font-weight: 600;
-          color: #ffffff;
+          color: var(--text-primary);
         }
 
         .home-review-stars {
@@ -318,7 +318,7 @@ export default function HomeReviews() {
 
         .home-review-comment {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.8);
+          color: var(--text-secondary);
           line-height: 1.35;
           margin: 0;
           display: -webkit-box;
@@ -340,7 +340,7 @@ export default function HomeReviews() {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.2);
+          background: var(--border-strong);
           border: none;
           padding: 0;
           cursor: pointer;
@@ -367,11 +367,11 @@ export default function HomeReviews() {
         .home-reviews-empty {
           padding: 14px;
           text-align: center;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px dashed rgba(255, 255, 255, 0.15);
+          background: var(--surface-2);
+          border: 1px dashed var(--border-strong);
           border-radius: 14px;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
           cursor: pointer;
         }
 

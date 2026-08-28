@@ -1412,8 +1412,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           display: flex;
           flex-direction: column;
           min-height: 100vh;
-          background: #090d16;
-          color: #ffffff;
+          background: var(--bg);
+          color: var(--text-primary);
           font-family: inherit;
           padding-bottom: env(safe-area-inset-bottom, 16px);
         }
@@ -1425,9 +1425,9 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           margin: 12px 16px 0;
           padding: 10px 12px;
           border-radius: 12px;
-          background: rgba(239, 68, 68, 0.14);
+          background: var(--danger-bg);
           border: 1px solid rgba(239, 68, 68, 0.30);
-          color: #fca5a5;
+          color: var(--danger);
           font-size: 12.5px;
           line-height: 1.45;
         }
@@ -1447,7 +1447,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         .im-spinner {
           width: 44px;
           height: 44px;
-          border: 3px solid rgba(16, 185, 129, 0.2);
+          border: 3px solid var(--border-strong);
           border-top-color: #10b981;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
@@ -1476,9 +1476,9 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
         }
         .im-btn--ghost {
-          background: rgba(255, 255, 255, 0.08);
-          color: #ffffff;
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: var(--surface-2);
+          color: var(--text-primary);
+          border: 1px solid var(--border);
         }
 
         .im-test-box {
@@ -1498,11 +1498,11 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           justify-content: space-between;
           font-size: 12px;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
         .im-progress-bar {
           height: 8px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-2);
           border-radius: 4px;
           overflow: hidden;
         }
@@ -1540,11 +1540,11 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           object-fit: cover;
           border-radius: 8px;
           margin: 6px 0;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--surface-2);
         }
         .im-picture-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: 14px;
           padding: 12px;
           display: flex;
@@ -1565,14 +1565,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         }
         .im-picture-card p {
           font-size: 12px;
-          color: #cbd5e1;
+          color: var(--text-secondary);
           margin: 0;
           line-height: 1.4;
         }
 
         .im-question-card {
-          background: linear-gradient(145deg, rgba(16, 24, 38, 0.9), rgba(10, 16, 26, 0.95));
-          border: 1px solid rgba(16, 185, 129, 0.3);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: 20px;
           padding: 20px;
           display: flex;
@@ -1588,7 +1588,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         .im-question-text {
           font-size: 17px;
           font-weight: 700;
-          color: #ffffff;
+          color: var(--text-primary);
           line-height: 1.45;
           margin: 0;
         }
@@ -1600,14 +1600,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           flex-direction: column;
           gap: 6px;
           font-size: 13px;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .im-prep-card {
           display: flex;
           align-items: center;
           gap: 12px;
-          background: rgba(245, 158, 11, 0.12);
+          background: var(--warning-bg);
           border: 1px solid rgba(245, 158, 11, 0.3);
           padding: 14px;
           border-radius: 16px;
@@ -1630,10 +1630,11 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           justify-content: center;
           gap: 10px;
           padding: 16px;
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--surface-2);
           border-radius: 16px;
           font-size: 14px;
           font-weight: 600;
+          color: var(--text-primary);
         }
 
         .im-recording-controls {
@@ -1684,9 +1685,9 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           gap: 6px;
           padding: 7px 12px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(255, 255, 255, 0.06);
-          color: rgba(255, 255, 255, 0.78);
+          border: 1px solid var(--border);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           font-size: 12px;
           font-weight: 600;
           cursor: pointer;
@@ -1699,7 +1700,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           gap: 8px;
           width: 100%;
           min-height: 48px;
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
           font-size: 13px;
           font-weight: 600;
         }
@@ -1708,7 +1709,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           font-size: 13px;
           line-height: 1.6;
           text-align: center;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--text-secondary);
         }
 
         .im-rec-active {
@@ -1737,7 +1738,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         .im-abandon-link {
           background: none;
           border: none;
-          color: rgba(255, 255, 255, 0.4);
+          color: var(--text-tertiary);
           font-size: 12px;
           padding: 8px;
           cursor: pointer;
@@ -1746,9 +1747,9 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         }
 
         .im-error-box {
-          background: rgba(239, 68, 68, 0.15);
+          background: var(--danger-bg);
           border: 1px solid rgba(239, 68, 68, 0.3);
-          color: #fca5a5;
+          color: var(--danger);
           padding: 12px 14px;
           border-radius: 14px;
           font-size: 13px;
@@ -1817,8 +1818,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           gap: 12px;
         }
         .im-subscore-item {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: 14px;
           padding: 14px 16px;
           display: flex;
@@ -1833,7 +1834,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         .im-subscore-name {
           font-size: 13px;
           font-weight: 700;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
         }
         .im-subscore-band {
           font-size: 20px;
@@ -1843,20 +1844,20 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         .im-subscore-comment {
           font-size: 14px;
           line-height: 1.65;
-          color: rgba(255, 255, 255, 0.88);
+          color: var(--text-primary);
           margin: 0;
         }
 
         .im-advice-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: 16px;
           padding: 16px;
         }
         .im-advice-card h3 {
           font-size: 15px;
           font-weight: 800;
-          color: #ffffff;
+          color: var(--text-primary);
           margin: 0 0 6px 0;
         }
         .im-actions {
