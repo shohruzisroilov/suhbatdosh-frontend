@@ -141,18 +141,30 @@ export default function Listings({ navigate }: ListingsProps) {
     setIsModalOpen(true);
   }
 
-  async function handleSubmitModal(e: React.FormEvent) {
-    e.preventDefault();
-    if (!formTitle.trim() || formTitle.trim().length < 3) {
-      showToast('error', 'Sarlavha kamida 3 ta belgidan iborat bo\'lishi kerak');
+  useEffect(() => {
+    if (user?.username && !formContact) {
+      setFormContact(`@${user.username}`);
+    }
+  }, [user?.username]);
+
+  async function handleSubmitModal(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (submitting) return;
+
+    const trimmedTitle = formTitle.trim();
+    const trimmedDesc = formDescription.trim();
+    const trimmedContact = formContact.trim();
+
+    if (!trimmedTitle || trimmedTitle.length < 3) {
+      showToast('error', 'E\'lon sarlavhasi kamida 3 ta belgidan iborat bo\'lishi kerak');
       return;
     }
-    if (!formDescription.trim() || formDescription.trim().length < 10) {
-      showToast('error', 'Batafsil tavsif kamida 10 ta belgidan iborat bo\'lishi kerak');
+    if (!trimmedDesc || trimmedDesc.length < 10) {
+      showToast('error', `Batafsil ma'lumot kamida 10 ta belgidan iborat bo'lishi kerak (hozir ${trimmedDesc.length} ta)`);
       return;
     }
-    if (!formContact.trim()) {
-      showToast('error', 'Bog\'lanish uchun Telegram login yoki manzilni kiriting');
+    if (!trimmedContact) {
+      showToast('error', 'Bog\'lanish uchun Telegram login (masalan: @username) kiriting');
       return;
     }
 
@@ -161,34 +173,31 @@ export default function Listings({ navigate }: ListingsProps) {
       if (editingItem) {
         await updateListing(editingItem.id, {
           type: formType,
-          title: formTitle,
-          description: formDescription,
+          title: trimmedTitle,
+          description: trimmedDesc,
           targetLevel: formTargetLevel,
           genderPreference: formGender,
-          contactInfo: formContact,
+          contactInfo: trimmedContact,
         });
         showToast('success', 'E\'lon tahrirlandi va qayta admin tasdiqlashiga yuborildi!');
       } else {
         await createListing({
           type: formType,
-          title: formTitle,
-          description: formDescription,
+          title: trimmedTitle,
+          description: trimmedDesc,
           targetLevel: formTargetLevel,
           genderPreference: formGender,
-          contactInfo: formContact,
+          contactInfo: trimmedContact,
         });
         showToast('success', 'E\'lon yaratildi! Admin tasdiqlagach hammaga ko\'rinadi.');
       }
       setIsModalOpen(false);
-      if (activeTab === 'my') {
-        fetchMyListings();
-      } else {
-        setActiveTab('my');
-        fetchMyListings();
-      }
+      setActiveTab('my');
+      fetchMyListings();
     } catch (err: any) {
       console.error('Submit error:', err);
-      showToast('error', err.response?.data?.error || 'Xatolik yuz berdi');
+      const errMsg = err.response?.data?.error || err.message || 'Xatolik yuz berdi. Qayta urinib ko\'ring';
+      showToast('error', errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -676,6 +685,7 @@ export default function Listings({ navigate }: ListingsProps) {
                   type="submit"
                   disabled={submitting}
                   className="btn-submit"
+                  onClick={(e) => handleSubmitModal(e)}
                 >
                   {submitting ? 'Yuborilmoqda...' : editingItem ? 'Yangilash' : 'Admin Tasdiqlashiga Yuborish'}
                 </button>
@@ -692,7 +702,7 @@ export default function Listings({ navigate }: ListingsProps) {
         }
 
         .listings-toast {
-          position: absolute; top: 12px; left: 16px; right: 16px; z-index: 1000;
+          position: fixed; top: 16px; left: 16px; right: 16px; z-index: 2000;
           padding: 12px 16px; border-radius: 14px; font-size: 13px; font-weight: 600;
           display: flex; align-items: center; gap: 10px;
           box-shadow: 0 8px 24px rgba(0,0,0,0.18);
