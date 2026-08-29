@@ -180,3 +180,58 @@ export const finishCefrTest = (id: string, timeout = 180_000) =>
 export const abandonCefrTest = (id: string) =>
   api.post(`/cefr/tests/${id}/abandon`).then((r) => r.data);
 
+// ─── Partner & Mentor Listings ──────────────────────────────────────────────
+export const getListings = (params: {
+  type?: string;
+  search?: string;
+  level?: string;
+  gender?: string;
+  page?: number;
+  limit?: number;
+}) =>
+  api
+    .get('/listings', {
+      params: {
+        type: params.type || 'all',
+        search: params.search || undefined,
+        level: params.level || undefined,
+        gender: params.gender || undefined,
+        page: params.page || 1,
+        limit: params.limit || 20,
+      },
+    })
+    .then((r) => r.data);
+
+export const getMyListings = () => api.get('/listings/my').then((r) => r.data);
+
+export const getListing = (id: string) => api.get(`/listings/${id}`).then((r) => r.data);
+
+export const createListing = (data: {
+  type: 'partner' | 'teacher' | 'student';
+  title: string;
+  description: string;
+  targetLevel?: string;
+  genderPreference?: string;
+  contactInfo: string;
+}) => api.post('/listings', data).then((r) => r.data);
+
+export const updateListing = (
+  id: string,
+  data: {
+    type?: string;
+    title?: string;
+    description?: string;
+    targetLevel?: string;
+    genderPreference?: string;
+    contactInfo?: string;
+    isActive?: boolean;
+  }
+) => api.patch(`/listings/${id}`, data).then((r) => r.data);
+
+export const toggleActiveListing = (id: string) =>
+  api.patch(`/listings/${id}/toggle-active`).then((r) => r.data);
+
+export const deleteListing = (id: string) =>
+  api.delete(`/listings/${id}`).then((r) => r.data);
+
+

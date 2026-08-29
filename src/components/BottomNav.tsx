@@ -2,7 +2,7 @@ import React from 'react';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic } from '../utils/haptics';
-import { Mic, GraduationCap, Trophy, User } from 'lucide-react';
+import { Mic, Megaphone, GraduationCap, Trophy, User } from 'lucide-react';
 
 interface Tab {
   key: string;
@@ -15,6 +15,11 @@ const TABS: Tab[] = [
     key: 'home',
     label: 'nav.home',
     icon: <Mic size={20} strokeWidth={2.2} />,
+  },
+  {
+    key: 'listings',
+    label: 'nav.listings',
+    icon: <Megaphone size={20} strokeWidth={2.2} />,
   },
   {
     // The mock exams are what sets this app apart, so they get a permanent slot.

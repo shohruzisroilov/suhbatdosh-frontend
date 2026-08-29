@@ -63,6 +63,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
 
     // bottom navigation
     'nav.home': 'Home',
+    'nav.listings': "E'lonlar",
     'nav.leaderboard': 'Ranking',
     'nav.invite': 'Invite',
     'nav.profile': 'Profile',

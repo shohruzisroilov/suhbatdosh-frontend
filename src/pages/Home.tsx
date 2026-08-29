@@ -159,6 +159,22 @@ export default function Home() {
             <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
           </button>
 
+          {/* Partner & Mentor Listings Board */}
+          <button
+            type="button"
+            className="row"
+            onClick={() => { tapHaptic('medium'); navigate('listings'); }}
+          >
+            <span className="row__ico" style={{ background: 'rgba(0, 168, 255, 0.14)', color: '#00A8FF' }}>
+              <Users size={18} aria-hidden="true" />
+            </span>
+            <span className="row__text">
+              <span className="row__title">Partner & Ustoz E'lonlari</span>
+              <span className="row__sub">Sherik, ustoz yoki shogird topish uchun e'lon bering</span>
+            </span>
+            <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
+          </button>
+
         </div>
 
         {/* Recent Practice History */}

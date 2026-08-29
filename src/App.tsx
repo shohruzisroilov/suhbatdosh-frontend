@@ -27,6 +27,7 @@ import Matching from './pages/Matching.tsx';
 import SessionEnd from './pages/SessionEnd.tsx';
 import IeltsMock from './pages/IeltsMock.tsx';
 import CefrMock from './pages/CefrMock.tsx';
+import Listings from './pages/Listings.tsx';
 
 const Chat = lazy(() => import('./pages/Chat.tsx'));
 
@@ -43,6 +44,7 @@ const queryClient = new QueryClient({
 const SCREENS: Record<string, React.ComponentType<any>> = {
   onboarding: Onboarding,
   home: Home,
+  listings: Listings,
   mock: Mock,
   leaderboard: Leaderboard,
   invite: Invite,
@@ -60,7 +62,7 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   cefr_mock: CefrMock,
 };
 
-const TAB_SCREENS = ['home', 'mock', 'leaderboard', 'profile'];
+const TAB_SCREENS = ['home', 'listings', 'mock', 'leaderboard', 'profile'];
 
 function AuthErrorScreen({ message }: { message: string }) {
   return (
