@@ -234,4 +234,8 @@ export const toggleActiveListing = (id: string) =>
 export const deleteListing = (id: string) =>
   api.delete(`/listings/${id}`).then((r) => r.data);
 
+/** One call for a whole screenful of cards — see useListingViews in pages/Listings.tsx. */
+export const recordListingViews = (ids: string[]) =>
+  api.post('/listings/views', { ids }).then((r) => r.data);
+
 
