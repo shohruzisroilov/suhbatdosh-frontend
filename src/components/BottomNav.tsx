@@ -17,16 +17,15 @@ const TABS: Tab[] = [
     icon: <Mic size={20} strokeWidth={2.2} />,
   },
   {
-    key: 'listings',
-    label: 'nav.listings',
-    icon: <Megaphone size={20} strokeWidth={2.2} />,
-  },
-  {
     // The mock exams are what sets this app apart, so they get a permanent slot.
-    // Invite moved into Profile: it is a once-in-a-while action, not a daily one.
     key: 'mock',
     label: 'nav.mock',
     icon: <GraduationCap size={20} strokeWidth={2.2} />,
+  },
+  {
+    key: 'listings',
+    label: 'nav.listings',
+    icon: <Megaphone size={20} strokeWidth={2.2} />,
   },
   {
     key: 'leaderboard',

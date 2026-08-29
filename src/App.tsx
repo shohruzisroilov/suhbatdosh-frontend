@@ -62,7 +62,7 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   cefr_mock: CefrMock,
 };
 
-const TAB_SCREENS = ['home', 'listings', 'mock', 'leaderboard', 'profile'];
+const TAB_SCREENS = ['home', 'mock', 'listings', 'leaderboard', 'profile'];
 
 function AuthErrorScreen({ message }: { message: string }) {
   return (
