@@ -9,6 +9,14 @@
 @tailwind utilities;
 
 :root {
+  /* The browser has to be told which way the theme runs, or it draws every native
+     control — select buttons and their dropdown panels, scrollbars, autofill, date
+     pickers — in its light default. That is why a <select> showed up as a pale box
+     with near-invisible text on these dark surfaces.
+     useAuth() puts .light or .dark on <html> from Telegram's colorScheme, so this
+     pairs with the .light override below. */
+  color-scheme: dark;
+
   /* ─── Color Palette (Dark Theme Default) ──────────────────────────────────── */
   --bg:             #090D14;   /* Deep midnight background */
   --bg-secondary:   #121824;   /* Surface cards */
@@ -119,6 +127,8 @@
 
 /* Light Mode Overrides */
 .light {
+  color-scheme: light;
+
   --bg:             #F8FAFC;
   --bg-secondary:   #FFFFFF;
   --surface-2:      #F1F5F9;
@@ -144,6 +154,7 @@
   --rating:         #D97706;
 
   --success:        #059669;
+  --warning:        #B45309;
   --danger:         #DC2626;
 
   --success-bg:     rgba(5, 150, 105, 0.12);
@@ -188,6 +199,32 @@ button, input, textarea, select {
   outline: none; border: none; background: none;
 }
 button { cursor: pointer; }
+
+/* iOS Safari and Android WebView draw a <select> as a native button and ignore the
+   author's background-color entirely, so the control has to be taken over completely:
+   no native appearance, and our own chevron in place of the one that disappears with
+   it. The arrow is inlined as a data URI — currentColor is not available inside one,
+   so its stroke is --text-tertiary spelled out. */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%2364748B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+/* Desktop draws the open dropdown panel itself; these are the only two properties it
+   honours there. */
+select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+/* The chevron is baked into a data URI, where currentColor does not resolve, so the
+   light theme needs its own darker copy. */
+.light select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23475569' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
 
 h1, h2, h3 {
   font-family: var(--font-display);

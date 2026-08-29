@@ -336,6 +336,43 @@ export default function MicPermissionModal() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+      
+        /* Telegram also runs this app in a light colour scheme, and every surface in
+           this modal is written dark-first in hex. Left alone it drops a near-black
+           card into a white app with white-on-white borders. Only the surfaces and
+           their text are restated; the sky-blue and green accents carry on either. */
+        .light .mic-modal-overlay { background: rgba(15, 23, 42, 0.45); }
+        .light .mic-modal-card {
+          background: var(--bg-secondary);
+          border-color: var(--border);
+          color: var(--text-primary);
+          box-shadow: var(--shadow-md);
+        }
+        .light .mic-modal-title { color: var(--text-primary); }
+        .light .mic-modal-desc { color: var(--text-secondary); }
+        .light .mic-modal-close-btn {
+          background: var(--surface-2);
+          border-color: var(--border);
+          color: var(--text-secondary);
+        }
+        .light .mic-modal-close-btn:active {
+          background: var(--surface-3);
+          color: var(--text-primary);
+        }
+        .light .mic-modal-steps-card {
+          background: var(--surface-2);
+          border-color: var(--border);
+        }
+        .light .mic-modal-step-item { color: var(--text-primary); }
+        .light .mic-modal-steps-header,
+        .light .mic-modal-step-num { color: #0369A1; }
+        .light .mic-modal-btn--primary { border-color: transparent; }
+        .light .mic-modal-btn--secondary {
+          background: var(--surface-2);
+          border-color: var(--border);
+          color: var(--text-primary);
+        }
+        .light .mic-modal-btn--secondary:hover { background: var(--surface-3); }
       `}</style>
     </Modal>
   );

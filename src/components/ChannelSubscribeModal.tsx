@@ -193,7 +193,24 @@ export default function ChannelSubscribeModal({ isOpen, onSubscribed, telegramId
 
         .sub-modal__btn-secondary:active { transform: scale(0.97); }
         .sub-modal__btn-secondary:disabled { opacity: 0.5; }
-      `}</style>
+      
+        /* The panel is a fixed dark gradient, but two rules on it already pull their
+           colour from the theme — so in Telegram's light scheme --text-primary landed
+           near-black on a near-black card and the secondary button's label vanished.
+           The card follows the theme now, and the text with it. */
+        .light .sub-modal-backdrop { background: rgba(15, 23, 42, 0.5); }
+        .light .sub-modal {
+          background: var(--bg-secondary);
+          border-color: rgba(0, 150, 230, 0.35);
+          box-shadow: var(--shadow-md);
+        }
+        .light .sub-modal__title { color: var(--text-primary); }
+        .light .sub-modal__btn-secondary {
+          background: var(--surface-2);
+          border-color: var(--border);
+          color: var(--text-primary);
+        }
+        `}</style>
     </Modal>
   );
 }

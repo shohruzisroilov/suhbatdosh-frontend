@@ -1490,6 +1490,25 @@ export default function Chat() {
           background: linear-gradient(135deg, #0c192e 0%, #030712 100%);
           display: flex; align-items: center; justify-content: center;
         }
+      
+        /* The call screen is a video surface, so it stays dark whatever Telegram's
+           colour scheme says — but the labels inside it are written with the theme's
+           text tokens, and in the light scheme those resolved to near-black on
+           near-black. Pinning the dark palette for this subtree keeps every token in
+           here meaning what it meant when it was written, instead of patching each
+           rule one at a time. */
+        .light .call-screen {
+          color-scheme: dark;
+          --bg:             #080C14;
+          --bg-secondary:   #121824;
+          --surface-2:      #1A2232;
+          --surface-3:      #222C3E;
+          --border:         rgba(255, 255, 255, 0.08);
+          --border-strong:  rgba(255, 255, 255, 0.16);
+          --text-primary:   #F8FAFC;
+          --text-secondary: #94A3B8;
+          --text-tertiary:  #64748B;
+        }
       `}</style>
     </div>
   );

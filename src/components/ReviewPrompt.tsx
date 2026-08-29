@@ -332,6 +332,42 @@ const Styles = React.memo(function Styles() {
       .rp-later-btn:active {
         color: #94A3B8;
       }
+
+      /* This card was authored dark-first, straight in hex. Telegram hands the app a
+         light colour scheme too, and a near-black panel dropped into a white feed both
+         looks wrong and drags its own borders down to invisible. The surfaces and the
+         text on them are restated here in tokens; the blue submit button and the amber
+         stars already read on either. */
+      .light .rp-container {
+        background: var(--bg-secondary);
+        border-color: var(--border);
+        box-shadow: var(--shadow-md);
+      }
+      .light .rp-title { color: var(--text-primary); }
+      .light .rp-sub,
+      .light .rp-char-counter,
+      .light .rp-later-btn { color: var(--text-secondary); }
+      .light .rp-later-btn:active { color: var(--text-primary); }
+      .light .rp-close-btn {
+        background: var(--surface-2);
+        border-color: var(--border);
+        color: var(--text-secondary);
+      }
+      .light .rp-close-btn:active {
+        background: var(--surface-3);
+        color: var(--text-primary);
+      }
+      .light .rp-star-btn {
+        background: var(--surface-2);
+        border-color: var(--border);
+        color: var(--text-tertiary);
+      }
+      .light .rp-textarea {
+        background: var(--surface-2);
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+      }
+      .light .rp-textarea::placeholder { color: var(--text-tertiary); }
     `}</style>
   );
 });
