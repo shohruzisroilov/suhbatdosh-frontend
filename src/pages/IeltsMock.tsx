@@ -15,7 +15,7 @@ import { tapHaptic, notifyHaptic } from '../utils/haptics';
 import { pickExaminerVoice, whenVoicesReady, type ExaminerGender } from '../utils/examinerVoice';
 import { describeAnswerError } from '../utils/answerError';
 import { MockHeader, MockIntroCard, MockLoading, type MockBusyAction } from '../components/MockIntro';
-import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, ChevronRight, Clock, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
 
 /** Uploads per answer. Each one carries the recording, so this stays small. */
 const ANSWER_SEND_ATTEMPTS = 2;
@@ -53,11 +53,18 @@ interface TestFeedback {
   grammar: { band: string; comment: string };
   pronunciation: { band: string; comment: string };
   partNotes?: { part1: string; part2: string; part3: string };
-  strongPoints?: string[];
-  mainProblems?: string[];
+  strengths?: string[];
+  weaknesses?: string[];
   fixes?: Array<{ said: string; better: string; why: string }>;
-  advice?: string;
-  betterAnswer?: { original: string; improved: string; explanation: string };
+  /** A list. Results marked before that change hold one paragraph. */
+  advice?: string | string[];
+}
+
+/** Whatever shape a stored result used, as a list. */
+function asList(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  const text = String(value || '').trim();
+  return text ? [text] : [];
 }
 
 /** Wraps a callback so that whichever of several racing paths arrives first wins. */
@@ -1282,28 +1289,56 @@ export default function IeltsMock() {
             </div>
           </div>
 
+          {/* What the examiner made of each part. The marker has written these since
+              the start; nothing on screen ever showed them. */}
+          {feedback.partNotes &&
+            (feedback.partNotes.part1 || feedback.partNotes.part2 || feedback.partNotes.part3) && (
+              <div className="im-section">
+                <h3 className="im-section-title">
+                  <BookOpen size={18} />
+                  <span>Bo'limlar bo'yicha izoh</span>
+                </h3>
+                <div className="im-subscores-grid">
+                  {([
+                    { key: 'part1', label: 'Part 1', sub: 'Introduction & Interview' },
+                    { key: 'part2', label: 'Part 2', sub: 'Cue Card' },
+                    { key: 'part3', label: 'Part 3', sub: 'Discussion' },
+                  ] as const).map(({ key, label, sub }) =>
+                    feedback.partNotes?.[key] ? (
+                      <div className="im-subscore-item" key={key}>
+                        <div className="im-subscore-head">
+                          <span className="im-subscore-name">{label} · {sub}</span>
+                        </div>
+                        <p className="im-subscore-comment">{feedback.partNotes[key]}</p>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
+            )}
+
           {/* Strong Points & Main Problems */}
-          {((feedback.strongPoints && feedback.strongPoints.length > 0) || (feedback.mainProblems && feedback.mainProblems.length > 0)) && (
+          {((feedback.strengths && feedback.strengths.length > 0) || (feedback.weaknesses && feedback.weaknesses.length > 0)) && (
             <div className="im-subscores-grid">
-              {feedback.strongPoints && feedback.strongPoints.length > 0 && (
+              {feedback.strengths && feedback.strengths.length > 0 && (
                 <div className="im-subscore-item" style={{ borderLeft: '3px solid #10b981' }}>
                   <div className="im-subscore-head">
                     <span className="im-subscore-name" style={{ color: '#10b981' }}><ThumbsUp size={13} aria-hidden="true" /> {t('mock.strongPoints')}</span>
                   </div>
                   <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
-                    {feedback.strongPoints.map((pt, idx) => (
+                    {feedback.strengths.map((pt, idx) => (
                       <li key={idx}>{pt}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {feedback.mainProblems && feedback.mainProblems.length > 0 && (
+              {feedback.weaknesses && feedback.weaknesses.length > 0 && (
                 <div className="im-subscore-item" style={{ borderLeft: '3px solid #ef4444' }}>
                   <div className="im-subscore-head">
                     <span className="im-subscore-name" style={{ color: '#ef4444' }}><AlertTriangle size={13} aria-hidden="true" /> {t('mock.mainProblems')}</span>
                   </div>
                   <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontSize: '14px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
-                    {feedback.mainProblems.map((pr, idx) => (
+                    {feedback.weaknesses.map((pr, idx) => (
                       <li key={idx}>{pr}</li>
                     ))}
                   </ul>
@@ -1312,21 +1347,8 @@ export default function IeltsMock() {
             </div>
           )}
 
-          {/* Better Answer Example */}
-          {feedback.betterAnswer && (
-            <div className="im-advice-card" style={{ background: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
-              <h3 style={{ color: '#38bdf8' }}><PenLine size={14} aria-hidden="true" /> {t('mock.betterAnswer')}</h3>
-              <div style={{ fontSize: '14px', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div><strong style={{ color: '#fca5a5' }}>Original:</strong> "{feedback.betterAnswer.original}"</div>
-                <div><strong style={{ color: '#86efac' }}>Improved (Band 7.5+):</strong> "{feedback.betterAnswer.improved}"</div>
-                {feedback.betterAnswer.explanation && (
-                  <div style={{ fontSize: '13px', lineHeight: 1.55, color: 'rgba(255,255,255,0.72)', fontStyle: 'italic' }}>
-                    Tahlil: {feedback.betterAnswer.explanation}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* A rewrite of one answer used to live here, but the marker has never
+              produced one: "fixes" below does the same job for up to five answers. */}
 
           {/* Error Fixes & Corrections */}
           {feedback.fixes && feedback.fixes.length > 0 && (
@@ -1354,10 +1376,14 @@ export default function IeltsMock() {
           )}
 
           {/* Actionable Advice */}
-          {feedback.advice && (
+          {asList(feedback.advice).length > 0 && (
             <div className="im-advice-card">
               <h3><Lightbulb size={14} aria-hidden="true" /> {t('mock.advice')}</h3>
-              <p>{feedback.advice}</p>
+              <ol style={{ margin: '8px 0 0', paddingLeft: '20px', fontSize: '15px', lineHeight: 1.65 }}>
+                {asList(feedback.advice).map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ol>
             </div>
           )}
 
