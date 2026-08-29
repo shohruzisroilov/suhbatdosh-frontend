@@ -458,7 +458,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.resume': 'Resume your unfinished test',
     'mock.discard': 'Discard it and start over',
     'mock.startIelts': 'Start IELTS mock test',
-    'mock.startCefr': 'Start CEFR mock test',
+    'mock.startCefr': 'Start Multilevel mock test',
 
     // Every wait on a mock screen names itself, so the two exams never differ on
     // whether tapping something looks like it worked.
@@ -470,12 +470,12 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.noQuota': 'No tests left today',
     'mock.quotaHint': 'You have used all of today\'s tests. They reset tomorrow.',
     'mock.retake': 'Take another test',
-    'mock.retakeCefr': 'Take another CEFR test',
+    'mock.retakeCefr': 'Take another Multilevel test',
     'mock.notesHint': 'Make notes now. Start speaking when the timer ends.',
     'mock.enter': 'Start test',
     'mock.ieltsSub': 'Parts 1, 2 and 3, scored by AI',
-    'mock.cefrSub': 'National certificate format',
-    'mock.cefrGrading': 'Marking your answers against the CEFR criteria.',
+    'mock.cefrSub': 'National certificate format, marked out of 75',
+    'mock.cefrGrading': 'Marking your answers against the four official Multilevel criteria.',
     'mock.strongPoints': 'What worked',
     'mock.mainProblems': 'What to fix',
     'mock.betterAnswer': 'A stronger version',
@@ -489,7 +489,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'mock.context': 'Context',
     'mock.pageSub': 'Full speaking tests, marked by an AI examiner.',
     'mock.ieltsParts': 'Parts 1, 2, 3',
-    'mock.cefrParts': '4 parts',
+    'mock.cefrParts': 'Parts 1.1, 1.2, 2, 3',
     'mock.aiScored': 'AI feedback',
     'mock.limitTitle': 'Run out of free tests?',
     'mock.limitSub': 'Premium gives you 3 full tests every day',

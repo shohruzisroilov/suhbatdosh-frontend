@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useT } from '../i18n';
-import { AlertTriangle, ArrowLeft, Award, BookOpen, CheckCircle2, Clock, HelpCircle, Image as ImageIcon, Layers, Lightbulb, Mic, Mic2, MicOff, RotateCcw, Sparkles, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+import { AlertTriangle, Award, BookOpen, Clock, Image as ImageIcon, Layers, Lightbulb, Mic, Mic2, MicOff, PenLine, RotateCcw, Sparkles, ThumbsUp, Volume2 } from 'lucide-react';
 import {
   getCefrStatus,
   createCefrTest,
@@ -53,26 +53,178 @@ interface StepData {
   prompts?: string[] | null;
   prepSec?: number | null;
   maxSec: number;
+  /** Position in Part 1, which the real exam numbers 1 to 6 across both sections. */
+  qNo?: number | null;
+  qTotal?: number | null;
+}
+
+/**
+ * One part's raw mark, out of the five (or six, for Part 3) the exam awards it.
+ *
+ * `legacy` carries the CEFR letter that results marked before the scoring change were
+ * stored with. Those rows have no raw mark, so the panel shows the letter instead of
+ * an invented number.
+ */
+interface PartMark {
+  mark: number | null;
+  max: number;
+  target: string;
+  comment: string;
+  legacy?: string;
+}
+
+interface CriterionMark {
+  mark: number | null;
+  max: number;
+  comment: string;
+  legacy?: string;
 }
 
 interface CefrFeedback {
   cefrLevel: string;
+  /** The 0-75 figure the certificate reports. */
+  overallScore: number | null;
+  rawTotal: number | null;
+  rawMax: number;
+  scaledMax: number;
   estimatedScore: string;
   partPerformance: {
-    part1_1: { score: string; comment: string };
-    part1_2: { score: string; comment: string };
-    part2: { score: string; comment: string };
-    part3: { score: string; comment: string };
+    part1_1: PartMark;
+    part1_2: PartMark;
+    part2: PartMark;
+    part3: PartMark;
   };
-  skills: {
-    fluency: { score: string; comment: string };
-    vocabulary: { score: string; comment: string };
-    grammar: { score: string; comment: string };
-    pronunciation: { score: string; comment: string };
+  criteria: {
+    grammar: CriterionMark;
+    vocabulary: CriterionMark;
+    fluency: CriterionMark;
+    coherence: CriterionMark;
   };
+  /** Not scored in the real exam; shown because it is still worth practising. */
+  pronunciationNote: string;
+  betterAnswer: { original: string; improved: string; explanation: string } | null;
   strengths: string[];
   weaknesses: string[];
   improvementPlan: string[];
+}
+
+/**
+ * The exam's own marking scale, for the results screen.
+ *
+ * Parts 1.1, 1.2 and 2 are worth five marks each and Part 3 six, giving twenty-one
+ * raw marks that convert to the 0-75 score printed on the certificate.
+ */
+const PART_META = [
+  { key: 'part1_1', label: 'Part 1.1', sub: "Shaxsiy savollar", max: 5, target: 'A2' },
+  { key: 'part1_2', label: 'Part 1.2', sub: 'Taqqoslash', max: 5, target: 'B1' },
+  { key: 'part2', label: 'Part 2', sub: "Mavzu bo'yicha nutq", max: 5, target: 'B2' },
+  { key: 'part3', label: 'Part 3', sub: 'Ikki tomonlama muhokama', max: 6, target: 'C1' },
+] as const;
+
+/** The four criteria the Multilevel examiners actually mark against. */
+const CRITERIA_META = [
+  { key: 'grammar', label: 'Grammatical Range & Accuracy', uz: 'Grammatika' },
+  { key: 'vocabulary', label: 'Vocabulary', uz: "So'z boyligi" },
+  { key: 'fluency', label: 'Fluency', uz: 'Ravonlik' },
+  { key: 'coherence', label: 'Coherence & Cohesion', uz: 'Fikr izchilligi' },
+] as const;
+
+/** Where each band starts on the reported 0-75 scale. */
+const BAND_TABLE = [
+  { level: 'C1', min: 65, max: 75, note: "Erkin, aniq, deyarli ona tilidek" },
+  { level: 'B2', min: 51, max: 64, note: 'Ishonchli va ravon, ayrim xatolar bilan' },
+  { level: 'B1', min: 38, max: 50, note: 'Fikrni yetkaza oladi, kamchiliklari bor' },
+  { level: 'A2', min: 20, max: 37, note: "Oddiy muloqot, tez-tez to'xtalish" },
+  { level: 'A1', min: 0, max: 19, note: "Alohida so'zlar va tayyor iboralar" },
+] as const;
+
+const numberOrNull = (v: any): number | null => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const textOf = (v: any): string => (typeof v === 'string' ? v : '');
+
+/**
+ * Reads a stored result, whichever scoring it was written under.
+ *
+ * Results from before the exam's own marking scale went in hold a CEFR letter per part
+ * and a free-text score, and four IELTS criteria including pronunciation. Reopening
+ * one of those must still show something — walking straight into `mark` would render a
+ * screen of blanks.
+ */
+function normalizeFeedback(raw: any): CefrFeedback {
+  const parts = raw?.partPerformance ?? {};
+  const crit = raw?.criteria ?? raw?.skills ?? {};
+
+  const part = (key: string, max: number, target: string): PartMark => {
+    const src = parts[key] ?? {};
+    return {
+      mark: numberOrNull(src.mark),
+      max: numberOrNull(src.max) ?? max,
+      target: textOf(src.target) || target,
+      comment: textOf(src.comment),
+      legacy: textOf(src.score) || undefined,
+    };
+  };
+
+  const criterion = (key: string): CriterionMark => {
+    const src = crit[key] ?? {};
+    return {
+      mark: numberOrNull(src.mark),
+      max: numberOrNull(src.max) ?? 5,
+      comment: textOf(src.comment),
+      legacy: textOf(src.score) || undefined,
+    };
+  };
+
+  const overall = numberOrNull(raw?.overallScore);
+  // A legacy row stored the score only inside a sentence like "58 / 75 (AI ESTIMATED…)".
+  const fromText = numberOrNull(String(raw?.estimatedScore ?? '').match(/\d+/)?.[0]);
+
+  return {
+    cefrLevel: textOf(raw?.cefrLevel) || 'A1',
+    overallScore: overall ?? fromText,
+    rawTotal: numberOrNull(raw?.rawTotal),
+    rawMax: numberOrNull(raw?.rawMax) ?? 21,
+    scaledMax: numberOrNull(raw?.scaledMax) ?? 75,
+    estimatedScore: textOf(raw?.estimatedScore),
+    partPerformance: {
+      part1_1: part('part1_1', 5, 'A2'),
+      part1_2: part('part1_2', 5, 'B1'),
+      part2: part('part2', 5, 'B2'),
+      part3: part('part3', 6, 'C1'),
+    },
+    criteria: {
+      grammar: criterion('grammar'),
+      vocabulary: criterion('vocabulary'),
+      fluency: criterion('fluency'),
+      // Older results have no coherence mark; pronunciation stood in its place.
+      coherence: criterion('coherence'),
+    },
+    pronunciationNote:
+      textOf(raw?.pronunciationNote) || textOf(raw?.skills?.pronunciation?.comment),
+    betterAnswer:
+      raw?.betterAnswer?.original && raw?.betterAnswer?.improved
+        ? {
+            original: textOf(raw.betterAnswer.original),
+            improved: textOf(raw.betterAnswer.improved),
+            explanation: textOf(raw.betterAnswer.explanation),
+          }
+        : null,
+    strengths: Array.isArray(raw?.strengths) ? raw.strengths.map(textOf).filter(Boolean) : [],
+    weaknesses: Array.isArray(raw?.weaknesses) ? raw.weaknesses.map(textOf).filter(Boolean) : [],
+    improvementPlan: Array.isArray(raw?.improvementPlan)
+      ? raw.improvementPlan.map(textOf).filter(Boolean)
+      : [],
+  };
+}
+
+/** A mark as the exam writes it: "4 / 5", or the half-mark it actually was. */
+function formatMark(mark: number | null, max: number, legacy?: string): string {
+  if (mark === null) return legacy || '—';
+  const shown = Number.isInteger(mark) ? String(mark) : mark.toFixed(1);
+  return `${shown} / ${max}`;
 }
 
 /** Wraps a callback so that whichever of several racing paths arrives first wins. */
@@ -120,8 +272,10 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
   const [testId, setTestId] = useState<string | null>(null);
   // Which voice the browser fallback should read the examiner's lines in.
   const examinerGenderRef = useRef<ExaminerGender>('female');
-  // The question is heard, not read — the text is available on request, as in IELTS.
-  const [showTranscript, setShowTranscript] = useState(false);
+  // The real Multilevel test shows the question on screen while the recording reads it
+  // out, so it starts visible. Hiding it was IELTS's behaviour, where the examiner
+  // speaks and there is nothing to read — a different exam.
+  const [showTranscript, setShowTranscript] = useState(true);
 
   // The browser populates its voice list asynchronously and reports none on the first
   // call. Warm it on mount so the fallback has real voices to choose from if it fires.
@@ -313,7 +467,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         // matched nothing, and then fell through to a step that a finished test does
         // not have — so reopening a graded test showed the candidate nothing at all.
         if (res.feedback) {
-          setFeedback(res.feedback);
+          setFeedback(normalizeFeedback(res.feedback));
           setTestStatus('results');
           return;
         }
@@ -838,14 +992,32 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     await submitAnswer(null, 0);
   };
 
-  const getPartBadgeText = (part: string, kind?: string) => {
-    if (kind === 'frame' || part === 'intro') return 'KIRISH • Examiner Yo\'riqnomasi';
-    if (kind === 'closing' || part === 'closing') return 'YAKUN • Imtihon Tugadi';
-    if (part === '1.1') return 'PART 1.1 • Oddiy Savollar (A1-A2)';
-    if (part === '1.2') return 'PART 1.2 • Rasmlarni Taqqoslash (B1)';
-    if (part === '2') return 'PART 2 • Mavzu Bo\'yicha Nutq (B2)';
-    if (part === '3') return 'PART 3 • Erkin Muhokama (C1)';
-    return `PART ${part}`;
+  /**
+   * What the badge over the question says.
+   *
+   * A briefing step is labelled as one so the candidate knows the examiner is
+   * explaining rather than asking, and Part 1's questions carry their number out of
+   * six — the exam numbers them straight through both of its sections.
+   */
+  const getPartBadgeText = (step: StepData) => {
+    const part = String(step.part);
+    if (step.kind === 'closing' || part === 'closing') return 'YAKUN • Imtihon tugadi';
+    if (part === 'intro') return 'KIRISH • Examiner yoʻriqnomasi';
+
+    const name =
+      part === '1.1'
+        ? "PART 1.1 • Shaxsiy savollar (A2)"
+        : part === '1.2'
+        ? 'PART 1.2 • Taqqoslash (B1)'
+        : part === '2'
+        ? "PART 2 • Mavzu boʻyicha nutq (B2)"
+        : part === '3'
+        ? 'PART 3 • Ikki tomonlama muhokama (C1)'
+        : `PART ${part}`;
+
+    if (step.kind === 'frame') return `${name} • Yoʻriqnoma`;
+    if (step.qNo && step.qTotal) return `${name} • ${step.qNo}-savol / ${step.qTotal}`;
+    return name;
   };
 
   const handleFinishTest = async (attempt = 1) => {
@@ -861,7 +1033,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
     try {
       const res = await finishCefrTest(id);
       if (!mountedRef.current) return;
-      setFeedback(res.feedback);
+      setFeedback(normalizeFeedback(res.feedback));
       setTestStatus('results');
       notifyHaptic('success');
     } catch (err: any) {
@@ -965,8 +1137,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         <MockIntroCard
           accent="cefr"
           hero={<Award size={40} aria-hidden="true" />}
-          title="CEFR Multilevel Speaking Mock"
-          description="Milliy Sertifikat formati bo'yicha (Part 1.1, Part 1.2 Rasm tahlili, Part 2 B2, va Part 3 C1) to'liq AI topshirish va darajani aniqlash."
+          title="Multilevel Speaking Mock"
+          description="Milliy sertifikat imtihonining Speaking qismi — toʻliq formatda: 6 ta savol (Part 1.1 va 1.2), 2 daqiqalik nutq (Part 2) va ikki tomonlama muhokama (Part 3). AI examiner savol beradi, javobingizni yozib oladi va rasmiy mezonlar boʻyicha baholaydi."
           details={[
             {
               icon: <Clock size={15} aria-hidden="true" />,
@@ -976,12 +1148,19 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             {
               icon: <Award size={15} aria-hidden="true" />,
               label: 'Baholash',
-              value: 'Max 75 ball (A1 - C1)',
+              value: '21 xom ball → 75 ball (A1–C1)',
             },
             {
               icon: <BookOpen size={15} aria-hidden="true" />,
-              label: "Format & Bo'limlar",
-              value: 'Part 1.1 (A1-A2) + Part 1.2 (Rasm) + Part 2 (B2) + Part 3 (C1)',
+              label: 'Imtihon tuzilishi',
+              value:
+                'Part 1.1 — 3 savol, 30 son. · Part 1.2 — 3 savol, 45+30+30 son. · Part 2 — 1 daq. tayyorgarlik, 2 daq. nutq · Part 3 — 1 daq. tayyorgarlik, 2 daq. muhokama',
+              wide: true,
+            },
+            {
+              icon: <Layers size={15} aria-hidden="true" />,
+              label: 'Mezonlar',
+              value: "Grammatika · So'z boyligi · Ravonlik · Fikr izchilligi",
               wide: true,
             },
             {
@@ -1042,7 +1221,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Progress Tracker */}
           <div className="im-progress-bar-wrap">
             <div className="im-progress-info">
-              <span>{getPartBadgeText(String(currentStep.part), currentStep.kind)}</span>
+              <span>{getPartBadgeText(currentStep)}</span>
               <span>{currentStep.i + 1} / {totalSteps}</span>
             </div>
             <div className="im-progress-bar">
@@ -1063,15 +1242,18 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>AI Examiner</span>
                 {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
               </div>
-              {showTranscript ? (
-                <p className="im-examiner-text" style={{ fontSize: '15px', margin: '4px 0 0 0', color: '#f8fafc', lineHeight: 1.5 }}>
-                  {currentStep.say}
-                </p>
-              ) : (
-                <p className="im-examiner-text" style={{ fontSize: '15px', margin: '4px 0 0 0', color: 'rgba(248,250,252,0.6)', fontStyle: 'italic', lineHeight: 1.5 }}>
-                  {isSpeaking ? 'Examinerni tinglang…' : 'Endi javob bering.'}
-                </p>
-              )}
+              {/* The wording itself lives in the question card below, the way the
+                  exam puts it on screen. Repeating it here read it to the candidate
+                  twice on one screen. */}
+              <p className="im-examiner-text" style={{ fontSize: '14px', margin: '4px 0 0 0', color: 'rgba(248,250,252,0.65)', fontStyle: 'italic', lineHeight: 1.5 }}>
+                {isSpeaking
+                  ? 'Examinerni tinglang…'
+                  : isPrepping
+                  ? 'Tayyorgarlik vaqti ketmoqda.'
+                  : isRecording
+                  ? 'Javobingiz yozib olinmoqda.'
+                  : 'Endi javob bering.'}
+              </p>
               <div className="im-examiner-actions">
                 {/* Asking the examiner to repeat is allowed in the real test. */}
                 <button
@@ -1146,21 +1328,36 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
 
           {/* Question / Task Card */}
           <div className="im-question-card">
-            <span className="im-part-tag">{getPartBadgeText(String(currentStep.part), currentStep.kind)}</span>
-            {/* Parts 1.2 and 2 hand the candidate material to look at in the real exam,
-                so their wording stays on screen. The spoken-only parts follow the
-                transcript toggle instead of printing what the examiner just said. */}
+            <span className="im-part-tag">{getPartBadgeText(currentStep)}</span>
+            {/* The real test shows the wording on screen while it is read out, so it
+                stays up unless the candidate hides it. The material for Parts 1.2 and
+                2 stays regardless — it is what the question is about. */}
             {(currentStep.pictures || currentStep.prompts || showTranscript) && (
               <h3 className="im-question-text">{currentStep.say}</h3>
             )}
 
-            {/* Prompts list for Part 2 */}
+            {/* Part 2's three points, numbered the way the exam card numbers them —
+                all three must be covered for full marks. */}
             {currentStep.prompts && (
-              <ul className="im-prompts-list">
+              <ol className="im-prompts-list">
                 {currentStep.prompts.map((pr, idx) => (
-                  <li key={idx}>• {pr}</li>
+                  <li key={idx}>
+                    <span className="im-prompt-no">{idx + 1}</span>
+                    <span>{pr}</span>
+                  </li>
                 ))}
-              </ul>
+              </ol>
+            )}
+
+            {/* How long this answer may run, and whether preparation comes first —
+                the exam states both before every task. */}
+            {currentStep.kind !== 'frame' && currentStep.kind !== 'closing' && (
+              <p className="im-timing-note">
+                <Clock size={12} aria-hidden="true" />
+                {currentStep.prepSec
+                  ? `${currentStep.prepSec} soniya tayyorgarlik, ${formatSecs(currentStep.maxSec * 1000)} javob`
+                  : `Javob uchun ${currentStep.maxSec} soniya`}
+              </p>
             )}
           </div>
 
@@ -1257,91 +1454,151 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       {/* 5. RESULTS STATE */}
       {testStatus === 'results' && feedback && (
         <div className="im-content im-results-card">
-          {/* Header Score Badge */}
+          {/* Header Score Badge — the two figures the certificate carries: the band
+              and the score out of 75. */}
           <div className="im-result-header" style={{ background: getCefrBadgeStyle(feedback.cefrLevel).bg }}>
-            <span className="im-result-title">🇺🇿 CEFR Multilevel Speaking Mock Result</span>
+            <span className="im-result-title">🇺🇿 Multilevel Speaking — mock natijasi</span>
             <div className="im-score-circle">
               <span className="im-score-val">{feedback.cefrLevel}</span>
-              <span className="im-score-sub">{feedback.estimatedScore}</span>
+              <span className="im-score-sub">
+                {feedback.overallScore !== null
+                  ? `${feedback.overallScore} / ${feedback.scaledMax} ball`
+                  : feedback.estimatedScore}
+              </span>
             </div>
+            {feedback.rawTotal !== null && (
+              <span className="im-score-raw">
+                Xom ball: {formatMark(feedback.rawTotal, feedback.rawMax)}
+              </span>
+            )}
+            <span className="im-score-disclaimer">
+              AI baholadi — rasmiy imtihon natijasi emas
+            </span>
           </div>
 
-          {/* Part-by-Part Breakdown */}
-          {feedback.partPerformance && (
+          {/* Where this score sits on the exam's own scale. A number with nothing to
+              measure it against told the candidate very little. */}
+          {feedback.overallScore !== null && (
             <div className="im-section">
               <h3 className="im-section-title">
-                <BookOpen size={18} />
-                <span>Bo'limlar bo'yicha ko'rsatkichlar (Part Performance)</span>
+                <Layers size={18} />
+                <span>Baholash shkalasi</span>
               </h3>
-              <div className="im-subscores-grid">
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Part 1.1 (A1-A2)</span>
-                    <span className="im-subscore-band">{feedback.partPerformance.part1_1?.score}</span>
-                  </div>
-                  <p className="im-subscore-comment">{feedback.partPerformance.part1_1?.comment}</p>
-                </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Part 1.2 (B1 Rasm)</span>
-                    <span className="im-subscore-band">{feedback.partPerformance.part1_2?.score}</span>
-                  </div>
-                  <p className="im-subscore-comment">{feedback.partPerformance.part1_2?.comment}</p>
-                </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Part 2 (B2 Topic)</span>
-                    <span className="im-subscore-band">{feedback.partPerformance.part2?.score}</span>
-                  </div>
-                  <p className="im-subscore-comment">{feedback.partPerformance.part2?.comment}</p>
-                </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Part 3 (C1 Discussion)</span>
-                    <span className="im-subscore-band">{feedback.partPerformance.part3?.score}</span>
-                  </div>
-                  <p className="im-subscore-comment">{feedback.partPerformance.part3?.comment}</p>
-                </div>
+              <div className="im-band-table">
+                {BAND_TABLE.map((band) => {
+                  const here = band.level === feedback.cefrLevel;
+                  return (
+                    <div key={band.level} className={`im-band-row${here ? ' is-here' : ''}`}>
+                      <span className="im-band-level">{band.level}</span>
+                      <span className="im-band-range">{band.min}–{band.max}</span>
+                      <span className="im-band-note">{band.note}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Skills Breakdown */}
-          {feedback.skills && (
-            <div className="im-section">
-              <h3 className="im-section-title">
-                <Award size={18} />
-                <span>Ko'nikmalar bo'yicha baholar (Skills)</span>
-              </h3>
-              <div className="im-subscores-grid">
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Fluency & Coherence</span>
-                    <span className="im-subscore-band">{feedback.skills.fluency?.score}</span>
+          {/* Part-by-Part Breakdown — the raw marks the exam actually awards. */}
+          <div className="im-section">
+            <h3 className="im-section-title">
+              <BookOpen size={18} />
+              <span>Qismlar boʻyicha ball</span>
+            </h3>
+            <div className="im-subscores-grid">
+              {PART_META.map((meta) => {
+                const part = feedback.partPerformance[meta.key];
+                const pct = part.mark !== null ? Math.round((part.mark / part.max) * 100) : null;
+                return (
+                  <div className="im-subscore-item" key={meta.key}>
+                    <div className="im-subscore-head">
+                      <span className="im-subscore-name">
+                        {meta.label} · {meta.sub}
+                        <span className="im-target-tag">{part.target} darajasi</span>
+                      </span>
+                      <span className="im-subscore-band">
+                        {formatMark(part.mark, part.max, part.legacy)}
+                      </span>
+                    </div>
+                    {pct !== null && (
+                      <div className="im-mark-bar">
+                        <div className="im-mark-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                    )}
+                    <p className="im-subscore-comment">{part.comment}</p>
                   </div>
-                  <p className="im-subscore-comment">{feedback.skills.fluency?.comment}</p>
-                </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Vocabulary</span>
-                    <span className="im-subscore-band">{feedback.skills.vocabulary?.score}</span>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* The four criteria the examiners mark against. Pronunciation is not one of
+              them in this exam, so it is reported below as an unscored note. */}
+          <div className="im-section">
+            <h3 className="im-section-title">
+              <Award size={18} />
+              <span>Baholash mezonlari</span>
+            </h3>
+            <div className="im-subscores-grid">
+              {CRITERIA_META.map((meta) => {
+                const c = feedback.criteria[meta.key];
+                // A result marked before coherence became a criterion has nothing to
+                // say here; an empty panel reads as a bug rather than as history.
+                if (c.mark === null && !c.comment && !c.legacy) return null;
+                const pct = c.mark !== null ? Math.round((c.mark / c.max) * 100) : null;
+                return (
+                  <div className="im-subscore-item" key={meta.key}>
+                    <div className="im-subscore-head">
+                      <span className="im-subscore-name">
+                        {meta.label}
+                        <span className="im-target-tag">{meta.uz}</span>
+                      </span>
+                      <span className="im-subscore-band">
+                        {formatMark(c.mark, c.max, c.legacy)}
+                      </span>
+                    </div>
+                    {pct !== null && (
+                      <div className="im-mark-bar">
+                        <div className="im-mark-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                    )}
+                    <p className="im-subscore-comment">{c.comment}</p>
                   </div>
-                  <p className="im-subscore-comment">{feedback.skills.vocabulary?.comment}</p>
+                );
+              })}
+            </div>
+          </div>
+
+          {feedback.pronunciationNote && (
+            <div className="im-subscore-item">
+              <div className="im-subscore-head">
+                <span className="im-subscore-name">
+                  Talaffuz
+                  <span className="im-target-tag">ballga kirmaydi</span>
+                </span>
+              </div>
+              <p className="im-subscore-comment">{feedback.pronunciationNote}</p>
+            </div>
+          )}
+
+          {/* One answer, rewritten at the level its part is testing. */}
+          {feedback.betterAnswer && (
+            <div className="im-advice-card">
+              <h3><PenLine size={14} aria-hidden="true" /> {t('mock.betterAnswer')}</h3>
+              <div className="im-better">
+                <div>
+                  <strong style={{ color: '#fca5a5' }}>Siz aytdingiz:</strong>{' '}
+                  "{feedback.betterAnswer.original}"
                 </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Grammar</span>
-                    <span className="im-subscore-band">{feedback.skills.grammar?.score}</span>
+                <div>
+                  <strong style={{ color: '#86efac' }}>Kuchliroq variant:</strong>{' '}
+                  "{feedback.betterAnswer.improved}"
+                </div>
+                {feedback.betterAnswer.explanation && (
+                  <div style={{ color: 'var(--text-secondary)' }}>
+                    Tahlil: {feedback.betterAnswer.explanation}
                   </div>
-                  <p className="im-subscore-comment">{feedback.skills.grammar?.comment}</p>
-                </div>
-                <div className="im-subscore-item">
-                  <div className="im-subscore-head">
-                    <span className="im-subscore-name">Pronunciation</span>
-                    <span className="im-subscore-band">{feedback.skills.pronunciation?.score}</span>
-                  </div>
-                  <p className="im-subscore-comment">{feedback.skills.pronunciation?.comment}</p>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -1598,9 +1855,38 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           list-style: none;
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          font-size: 13px;
-          color: var(--text-secondary);
+          gap: 8px;
+          font-size: 14px;
+          line-height: 1.5;
+          color: var(--text-primary);
+        }
+        .im-prompts-list li {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .im-prompt-no {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+          border-radius: 6px;
+          background: rgba(16, 185, 129, 0.18);
+          color: #10b981;
+          font-size: 11px;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 1px;
+        }
+        .im-timing-note {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin: 2px 0 0;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: var(--text-tertiary);
         }
 
         .im-prep-card {
@@ -1792,9 +2078,80 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           line-height: 1;
         }
         .im-score-sub {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.8);
+          font-size: 16px;
+          color: rgba(255, 255, 255, 0.92);
+          font-weight: 800;
+        }
+        .im-score-raw {
+          font-size: 12px;
           font-weight: 700;
+          color: rgba(255, 255, 255, 0.78);
+        }
+        .im-score-disclaimer {
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* The scale the score sits on. A bare number told the candidate very little
+           about how close they were to the next band. */
+        .im-band-table {
+          display: flex;
+          flex-direction: column;
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          overflow: hidden;
+          background: var(--bg-secondary);
+        }
+        .im-band-row {
+          display: grid;
+          grid-template-columns: 34px 54px 1fr;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 12px;
+          font-size: 12px;
+          color: var(--text-secondary);
+          border-bottom: 1px solid var(--border);
+        }
+        .im-band-row:last-child { border-bottom: none; }
+        .im-band-row.is-here {
+          background: rgba(16, 185, 129, 0.12);
+          color: var(--text-primary);
+          font-weight: 700;
+        }
+        .im-band-level { font-weight: 800; color: #10b981; }
+        .im-band-range { font-variant-numeric: tabular-nums; }
+        .im-band-note { line-height: 1.35; }
+
+        /* How much of a part's marks were earned, at a glance. */
+        .im-mark-bar {
+          height: 6px;
+          border-radius: 3px;
+          background: var(--surface-2);
+          overflow: hidden;
+        }
+        .im-mark-fill {
+          height: 100%;
+          border-radius: 3px;
+          background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        .im-target-tag {
+          display: inline-block;
+          margin-left: 6px;
+          padding: 1px 6px;
+          border-radius: 6px;
+          background: var(--surface-2);
+          color: var(--text-tertiary);
+          font-size: 10px;
+          font-weight: 700;
+          vertical-align: middle;
+        }
+        .im-better {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          font-size: 14px;
+          line-height: 1.6;
         }
 
         /* One per row: two columns left each comment in a column too narrow to
@@ -1830,16 +2187,20 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 10px;
         }
         .im-subscore-name {
           font-size: 13px;
           font-weight: 700;
           color: var(--text-secondary);
+          line-height: 1.4;
         }
         .im-subscore-band {
-          font-size: 20px;
+          flex-shrink: 0;
+          font-size: 19px;
           font-weight: 800;
           color: #10b981;
+          font-variant-numeric: tabular-nums;
         }
         .im-subscore-comment {
           font-size: 14px;

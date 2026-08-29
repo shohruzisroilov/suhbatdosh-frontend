@@ -63,10 +63,10 @@ export default function Mock() {
               <Sparkles size={22} aria-hidden="true" />
             </span>
             <div className="mock-row__heading">
-              <h2 className="mock-row__title">CEFR Multilevel</h2>
+              <h2 className="mock-row__title">Multilevel Speaking</h2>
               <p className="mock-row__sub">{t('mock.cefrSub')}</p>
             </div>
-            <span className="mock-row__tag mock-row__tag--cefr">A1–C1</span>
+            <span className="mock-row__tag mock-row__tag--cefr">0–75 · A1–C1</span>
           </div>
 
           <ul className="mock-row__facts">
