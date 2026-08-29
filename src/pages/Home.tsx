@@ -64,7 +64,7 @@ export default function Home() {
           </button>
         )}
 
-        {/* Kunlik limit tugaganda chiqariladigan Bepul daqiqalar hisoblagichi va Premium banner */}
+        {/* Free-minutes counter and the Premium banner, shown once the daily limit is used up */}
         {isLimitReached && (
           <>
             <DailyProgress

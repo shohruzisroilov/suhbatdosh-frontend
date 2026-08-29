@@ -10,7 +10,7 @@
 export function describeAnswerError(err: any): string {
   // Axios reports its own timeout this way; the request never reached the server.
   if (err?.code === 'ECONNABORTED' || /timeout/i.test(String(err?.message || ''))) {
-    return "Javob yuklanmadi — internet juda sekin ko'rinadi. Signal yaxshiroq joyda qayta yuboring.";
+    return 'Could not send your answer. Your internet looks slow — try again with a better signal.';
   }
 
   // A reply the server did send: it knows what went wrong, so say what it said.
@@ -19,12 +19,12 @@ export function describeAnswerError(err: any): string {
 
   const status = err?.response?.status;
   if (status >= 500) {
-    return `Serverda xatolik (${status}). Bir oz kutib, qayta yuboring.`;
+    return `Something went wrong on our side (${status}). Wait a moment and send again.`;
   }
   if (status) {
-    return `So'rov qabul qilinmadi (${status}). Qayta yuborib ko'ring.`;
+    return `Your answer was not accepted (${status}). Please send it again.`;
   }
 
   // No response at all and no timeout flag — the connection dropped mid-flight.
-  return "Aloqa uzildi. Internetni tekshirib, javobni qayta yuboring.";
+  return 'Connection lost. Check your internet and send your answer again.';
 }

@@ -220,7 +220,7 @@ export default function IeltsMock() {
       return true;
     } catch (err) {
       console.error('Mic access error:', err);
-      setErrorMsg('Mikrofonga ruxsat berilmadi. Testni topshirish uchun brauzer sozlamalaridan ruxsat bering.');
+      setErrorMsg('No microphone access. Allow the microphone in your browser settings to take the test.');
       return false;
     }
   };
@@ -246,7 +246,7 @@ export default function IeltsMock() {
         }
       } catch (err: any) {
         console.error('Failed to load active test', err);
-        setErrorMsg(err.response?.data?.error || 'Testni ochib bo\'lmadi. Qaytadan urinib ko\'ring.');
+        setErrorMsg(err.response?.data?.error || 'Could not open the test. Please try again.');
       }
     });
 
@@ -269,7 +269,7 @@ export default function IeltsMock() {
         // The server may well have created the test before this request gave up, so
         // look again rather than leaving a started test invisible behind an error.
         void fetchStatus();
-        const msg = err.response?.data?.error || 'Testni boshlab bo\'lmadi. Qaytadan urinib ko\'ring.';
+        const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
         setErrorMsg(msg);
       }
     });
@@ -531,7 +531,7 @@ export default function IeltsMock() {
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('Mikrofonga ruxsat berilmadi. Testni topshirish uchun sozlamalardan ruxsat bering.');
+      setErrorMsg('No microphone access. Allow the microphone in your settings to take the test.');
     }
   };
 
@@ -881,7 +881,7 @@ export default function IeltsMock() {
       }
 
       setGradingFailed(true);
-      setErrorMsg(err.response?.data?.error || 'Baholashda xatolik yuz berdi. Qayta urinib ko\'ring.');
+      setErrorMsg(err.response?.data?.error || 'Could not mark your test. Please try again.');
     }
   };
 
@@ -895,9 +895,9 @@ export default function IeltsMock() {
   const getIeltsPartBadgeText = (part: number, kind: string) => {
     if (kind === 'frame') return 'KIRISH • Examiner Yo\'riqnomasi';
     if (kind === 'closing') return 'END • Test finished';
-    if (part === 1) return 'PART 1 • Kirish & Shaxsiy Savollar';
-    if (part === 2) return 'PART 2 • Cue Card Topshirig\'i';
-    if (part === 3) return 'PART 3 • Erkin Muhokama & Tahlil';
+    if (part === 1) return 'PART 1 • Introduction & personal questions';
+    if (part === 2) return 'PART 2 • Cue card task';
+    if (part === 3) return 'PART 3 • Discussion & analysis';
     return `PART ${part}`;
   };
 
@@ -942,16 +942,16 @@ export default function IeltsMock() {
           accent="ielts"
           hero={<Award size={40} aria-hidden="true" />}
           title="IELTS Speaking Mock Exam"
-          description="A full IELTS Speaking test — Part 1, the Part 2 cue card and the Part 3 discussion — marked by an AI examiner on the four official criteria."
+          description="A full IELTS Speaking test: Part 1, the Part 2 cue card, and the Part 3 discussion. An AI examiner marks you on the four official criteria."
           details={[
             {
               icon: <Clock size={15} aria-hidden="true" />,
-              label: 'Davomiyligi',
+              label: 'Length',
               value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
             },
             {
               icon: <Award size={15} aria-hidden="true" />,
-              label: 'Baholash',
+              label: 'Scoring',
               value: 'Band 0 - 9.0 (IELTS)',
             },
             {
@@ -966,7 +966,7 @@ export default function IeltsMock() {
               // quota that resets each day — calling both "Kunlik Limit" told half of
               // them to come back tomorrow for tests they will not get.
               label: status?.lifetime ? t('mock.freeTrial') : t('mock.dailyLimit'),
-              value: status ? `${status.remaining} / ${status.limit} ta imtihon qoldi` : '—',
+              value: status ? `${status.remaining} of ${status.limit} tests left` : '—',
               wide: true,
             },
           ]}
@@ -1103,7 +1103,7 @@ export default function IeltsMock() {
                   </div>
                   {isPrepping && (
                     <button type="button" className="im-mini-btn" onClick={skipPrep}>
-                      <Mic size={13} aria-hidden="true" /> Tayyorman, boshlayman
+                      <Mic size={13} aria-hidden="true" /> I am ready, start
                     </button>
                   )}
                 </div>
@@ -1142,10 +1142,10 @@ export default function IeltsMock() {
               <div className="im-retry-controls">
                 <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
                   <RotateCcw size={20} />
-                  <span>Javobni qayta yuborish</span>
+                  <span>Send answer again</span>
                 </button>
                 <button className="im-mini-btn" onClick={skipAnswer}>
-                  Bu savolni o'tkazib yuborish
+                  Skip this question
                 </button>
               </div>
             ) : submittingAnswer ? (
@@ -1203,17 +1203,17 @@ export default function IeltsMock() {
           <div className="im-content">
             <div className="im-error-box">
               <AlertCircle size={16} />
-              <span>{errorMsg || 'Baholashda xatolik yuz berdi.'}</span>
+              <span>{errorMsg || 'Could not mark your test.'}</span>
             </div>
             {/* The answers are safe on the server, so this retries the marking rather
                 than the test — nobody has to speak for twenty minutes again. */}
             <p className="im-grading-note">
-              Javoblaringiz saqlangan. Baholashni qaytadan boshlash uchun bosing.
+              Your answers are saved. Tap to try marking again.
             </p>
             <div className="im-retry-controls">
               <button className="im-rec-btn im-rec-btn--retry" onClick={() => void finishTestGrading()}>
                 <RotateCcw size={20} />
-                <span>Baholashni qayta urinish</span>
+                <span>Try marking again</span>
               </button>
               <button className="im-mini-btn" onClick={() => navigate('mock')}>
                 Keyinroq qaytaman
@@ -1229,8 +1229,8 @@ export default function IeltsMock() {
       <div className="im-page">
         <MockLoading
           accent="ielts"
-          label="AI Examiner baholamoqda…"
-          sublabel="Your answers are being marked on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment."
+          label="The AI examiner is marking your test…"
+          sublabel="Marking you on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment."
         />
         <style>{css}</style>
       </div>
@@ -1296,7 +1296,7 @@ export default function IeltsMock() {
               <div className="im-section">
                 <h3 className="im-section-title">
                   <BookOpen size={18} />
-                  <span>Bo'limlar bo'yicha izoh</span>
+                  <span>Notes on each part</span>
                 </h3>
                 <div className="im-subscores-grid">
                   {([
@@ -1355,7 +1355,7 @@ export default function IeltsMock() {
             <div className="im-section">
               <h3 className="im-section-title">
                 <CheckCircle2 size={18} />
-                <span>Xatolar tahlili va yaxshiroq iboralar (Fixes)</span>
+                <span>Mistakes and better phrases</span>
               </h3>
               <div className="im-fixes-list">
                 {feedback.fixes.map((fix, idx) => (

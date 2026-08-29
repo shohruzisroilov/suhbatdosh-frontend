@@ -36,7 +36,7 @@ export function useMatch() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
     } catch (err: any) {
-      console.warn('Mikrofon xatosi:', err?.name, err?.message);
+      console.warn('Microphone error:', err?.name, err?.message);
       const errMsg = micErrorMessage(err);
       useAppStore.getState().setMicErrorModal({ isOpen: true, errorMsg: errMsg });
       return;

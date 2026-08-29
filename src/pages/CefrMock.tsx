@@ -115,27 +115,27 @@ interface CefrFeedback {
  * raw marks that convert to the 0-75 score printed on the certificate.
  */
 const PART_META = [
-  { key: 'part1_1', label: 'Part 1.1', sub: "Shaxsiy savollar", max: 5, target: 'A2' },
-  { key: 'part1_2', label: 'Part 1.2', sub: 'Taqqoslash', max: 5, target: 'B1' },
-  { key: 'part2', label: 'Part 2', sub: "Mavzu bo'yicha nutq", max: 5, target: 'B2' },
-  { key: 'part3', label: 'Part 3', sub: 'Ikki tomonlama muhokama', max: 6, target: 'C1' },
+  { key: 'part1_1', label: 'Part 1.1', sub: 'Personal questions', max: 5, target: 'A2' },
+  { key: 'part1_2', label: 'Part 1.2', sub: 'Comparing', max: 5, target: 'B1' },
+  { key: 'part2', label: 'Part 2', sub: 'Talk on a topic', max: 5, target: 'B2' },
+  { key: 'part3', label: 'Part 3', sub: 'Two-way discussion', max: 6, target: 'C1' },
 ] as const;
 
 /** The four criteria the Multilevel examiners actually mark against. */
 const CRITERIA_META = [
-  { key: 'grammar', label: 'Grammatical Range & Accuracy', uz: 'Grammatika' },
-  { key: 'vocabulary', label: 'Vocabulary', uz: "So'z boyligi" },
-  { key: 'fluency', label: 'Fluency', uz: 'Ravonlik' },
-  { key: 'coherence', label: 'Coherence & Cohesion', uz: 'Fikr izchilligi' },
+  { key: 'grammar', label: 'Grammatical Range & Accuracy', plain: 'Grammar' },
+  { key: 'vocabulary', label: 'Vocabulary', plain: 'Word choice' },
+  { key: 'fluency', label: 'Fluency', plain: 'Speaking smoothly' },
+  { key: 'coherence', label: 'Coherence & Cohesion', plain: 'Clear ideas' },
 ] as const;
 
 /** Where each band starts on the reported 0-75 scale. */
 const BAND_TABLE = [
-  { level: 'C1', min: 65, max: 75, note: "Erkin, aniq, deyarli ona tilidek" },
-  { level: 'B2', min: 51, max: 64, note: 'Ishonchli va ravon, ayrim xatolar bilan' },
-  { level: 'B1', min: 38, max: 50, note: 'Fikrni yetkaza oladi, kamchiliklari bor' },
-  { level: 'A2', min: 20, max: 37, note: "Oddiy muloqot, tez-tez to'xtalish" },
-  { level: 'A1', min: 0, max: 19, note: "Alohida so'zlar va tayyor iboralar" },
+  { level: 'C1', min: 65, max: 75, note: 'Fluent and accurate, close to a native speaker' },
+  { level: 'B2', min: 51, max: 64, note: 'Confident and fluent, with some mistakes' },
+  { level: 'B1', min: 38, max: 50, note: 'Gets the message across, with gaps' },
+  { level: 'A2', min: 20, max: 37, note: 'Simple conversation, stopping often' },
+  { level: 'A1', min: 0, max: 19, note: 'Single words and set phrases' },
 ] as const;
 
 const numberOrNull = (v: any): number | null => {
@@ -390,7 +390,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       return true;
     } catch (err) {
       console.error('Mic access error:', err);
-      setErrorMsg('Mikrofonga ruxsat berilmadi. Imtihon uchun brauzer sozlamalaridan ruxsat bering.');
+      setErrorMsg('No microphone access. Allow the microphone in your browser settings to take the exam.');
       return false;
     }
   };
@@ -480,10 +480,10 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           beginStep(res.step);
           return;
         }
-        setErrorMsg('Bu imtihonni davom ettirib bo\'lmadi.');
+        setErrorMsg('Could not continue this exam.');
       } catch (err: any) {
         console.error('Load active test error:', err);
-        setErrorMsg(err?.response?.data?.error || 'Imtihonni yuklashda xatolik.');
+        setErrorMsg(err?.response?.data?.error || 'Could not load the exam.');
       }
     });
 
@@ -507,7 +507,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         // The server may well have created the test before this request gave up, so
         // look again rather than leaving a started test invisible behind an error.
         void fetchStatus();
-        const msg = err?.response?.data?.error || 'Imtihonni boshlashda xatolik yuz berdi.';
+        const msg = err?.response?.data?.error || 'Could not start the exam.';
         setErrorMsg(msg);
       }
     });
@@ -817,7 +817,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('Mikrofonga ruxsat berilmadi. Sozlamalardan mikrofonga ruxsat bering.');
+      setErrorMsg('No microphone access. Allow the microphone in your settings.');
     }
   };
 
@@ -1001,22 +1001,22 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
    */
   const getPartBadgeText = (step: StepData) => {
     const part = String(step.part);
-    if (step.kind === 'closing' || part === 'closing') return 'YAKUN • Imtihon tugadi';
-    if (part === 'intro') return 'KIRISH • Examiner yoʻriqnomasi';
+    if (step.kind === 'closing' || part === 'closing') return 'END • Exam finished';
+    if (part === 'intro') return 'INTRO • Examiner instructions';
 
     const name =
       part === '1.1'
-        ? "PART 1.1 • Shaxsiy savollar (A2)"
+        ? 'PART 1.1 • Personal questions (A2)'
         : part === '1.2'
-        ? 'PART 1.2 • Taqqoslash (B1)'
+        ? 'PART 1.2 • Comparing (B1)'
         : part === '2'
-        ? "PART 2 • Mavzu boʻyicha nutq (B2)"
+        ? 'PART 2 • Talk on a topic (B2)'
         : part === '3'
-        ? 'PART 3 • Ikki tomonlama muhokama (C1)'
+        ? 'PART 3 • Two-way discussion (C1)'
         : `PART ${part}`;
 
-    if (step.kind === 'frame') return `${name} • Yoʻriqnoma`;
-    if (step.qNo && step.qTotal) return `${name} • ${step.qNo}-savol / ${step.qTotal}`;
+    if (step.kind === 'frame') return `${name} • Instructions`;
+    if (step.qNo && step.qTotal) return `${name} • Question ${step.qNo} of ${step.qTotal}`;
     return name;
   };
 
@@ -1050,13 +1050,13 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       }
 
       setGradingFailed(true);
-      setErrorMsg(err?.response?.data?.error || 'Natijalarni hisoblashda xatolik yuz berdi.');
+      setErrorMsg(err?.response?.data?.error || 'Could not work out your results.');
     }
   };
 
   const handleAbandon = () => {
     if (!testId) return;
-    if (!window.confirm('Imtihondan chiqmoqchimisiz? Ushbu urinish bekor qilinadi.')) return;
+    if (!window.confirm('Leave the exam? This attempt will be cancelled.')) return;
     haltStepMachine();
     return runAction('discard', async () => {
       tapHaptic('light');
@@ -1138,36 +1138,36 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           accent="cefr"
           hero={<Award size={40} aria-hidden="true" />}
           title="Multilevel Speaking Mock"
-          description="Milliy sertifikat imtihonining Speaking qismi — toʻliq formatda: 6 ta savol (Part 1.1 va 1.2), 2 daqiqalik nutq (Part 2) va ikki tomonlama muhokama (Part 3). AI examiner savol beradi, javobingizni yozib oladi va rasmiy mezonlar boʻyicha baholaydi."
+          description="The full Speaking part of the national certificate exam: 6 questions, a 2-minute talk, and a two-way discussion. An AI examiner asks, records your answers, and marks them on the official criteria."
           details={[
             {
               icon: <Clock size={15} aria-hidden="true" />,
-              label: 'Davomiyligi',
+              label: 'Length',
               value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
             },
             {
               icon: <Award size={15} aria-hidden="true" />,
-              label: 'Baholash',
-              value: '21 xom ball → 75 ball (A1–C1)',
+              label: 'Scoring',
+              value: '21 raw marks → 75 points (A1–C1)',
             },
             {
               icon: <BookOpen size={15} aria-hidden="true" />,
-              label: 'Imtihon tuzilishi',
+              label: 'Exam structure',
               value:
-                'Part 1.1 — 3 savol, 30 son. · Part 1.2 — 3 savol, 45+30+30 son. · Part 2 — 1 daq. tayyorgarlik, 2 daq. nutq · Part 3 — 1 daq. tayyorgarlik, 2 daq. muhokama',
+                'Part 1.1 — 3 questions, 30s each · Part 1.2 — 3 questions, 45+30+30s · Part 2 — 1 min to prepare, 2 min to talk · Part 3 — 1 min to prepare, 2 min to discuss',
               wide: true,
             },
             {
               icon: <Layers size={15} aria-hidden="true" />,
-              label: 'Mezonlar',
-              value: "Grammatika · So'z boyligi · Ravonlik · Fikr izchilligi",
+              label: 'Marked on',
+              value: 'Grammar · Word choice · Speaking smoothly · Clear ideas',
               wide: true,
             },
             {
               icon: <Sparkles size={15} aria-hidden="true" />,
               // Only the premium quota resets daily; the free one is a one-off trial.
               label: quota && !quota.isPremium ? t('mock.freeTrial') : t('mock.dailyLimit'),
-              value: quota ? `${quota.remaining} / ${quota.limit} ta imtihon qoldi` : '—',
+              value: quota ? `${quota.remaining} of ${quota.limit} exams left` : '—',
               wide: true,
             },
           ]}
@@ -1240,19 +1240,19 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-examiner-speech" style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>AI Examiner</span>
-                {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> savolni o'qimoqda...</span>}
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> reading the question…</span>}
               </div>
               {/* The wording itself lives in the question card below, the way the
                   exam puts it on screen. Repeating it here read it to the candidate
                   twice on one screen. */}
               <p className="im-examiner-text" style={{ fontSize: '14px', margin: '4px 0 0 0', color: 'rgba(248,250,252,0.65)', fontStyle: 'italic', lineHeight: 1.5 }}>
                 {isSpeaking
-                  ? 'Examinerni tinglang…'
+                  ? 'Listen to the examiner…'
                   : isPrepping
-                  ? 'Tayyorgarlik vaqti ketmoqda.'
+                  ? 'Preparation time is running.'
                   : isRecording
-                  ? 'Javobingiz yozib olinmoqda.'
-                  : 'Endi javob bering.'}
+                  ? 'Recording your answer.'
+                  : 'Answer now.'}
               </p>
               <div className="im-examiner-actions">
                 {/* Asking the examiner to repeat is allowed in the real test. */}
@@ -1269,7 +1269,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                   className="im-mini-btn"
                   onClick={() => setShowTranscript((v) => !v)}
                 >
-                  {showTranscript ? 'Matnni yashirish' : 'Matnni koʻrsatish'}
+                  {showTranscript ? 'Hide text' : 'Show text'}
                 </button>
               </div>
             </div>
@@ -1355,8 +1355,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <p className="im-timing-note">
                 <Clock size={12} aria-hidden="true" />
                 {currentStep.prepSec
-                  ? `${currentStep.prepSec} soniya tayyorgarlik, ${formatSecs(currentStep.maxSec * 1000)} javob`
-                  : `Javob uchun ${currentStep.maxSec} soniya`}
+                  ? `${currentStep.prepSec}s to prepare, ${formatSecs(currentStep.maxSec * 1000)} to answer`
+                  : `${currentStep.maxSec}s to answer`}
               </p>
             )}
           </div>
@@ -1368,25 +1368,25 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-retry-controls">
               <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
                 <RotateCcw size={20} />
-                <span>Javobni qayta yuborish</span>
+                <span>Send answer again</span>
               </button>
               <button className="im-mini-btn" onClick={skipAnswer}>
-                Bu savolni o'tkazib yuborish
+                Skip this question
               </button>
             </div>
           ) : submittingAnswer ? (
             <div className="im-submitting-box">
               <div className="im-spinner" />
-              <span>Javobingiz yuborilmoqda...</span>
+              <span>Sending your answer…</span>
             </div>
           ) : isPrepping ? (
             <div className="im-prep-card">
               <Clock size={24} className="animate-spin text-emerald-400" />
               <div style={{ flex: 1 }}>
-                <h4>Tayyorgarlik vaqti: {prepTimeLeft} soniya</h4>
+                <h4>Time to prepare: {prepTimeLeft}s</h4>
                 <p>{t('mock.notesHint')}</p>
                 <button className="im-mini-btn" onClick={skipPrep} style={{ marginTop: '8px' }}>
-                  <Mic size={13} aria-hidden="true" /> Tayyorman, boshlayman
+                  <Mic size={13} aria-hidden="true" /> I am ready, start
                 </button>
               </div>
             </div>
@@ -1400,7 +1400,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 {/* The examiner stops you at the limit; this is for finishing early. */}
                 <button className="im-rec-btn im-rec-btn--stop" onClick={() => void stopRecordingAndSend()}>
                   <MicOff size={22} />
-                  <span>Javobni tugatdim</span>
+                  <span>I have finished</span>
                 </button>
               </div>
             </div>
@@ -1421,14 +1421,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           )}
 
           <button className="im-abandon-link" onClick={handleAbandon}>
-            Imtihonni bekor qilish
+            Cancel the exam
           </button>
         </div>
       )}
 
       {/* 4. GRADING / EVALUATING STATE */}
       {testStatus === 'grading' && !gradingFailed && (
-        <MockLoading accent="cefr" label="Natijalar baholanmoqda…" sublabel={t('mock.cefrGrading')} />
+        <MockLoading accent="cefr" label="Marking your answers…" sublabel={t('mock.cefrGrading')} />
       )}
 
       {testStatus === 'grading' && gradingFailed && (
@@ -1437,12 +1437,12 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               an error and no way to ask for the result again. The answers are safe on
               the server, so this retries the marking, not the exam. */}
           <p className="im-grading-note">
-            Javoblaringiz saqlangan. Baholashni qaytadan boshlash uchun bosing.
+            Your answers are saved. Tap to try marking again.
           </p>
           <div className="im-retry-controls">
             <button className="im-rec-btn im-rec-btn--retry" onClick={() => void handleFinishTest()}>
               <RotateCcw size={20} />
-              <span>Baholashni qayta urinish</span>
+              <span>Try marking again</span>
             </button>
             <button className="im-mini-btn" onClick={() => navigate('mock')}>
               Keyinroq qaytaman
@@ -1457,7 +1457,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Header Score Badge — the two figures the certificate carries: the band
               and the score out of 75. */}
           <div className="im-result-header" style={{ background: getCefrBadgeStyle(feedback.cefrLevel).bg }}>
-            <span className="im-result-title">🇺🇿 Multilevel Speaking — mock natijasi</span>
+            <span className="im-result-title">🇺🇿 Multilevel Speaking — mock result</span>
             <div className="im-score-circle">
               <span className="im-score-val">{feedback.cefrLevel}</span>
               <span className="im-score-sub">
@@ -1472,7 +1472,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               </span>
             )}
             <span className="im-score-disclaimer">
-              AI baholadi — rasmiy imtihon natijasi emas
+              Marked by AI — not an official exam result
             </span>
           </div>
 
@@ -1482,7 +1482,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-section">
               <h3 className="im-section-title">
                 <Layers size={18} />
-                <span>Baholash shkalasi</span>
+                <span>Score scale</span>
               </h3>
               <div className="im-band-table">
                 {BAND_TABLE.map((band) => {
@@ -1503,7 +1503,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <div className="im-section">
             <h3 className="im-section-title">
               <BookOpen size={18} />
-              <span>Qismlar boʻyicha ball</span>
+              <span>Score by part</span>
             </h3>
             <div className="im-subscores-grid">
               {PART_META.map((meta) => {
@@ -1514,7 +1514,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                     <div className="im-subscore-head">
                       <span className="im-subscore-name">
                         {meta.label} · {meta.sub}
-                        <span className="im-target-tag">{part.target} darajasi</span>
+                        <span className="im-target-tag">{part.target} level</span>
                       </span>
                       <span className="im-subscore-band">
                         {formatMark(part.mark, part.max, part.legacy)}
@@ -1537,7 +1537,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <div className="im-section">
             <h3 className="im-section-title">
               <Award size={18} />
-              <span>Baholash mezonlari</span>
+              <span>What you are marked on</span>
             </h3>
             <div className="im-subscores-grid">
               {CRITERIA_META.map((meta) => {
@@ -1551,7 +1551,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                     <div className="im-subscore-head">
                       <span className="im-subscore-name">
                         {meta.label}
-                        <span className="im-target-tag">{meta.uz}</span>
+                        <span className="im-target-tag">{meta.plain}</span>
                       </span>
                       <span className="im-subscore-band">
                         {formatMark(c.mark, c.max, c.legacy)}
@@ -1573,8 +1573,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-subscore-item">
               <div className="im-subscore-head">
                 <span className="im-subscore-name">
-                  Talaffuz
-                  <span className="im-target-tag">ballga kirmaydi</span>
+                  Pronunciation
+                  <span className="im-target-tag">not in the score</span>
                 </span>
               </div>
               <p className="im-subscore-comment">{feedback.pronunciationNote}</p>
