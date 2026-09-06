@@ -94,6 +94,14 @@ function speechCeilingMs(text: string): number {
 /** What the examiner says when the answer has run to its limit. */
 const CUT_OFF_LINE = 'Thank you.';
 
+/** The four marks the report shows, in the order IELTS prints them. */
+const CRITERIA = [
+  { key: 'fluency', plainKey: 'ielts.critFluency', officialKey: 'ielts.critFluencyFull' },
+  { key: 'lexical', plainKey: 'ielts.critLexical', officialKey: 'ielts.critLexicalFull' },
+  { key: 'grammar', plainKey: 'ielts.critGrammar', officialKey: 'ielts.critGrammarFull' },
+  { key: 'pronunciation', plainKey: 'ielts.critPron', officialKey: 'ielts.critPronFull' },
+] as const;
+
 export default function IeltsMock() {
   const t = useT();
   const { navigate, user } = useAppStore();
@@ -220,7 +228,7 @@ export default function IeltsMock() {
       return true;
     } catch (err) {
       console.error('Mic access error:', err);
-      setErrorMsg('No microphone access. Allow the microphone in your browser settings to take the test.');
+      setErrorMsg(t('mock.micDenied'));
       return false;
     }
   };
@@ -246,7 +254,7 @@ export default function IeltsMock() {
         }
       } catch (err: any) {
         console.error('Failed to load active test', err);
-        setErrorMsg(err.response?.data?.error || 'Could not open the test. Please try again.');
+        setErrorMsg(err.response?.data?.error || t('mock.openFailed'));
       }
     });
 
@@ -269,7 +277,7 @@ export default function IeltsMock() {
         // The server may well have created the test before this request gave up, so
         // look again rather than leaving a started test invisible behind an error.
         void fetchStatus();
-        const msg = err.response?.data?.error || 'Could not start the test. Please try again.';
+        const msg = err.response?.data?.error || t('mock.startFailed');
         setErrorMsg(msg);
       }
     });
@@ -531,7 +539,7 @@ export default function IeltsMock() {
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('No microphone access. Allow the microphone in your settings to take the test.');
+      setErrorMsg(t('mock.micDenied'));
     }
   };
 
@@ -881,7 +889,7 @@ export default function IeltsMock() {
       }
 
       setGradingFailed(true);
-      setErrorMsg(err.response?.data?.error || 'Could not mark your test. Please try again.');
+      setErrorMsg(err.response?.data?.error || t('mock.markFailed'));
     }
   };
 
@@ -893,11 +901,11 @@ export default function IeltsMock() {
   };
 
   const getIeltsPartBadgeText = (part: number, kind: string) => {
-    if (kind === 'frame') return 'KIRISH • Examiner Yo\'riqnomasi';
-    if (kind === 'closing') return 'END • Test finished';
-    if (part === 1) return 'PART 1 • Introduction & personal questions';
-    if (part === 2) return 'PART 2 • Cue card task';
-    if (part === 3) return 'PART 3 • Discussion & analysis';
+    if (kind === 'frame') return t('mock.badgeIntro');
+    if (kind === 'closing') return t('mock.badgeEnd');
+    if (part === 1) return t('ielts.badgeP1');
+    if (part === 2) return t('ielts.badgeP2');
+    if (part === 3) return t('ielts.badgeP3');
     return `PART ${part}`;
   };
 
@@ -905,7 +913,7 @@ export default function IeltsMock() {
   const renderHeader = () => (
     <MockHeader
       accent="ielts"
-      title="IELTS AI Mock Examiner"
+      title={t('ielts.headerTitle')}
       soundEnabled={soundEnabled}
       onBack={() => navigate('mock')}
       onToggleSound={() => {
@@ -941,23 +949,23 @@ export default function IeltsMock() {
         <MockIntroCard
           accent="ielts"
           hero={<Award size={40} aria-hidden="true" />}
-          title="IELTS Speaking Mock Exam"
-          description="A full IELTS Speaking test: Part 1, the Part 2 cue card, and the Part 3 discussion. An AI examiner marks you on the four official criteria."
+          title={t('ielts.introTitle')}
+          description={t('ielts.introSub')}
           details={[
             {
               icon: <Clock size={15} aria-hidden="true" />,
-              label: 'Length',
+              label: t('mock.labelLength'),
               value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
             },
             {
               icon: <Award size={15} aria-hidden="true" />,
-              label: 'Scoring',
-              value: 'Band 0 - 9.0 (IELTS)',
+              label: t('mock.labelScoring'),
+              value: t('ielts.scoring'),
             },
             {
               icon: <BookOpen size={15} aria-hidden="true" />,
-              label: 'Format',
-              value: 'Part 1 (Intro) + Part 2 (Cue Card) + Part 3 (Discussion)',
+              label: t('mock.labelFormat'),
+              value: t('ielts.format'),
               wide: true,
             },
             {
@@ -966,7 +974,7 @@ export default function IeltsMock() {
               // quota that resets each day — calling both "Kunlik Limit" told half of
               // them to come back tomorrow for tests they will not get.
               label: status?.lifetime ? t('mock.freeTrial') : t('mock.dailyLimit'),
-              value: status ? `${status.remaining} of ${status.limit} tests left` : '—',
+              value: status ? t('mock.testsLeft', { n: status.remaining, total: status.limit }) : '—',
               wide: true,
             },
           ]}
@@ -1043,14 +1051,14 @@ export default function IeltsMock() {
             </div>
             <div className="im-examiner-speech">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="im-examiner-name">AI Examiner</span>
-                {isSpeaking && <span style={{ fontSize: '11px', color: '#38bdf8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> speaking…</span>}
+                <span className="im-examiner-name">{t('mock.examiner')}</span>
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#38bdf8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> {t('mock.speakingTag')}</span>}
               </div>
               {showTranscript ? (
                 <p className="im-examiner-text">{currentStep.say || currentStep.cardSay}</p>
               ) : (
                 <p className="im-examiner-text im-examiner-text--hidden">
-                  {isSpeaking ? 'Listen to the examiner…' : 'Answer now.'}
+                  {isSpeaking ? t('mock.listen') : t('mock.answerNow')}
                 </p>
               )}
               <div className="im-examiner-actions">
@@ -1061,14 +1069,14 @@ export default function IeltsMock() {
                   onClick={repeatQuestion}
                   disabled={isSpeaking || submittingAnswer}
                 >
-                  <Volume2 size={13} aria-hidden="true" /> Repeat
+                  <Volume2 size={13} aria-hidden="true" /> {t('mock.repeat')}
                 </button>
                 <button
                   type="button"
                   className="im-mini-btn"
                   onClick={() => setShowTranscript((v) => !v)}
                 >
-                  {showTranscript ? 'Hide text' : 'Show text'}
+                  {showTranscript ? t('mock.hideText') : t('mock.showText')}
                 </button>
               </div>
             </div>
@@ -1079,11 +1087,11 @@ export default function IeltsMock() {
             <div className="im-cue-card">
               <div className="im-cue-card__header">
                 <BookOpen size={16} />
-                <span>Part 2 Cue Card</span>
+                <span>{t('ielts.cueCardTitle')}</span>
               </div>
               <h3 className="im-cue-card__title">"{currentStep.card.cue}"</h3>
               <div className="im-cue-card__bullets">
-                <p className="im-cue-card__bullets-title">You should say:</p>
+                <p className="im-cue-card__bullets-title">{t('ielts.cardLead')}</p>
                 <ul>
                   {currentStep.card.bullets.map((bullet, idx) => (
                     <li key={idx}>{bullet}</li>
@@ -1098,19 +1106,19 @@ export default function IeltsMock() {
                 <div className="im-prep-timer__row">
                   <div className="im-prep-timer__info">
                     <Clock size={16} />
-                    <span>Preparation: </span>
+                    <span>{t('mock.prepShort')} </span>
                     <strong className="im-prep-timer__time">{prepTimeLeft}s</strong>
                   </div>
                   {isPrepping && (
                     <button type="button" className="im-mini-btn" onClick={skipPrep}>
-                      <Mic size={13} aria-hidden="true" /> I am ready, start
+                      <Mic size={13} aria-hidden="true" /> {t('mock.readyStart')}
                     </button>
                   )}
                 </div>
                 {isPrepping ? (
-                  <span className="im-prep-active">Make your notes — you start speaking when this ends.</span>
+                  <span className="im-prep-active">{t('mock.notesHint')}</span>
                 ) : prepTimeLeft === 0 ? (
-                  <span className="im-prep-active">Speak now.</span>
+                  <span className="im-prep-active">{t('mock.answerNow')}</span>
                 ) : null}
               </div>
 
@@ -1119,9 +1127,9 @@ export default function IeltsMock() {
                 className="im-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Your notes…"
+                placeholder={t('mock.notesPlaceholder')}
                 rows={4}
-                aria-label="Notes for Part 2"
+                aria-label={t('mock.notesAria')}
               />
             </div>
           )}
@@ -1142,16 +1150,16 @@ export default function IeltsMock() {
               <div className="im-retry-controls">
                 <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
                   <RotateCcw size={20} />
-                  <span>Send answer again</span>
+                  <span>{t('mock.sendAgain')}</span>
                 </button>
                 <button className="im-mini-btn" onClick={skipAnswer}>
-                  Skip this question
+                  {t('mock.skipQuestion')}
                 </button>
               </div>
             ) : submittingAnswer ? (
               <div className="im-loading-answer">
                 <div className="im-spinner" />
-                <span>Sending your answer…</span>
+                <span>{t('mock.sending')}</span>
               </div>
             ) : isRecording ? (
               <div className="im-recording-controls">
@@ -1163,29 +1171,29 @@ export default function IeltsMock() {
                   {/* The examiner stops you at the limit; this is for finishing early. */}
                   <button className="im-rec-btn im-rec-btn--stop" onClick={() => void stopRecordingAndSend()}>
                     <MicOff size={22} />
-                    <span>I've finished</span>
+                    <span>{t('mock.doneAnswer')}</span>
                   </button>
                 </div>
               </div>
             ) : isPrepping ? (
               <div className="im-waiting-note">
                 <Clock size={15} aria-hidden="true" />
-                <span>Preparing — {prepTimeLeft}s left</span>
+                <span>{t('mock.prepLeft', { n: prepTimeLeft })}</span>
               </div>
             ) : isSpeaking ? (
               <div className="im-waiting-note">
                 <Volume2 size={15} aria-hidden="true" />
-                <span>The examiner is speaking…</span>
+                <span>{t('mock.examinerSpeaking')}</span>
               </div>
             ) : (
               <div className="im-waiting-note">
                 <Mic size={15} aria-hidden="true" />
-                <span>Getting ready…</span>
+                <span>{t('mock.gettingReady')}</span>
               </div>
             )}
 
             <button className="im-abandon-link" onClick={handleAbandon}>
-              End the test
+              {t('mock.endTest')}
             </button>
           </div>
         </div>
@@ -1203,20 +1211,20 @@ export default function IeltsMock() {
           <div className="im-content">
             <div className="im-error-box">
               <AlertCircle size={16} />
-              <span>{errorMsg || 'Could not mark your test.'}</span>
+              <span>{errorMsg || t('mock.markFailed')}</span>
             </div>
             {/* The answers are safe on the server, so this retries the marking rather
                 than the test — nobody has to speak for twenty minutes again. */}
             <p className="im-grading-note">
-              Your answers are saved. Tap to try marking again.
+              {t('mock.markRetryHint')}
             </p>
             <div className="im-retry-controls">
               <button className="im-rec-btn im-rec-btn--retry" onClick={() => void finishTestGrading()}>
                 <RotateCcw size={20} />
-                <span>Try marking again</span>
+                <span>{t('mock.markRetry')}</span>
               </button>
               <button className="im-mini-btn" onClick={() => navigate('mock')}>
-                Keyinroq qaytaman
+                {t('mock.comeBackLater')}
               </button>
             </div>
           </div>
@@ -1229,8 +1237,8 @@ export default function IeltsMock() {
       <div className="im-page">
         <MockLoading
           accent="ielts"
-          label="The AI examiner is marking your test…"
-          sublabel="Marking you on Fluency, Lexical Resource, Grammar and Pronunciation. This takes a moment."
+          label={t('ielts.markingTitle')}
+          sublabel={t('ielts.markingDesc')}
         />
         <style>{css}</style>
       </div>
@@ -1247,46 +1255,29 @@ export default function IeltsMock() {
           {/* Main Band Score Card */}
           <div className="im-result-score-card">
             <Award size={36} className="im-award-icon" />
-            <div className="im-overall-badge">OVERALL BAND</div>
+            <div className="im-overall-badge">{t('ielts.overall')}</div>
             <div className="im-score-num">{feedback.overall}</div>
-            <p className="im-score-text">
-              Tabriklaymiz! IELTS Speaking testini muvaffaqiyatli yakunladingiz.
-            </p>
+            <p className="im-score-text">{t('ielts.resultLead')}</p>
+            <span className="im-score-disclaimer">{t('ielts.reportDisclaimer')}</span>
           </div>
 
-          {/* Sub-scores Grid */}
+          {/* The four marks. Each one leads with what it means in plain words —
+              "Lexical Resource" is the examiner's term, not a word a candidate at A2
+              knows — and keeps the official name beside it, because that is what the
+              real report card says. */}
           <div className="im-subscores-grid">
-            <div className="im-subscore-item">
-              <div className="im-subscore-head">
-                <span className="im-subscore-name">Fluency & Coherence</span>
-                <span className="im-subscore-band">{feedback.fluency.band}</span>
+            {CRITERIA.map((c) => (
+              <div className="im-subscore-item" key={c.key}>
+                <div className="im-subscore-head">
+                  <span className="im-subscore-name">
+                    {t(c.plainKey)}
+                    <span className="im-target-tag">{t(c.officialKey)}</span>
+                  </span>
+                  <span className="im-subscore-band">{feedback[c.key].band}</span>
+                </div>
+                <p className="im-subscore-comment">{feedback[c.key].comment}</p>
               </div>
-              <p className="im-subscore-comment">{feedback.fluency.comment}</p>
-            </div>
-
-            <div className="im-subscore-item">
-              <div className="im-subscore-head">
-                <span className="im-subscore-name">Lexical Resource</span>
-                <span className="im-subscore-band">{feedback.lexical.band}</span>
-              </div>
-              <p className="im-subscore-comment">{feedback.lexical.comment}</p>
-            </div>
-
-            <div className="im-subscore-item">
-              <div className="im-subscore-head">
-                <span className="im-subscore-name">Grammar Range & Accuracy</span>
-                <span className="im-subscore-band">{feedback.grammar.band}</span>
-              </div>
-              <p className="im-subscore-comment">{feedback.grammar.comment}</p>
-            </div>
-
-            <div className="im-subscore-item">
-              <div className="im-subscore-head">
-                <span className="im-subscore-name">Pronunciation</span>
-                <span className="im-subscore-band">{feedback.pronunciation.band}</span>
-              </div>
-              <p className="im-subscore-comment">{feedback.pronunciation.comment}</p>
-            </div>
+            ))}
           </div>
 
           {/* What the examiner made of each part. The marker has written these since
@@ -1296,13 +1287,13 @@ export default function IeltsMock() {
               <div className="im-section">
                 <h3 className="im-section-title">
                   <BookOpen size={18} />
-                  <span>Notes on each part</span>
+                  <span>{t('ielts.byPart')}</span>
                 </h3>
                 <div className="im-subscores-grid">
                   {([
-                    { key: 'part1', label: 'Part 1', sub: 'Introduction & Interview' },
-                    { key: 'part2', label: 'Part 2', sub: 'Cue Card' },
-                    { key: 'part3', label: 'Part 3', sub: 'Discussion' },
+                    { key: 'part1', label: t('ielts.p1Name'), sub: t('ielts.p1Sub') },
+                    { key: 'part2', label: t('ielts.p2Name'), sub: t('ielts.p2Sub') },
+                    { key: 'part3', label: t('ielts.p3Name'), sub: t('ielts.p3Sub') },
                   ] as const).map(({ key, label, sub }) =>
                     feedback.partNotes?.[key] ? (
                       <div className="im-subscore-item" key={key}>
@@ -1355,20 +1346,20 @@ export default function IeltsMock() {
             <div className="im-section">
               <h3 className="im-section-title">
                 <CheckCircle2 size={18} />
-                <span>Mistakes and better phrases</span>
+                <span>{t('ielts.fixes')}</span>
               </h3>
               <div className="im-fixes-list">
                 {feedback.fixes.map((fix, idx) => (
                   <div key={idx} className="im-fix-card">
                     <div className="im-fix-said">
-                      <span className="im-fix-label">You said:</span>
+                      <span className="im-fix-label">{t('mock.fixSaid')}</span>
                       <p>"{fix.said}"</p>
                     </div>
                     <div className="im-fix-better">
-                      <span className="im-fix-label">Yaxshiroq (Band+):</span>
+                      <span className="im-fix-label">{t('mock.fixBetter')}</span>
                       <p>"{fix.better}"</p>
                     </div>
-                    {fix.why && <span className="im-fix-why">Sabab: {fix.why}</span>}
+                    {fix.why && <span className="im-fix-why">{t('mock.fixWhy')} {fix.why}</span>}
                   </div>
                 ))}
               </div>
@@ -1394,7 +1385,7 @@ export default function IeltsMock() {
               <span>{t('mock.retake')}</span>
             </button>
             <button className="im-btn im-btn--ghost" onClick={() => navigate('mock')}>
-              <span>Bosh sahifaga qaytish</span>
+              <span>{t('mock.goBackHome')}</span>
             </button>
           </div>
         </div>
@@ -1613,6 +1604,10 @@ const css = `
   .im-award-icon { color: #f59e0b; }
   .im-overall-badge { font-size: 12px; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
   .im-score-num { font-size: 54px; font-weight: 900; line-height: 1; color: #fff; }
+  .im-score-disclaimer {
+    display: block; margin-top: 10px; font-size: 11px; line-height: 1.5;
+    color: rgba(255, 255, 255, 0.6); max-width: 300px;
+  }
   .im-score-text { font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.85); margin: 4px 0 0; }
 
   /* One per row: two columns left each comment in a column too narrow to read,

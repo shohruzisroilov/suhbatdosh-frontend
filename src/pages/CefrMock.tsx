@@ -115,27 +115,33 @@ interface CefrFeedback {
  * raw marks that convert to the 0-75 score printed on the certificate.
  */
 const PART_META = [
-  { key: 'part1_1', label: 'Part 1.1', sub: 'Personal questions', max: 5, target: 'A2' },
-  { key: 'part1_2', label: 'Part 1.2', sub: 'Comparing', max: 5, target: 'B1' },
-  { key: 'part2', label: 'Part 2', sub: 'Talk on a topic', max: 5, target: 'B2' },
-  { key: 'part3', label: 'Part 3', sub: 'Two-way discussion', max: 6, target: 'C1' },
+  { key: 'part1_1', labelKey: 'cefr.part1_1', subKey: 'cefr.part1_1Sub', max: 5, target: 'A2' },
+  { key: 'part1_2', labelKey: 'cefr.part1_2', subKey: 'cefr.part1_2Sub', max: 5, target: 'B1' },
+  { key: 'part2', labelKey: 'cefr.part2', subKey: 'cefr.part2Sub', max: 5, target: 'B2' },
+  { key: 'part3', labelKey: 'cefr.part3', subKey: 'cefr.part3Sub', max: 6, target: 'C1' },
 ] as const;
 
-/** The four criteria the Multilevel examiners actually mark against. */
+/**
+ * The four criteria the Multilevel examiners actually mark against.
+ *
+ * The plain name leads and the official one follows as the small tag: a candidate
+ * sitting an A2 paper does not read "Grammatical Range and Accuracy" and learn
+ * anything, but they do need to meet the term before exam day.
+ */
 const CRITERIA_META = [
-  { key: 'grammar', label: 'Grammatical Range & Accuracy', plain: 'Grammar' },
-  { key: 'vocabulary', label: 'Vocabulary', plain: 'Word choice' },
-  { key: 'fluency', label: 'Fluency', plain: 'Speaking smoothly' },
-  { key: 'coherence', label: 'Coherence & Cohesion', plain: 'Clear ideas' },
+  { key: 'grammar', plainKey: 'cefr.critGrammar', officialKey: 'cefr.critGrammarFull' },
+  { key: 'vocabulary', plainKey: 'cefr.critVocabulary', officialKey: 'cefr.critVocabularyFull' },
+  { key: 'fluency', plainKey: 'cefr.critFluency', officialKey: 'cefr.critFluencyFull' },
+  { key: 'coherence', plainKey: 'cefr.critCoherence', officialKey: 'cefr.critCoherenceFull' },
 ] as const;
 
 /** Where each band starts on the reported 0-75 scale. */
 const BAND_TABLE = [
-  { level: 'C1', min: 65, max: 75, note: 'Fluent and accurate, close to a native speaker' },
-  { level: 'B2', min: 51, max: 64, note: 'Confident and fluent, with some mistakes' },
-  { level: 'B1', min: 38, max: 50, note: 'Gets the message across, with gaps' },
-  { level: 'A2', min: 20, max: 37, note: 'Simple conversation, stopping often' },
-  { level: 'A1', min: 0, max: 19, note: 'Single words and set phrases' },
+  { level: 'C1', min: 65, max: 75, noteKey: 'cefr.bandC1' },
+  { level: 'B2', min: 51, max: 64, noteKey: 'cefr.bandB2' },
+  { level: 'B1', min: 38, max: 50, noteKey: 'cefr.bandB1' },
+  { level: 'A2', min: 20, max: 37, noteKey: 'cefr.bandA2' },
+  { level: 'A1', min: 0, max: 19, noteKey: 'cefr.bandA1' },
 ] as const;
 
 const numberOrNull = (v: any): number | null => {
@@ -390,7 +396,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       return true;
     } catch (err) {
       console.error('Mic access error:', err);
-      setErrorMsg('No microphone access. Allow the microphone in your browser settings to take the exam.');
+      setErrorMsg(t('mock.micDenied'));
       return false;
     }
   };
@@ -480,10 +486,10 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           beginStep(res.step);
           return;
         }
-        setErrorMsg('Could not continue this exam.');
+        setErrorMsg(t('mock.openFailed'));
       } catch (err: any) {
         console.error('Load active test error:', err);
-        setErrorMsg(err?.response?.data?.error || 'Could not load the exam.');
+        setErrorMsg(err?.response?.data?.error || t('mock.openFailed'));
       }
     });
 
@@ -507,7 +513,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         // The server may well have created the test before this request gave up, so
         // look again rather than leaving a started test invisible behind an error.
         void fetchStatus();
-        const msg = err?.response?.data?.error || 'Could not start the exam.';
+        const msg = err?.response?.data?.error || t('mock.startFailed');
         setErrorMsg(msg);
       }
     });
@@ -817,7 +823,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       }, 200);
     } catch (err: any) {
       console.error('Mic access error:', err);
-      setErrorMsg('No microphone access. Allow the microphone in your settings.');
+      setErrorMsg(t('mock.micDenied'));
     }
   };
 
@@ -1001,22 +1007,22 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
    */
   const getPartBadgeText = (step: StepData) => {
     const part = String(step.part);
-    if (step.kind === 'closing' || part === 'closing') return 'END • Exam finished';
-    if (part === 'intro') return 'INTRO • Examiner instructions';
+    if (step.kind === 'closing' || part === 'closing') return t('mock.badgeEnd');
+    if (part === 'intro') return t('mock.badgeIntro');
 
     const name =
       part === '1.1'
-        ? 'PART 1.1 • Personal questions (A2)'
+        ? t('cefr.badge11')
         : part === '1.2'
-        ? 'PART 1.2 • Comparing (B1)'
+        ? t('cefr.badge12')
         : part === '2'
-        ? 'PART 2 • Talk on a topic (B2)'
+        ? t('cefr.badge2')
         : part === '3'
-        ? 'PART 3 • Two-way discussion (C1)'
+        ? t('cefr.badge3')
         : `PART ${part}`;
 
-    if (step.kind === 'frame') return `${name} • Instructions`;
-    if (step.qNo && step.qTotal) return `${name} • Question ${step.qNo} of ${step.qTotal}`;
+    if (step.kind === 'frame') return t('cefr.badgeFrame', { name });
+    if (step.qNo && step.qTotal) return t('cefr.badgeQuestion', { name, n: step.qNo, total: step.qTotal });
     return name;
   };
 
@@ -1050,13 +1056,13 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       }
 
       setGradingFailed(true);
-      setErrorMsg(err?.response?.data?.error || 'Could not work out your results.');
+      setErrorMsg(err?.response?.data?.error || t('cefr.resultsFailed'));
     }
   };
 
   const handleAbandon = () => {
     if (!testId) return;
-    if (!window.confirm('Leave the exam? This attempt will be cancelled.')) return;
+    if (!window.confirm(t('cefr.quitConfirm'))) return;
     haltStepMachine();
     return runAction('discard', async () => {
       tapHaptic('light');
@@ -1111,7 +1117,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
       {/* Top Navigation */}
       <MockHeader
         accent="cefr"
-        title="CEFR Multilevel Mock"
+        title={t('cefr.headerTitle')}
         soundEnabled={soundEnabled}
         onBack={() => navigate('mock')}
         onToggleSound={toggleSound}
@@ -1137,37 +1143,36 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
         <MockIntroCard
           accent="cefr"
           hero={<Award size={40} aria-hidden="true" />}
-          title="Multilevel Speaking Mock"
-          description="The full Speaking part of the national certificate exam: 6 questions, a 2-minute talk, and a two-way discussion. An AI examiner asks, records your answers, and marks them on the official criteria."
+          title={t('cefr.introTitle')}
+          description={t('cefr.introSub')}
           details={[
             {
               icon: <Clock size={15} aria-hidden="true" />,
-              label: 'Length',
+              label: t('mock.labelLength'),
               value: estimatedMinutes ? t('mock.durationMins', { n: estimatedMinutes }) : t('mock.duration'),
             },
             {
               icon: <Award size={15} aria-hidden="true" />,
-              label: 'Scoring',
-              value: '21 raw marks → 75 points (A1–C1)',
+              label: t('mock.labelScoring'),
+              value: t('cefr.scoring'),
             },
             {
               icon: <BookOpen size={15} aria-hidden="true" />,
-              label: 'Exam structure',
-              value:
-                'Part 1.1 — 3 questions, 30s each · Part 1.2 — 3 questions, 45+30+30s · Part 2 — 1 min to prepare, 2 min to talk · Part 3 — 1 min to prepare, 2 min to discuss',
+              label: t('mock.labelFormat'),
+              value: t('cefr.structure'),
               wide: true,
             },
             {
               icon: <Layers size={15} aria-hidden="true" />,
-              label: 'Marked on',
-              value: 'Grammar · Word choice · Speaking smoothly · Clear ideas',
+              label: t('mock.labelMarkedOn'),
+              value: t('cefr.markedOn'),
               wide: true,
             },
             {
               icon: <Sparkles size={15} aria-hidden="true" />,
               // Only the premium quota resets daily; the free one is a one-off trial.
               label: quota && !quota.isPremium ? t('mock.freeTrial') : t('mock.dailyLimit'),
-              value: quota ? `${quota.remaining} of ${quota.limit} exams left` : '—',
+              value: quota ? t('mock.testsLeft', { n: quota.remaining, total: quota.limit }) : '—',
               wide: true,
             },
           ]}
@@ -1239,20 +1244,20 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             </div>
             <div className="im-examiner-speech" style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>AI Examiner</span>
-                {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> reading the question…</span>}
+                <span className="im-examiner-name" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>{t('mock.examiner')}</span>
+                {isSpeaking && <span style={{ fontSize: '11px', color: '#34d399', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}><Volume2 size={13} className="animate-pulse" /> {t('mock.readingTag')}</span>}
               </div>
               {/* The wording itself lives in the question card below, the way the
                   exam puts it on screen. Repeating it here read it to the candidate
                   twice on one screen. */}
               <p className="im-examiner-text" style={{ fontSize: '14px', margin: '4px 0 0 0', color: 'rgba(248,250,252,0.65)', fontStyle: 'italic', lineHeight: 1.5 }}>
                 {isSpeaking
-                  ? 'Listen to the examiner…'
+                  ? t('mock.listen')
                   : isPrepping
-                  ? 'Preparation time is running.'
+                  ? t('mock.prepRunning')
                   : isRecording
-                  ? 'Recording your answer.'
-                  : 'Answer now.'}
+                  ? t('mock.recordingNow')
+                  : t('mock.answerNow')}
               </p>
               <div className="im-examiner-actions">
                 {/* Asking the examiner to repeat is allowed in the real test. */}
@@ -1262,14 +1267,14 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                   onClick={repeatQuestion}
                   disabled={isSpeaking || submittingAnswer}
                 >
-                  <Volume2 size={13} aria-hidden="true" /> Qayta eshitish
+                  <Volume2 size={13} aria-hidden="true" /> {t('mock.repeat')}
                 </button>
                 <button
                   type="button"
                   className="im-mini-btn"
                   onClick={() => setShowTranscript((v) => !v)}
                 >
-                  {showTranscript ? 'Hide text' : 'Show text'}
+                  {showTranscript ? t('mock.hideText') : t('mock.showText')}
                 </button>
               </div>
             </div>
@@ -1355,8 +1360,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <p className="im-timing-note">
                 <Clock size={12} aria-hidden="true" />
                 {currentStep.prepSec
-                  ? `${currentStep.prepSec}s to prepare, ${formatSecs(currentStep.maxSec * 1000)} to answer`
-                  : `${currentStep.maxSec}s to answer`}
+                  ? t('cefr.timingPrep', { prep: currentStep.prepSec, answer: formatSecs(currentStep.maxSec * 1000) })
+                  : t('cefr.timingAnswer', { answer: currentStep.maxSec })}
               </p>
             )}
           </div>
@@ -1368,25 +1373,25 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-retry-controls">
               <button className="im-rec-btn im-rec-btn--retry" onClick={retryAnswer}>
                 <RotateCcw size={20} />
-                <span>Send answer again</span>
+                <span>{t('mock.sendAgain')}</span>
               </button>
               <button className="im-mini-btn" onClick={skipAnswer}>
-                Skip this question
+                {t('mock.skipQuestion')}
               </button>
             </div>
           ) : submittingAnswer ? (
             <div className="im-submitting-box">
               <div className="im-spinner" />
-              <span>Sending your answer…</span>
+              <span>{t('mock.sending')}</span>
             </div>
           ) : isPrepping ? (
             <div className="im-prep-card">
               <Clock size={24} className="animate-spin text-emerald-400" />
               <div style={{ flex: 1 }}>
-                <h4>Time to prepare: {prepTimeLeft}s</h4>
+                <h4>{t('mock.prepCard', { n: prepTimeLeft })}</h4>
                 <p>{t('mock.notesHint')}</p>
                 <button className="im-mini-btn" onClick={skipPrep} style={{ marginTop: '8px' }}>
-                  <Mic size={13} aria-hidden="true" /> I am ready, start
+                  <Mic size={13} aria-hidden="true" /> {t('mock.readyStart')}
                 </button>
               </div>
             </div>
@@ -1400,7 +1405,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                 {/* The examiner stops you at the limit; this is for finishing early. */}
                 <button className="im-rec-btn im-rec-btn--stop" onClick={() => void stopRecordingAndSend()}>
                   <MicOff size={22} />
-                  <span>I have finished</span>
+                  <span>{t('mock.doneAnswer')}</span>
                 </button>
               </div>
             </div>
@@ -1409,26 +1414,26 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               {isSpeaking ? (
                 <>
                   <Volume2 size={15} aria-hidden="true" />
-                  <span>Examiner gapirmoqda…</span>
+                  <span>{t('mock.examinerSpeaking')}</span>
                 </>
               ) : (
                 <>
                   <Mic size={15} aria-hidden="true" />
-                  <span>Tayyorlanmoqda…</span>
+                  <span>{t('mock.gettingReady')}</span>
                 </>
               )}
             </div>
           )}
 
           <button className="im-abandon-link" onClick={handleAbandon}>
-            Cancel the exam
+            {t('cefr.cancelExam')}
           </button>
         </div>
       )}
 
       {/* 4. GRADING / EVALUATING STATE */}
       {testStatus === 'grading' && !gradingFailed && (
-        <MockLoading accent="cefr" label="Marking your answers…" sublabel={t('mock.cefrGrading')} />
+        <MockLoading accent="cefr" label={t('cefr.marking')} sublabel={t('mock.cefrGrading')} />
       )}
 
       {testStatus === 'grading' && gradingFailed && (
@@ -1437,15 +1442,15 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               an error and no way to ask for the result again. The answers are safe on
               the server, so this retries the marking, not the exam. */}
           <p className="im-grading-note">
-            Your answers are saved. Tap to try marking again.
+            {t('mock.markRetryHint')}
           </p>
           <div className="im-retry-controls">
             <button className="im-rec-btn im-rec-btn--retry" onClick={() => void handleFinishTest()}>
               <RotateCcw size={20} />
-              <span>Try marking again</span>
+              <span>{t('mock.markRetry')}</span>
             </button>
             <button className="im-mini-btn" onClick={() => navigate('mock')}>
-              Keyinroq qaytaman
+              {t('mock.comeBackLater')}
             </button>
           </div>
         </div>
@@ -1457,22 +1462,22 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           {/* Header Score Badge — the two figures the certificate carries: the band
               and the score out of 75. */}
           <div className="im-result-header" style={{ background: getCefrBadgeStyle(feedback.cefrLevel).bg }}>
-            <span className="im-result-title">🇺🇿 Multilevel Speaking — mock result</span>
+            <span className="im-result-title">🇺🇿 {t('cefr.resultTitle')}</span>
             <div className="im-score-circle">
               <span className="im-score-val">{feedback.cefrLevel}</span>
               <span className="im-score-sub">
                 {feedback.overallScore !== null
-                  ? `${feedback.overallScore} / ${feedback.scaledMax} ball`
+                  ? t('cefr.points', { n: feedback.overallScore, total: feedback.scaledMax })
                   : feedback.estimatedScore}
               </span>
             </div>
             {feedback.rawTotal !== null && (
               <span className="im-score-raw">
-                Xom ball: {formatMark(feedback.rawTotal, feedback.rawMax)}
+                {t('cefr.rawTotal', { value: formatMark(feedback.rawTotal, feedback.rawMax) })}
               </span>
             )}
             <span className="im-score-disclaimer">
-              Marked by AI — not an official exam result
+              {t('mock.aiDisclaimer')}
             </span>
           </div>
 
@@ -1482,7 +1487,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-section">
               <h3 className="im-section-title">
                 <Layers size={18} />
-                <span>Score scale</span>
+                <span>{t('cefr.scaleTitle')}</span>
               </h3>
               <div className="im-band-table">
                 {BAND_TABLE.map((band) => {
@@ -1491,7 +1496,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                     <div key={band.level} className={`im-band-row${here ? ' is-here' : ''}`}>
                       <span className="im-band-level">{band.level}</span>
                       <span className="im-band-range">{band.min}–{band.max}</span>
-                      <span className="im-band-note">{band.note}</span>
+                      <span className="im-band-note">{t(band.noteKey)}</span>
                     </div>
                   );
                 })}
@@ -1503,7 +1508,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <div className="im-section">
             <h3 className="im-section-title">
               <BookOpen size={18} />
-              <span>Score by part</span>
+              <span>{t('cefr.byPartTitle')}</span>
             </h3>
             <div className="im-subscores-grid">
               {PART_META.map((meta) => {
@@ -1513,8 +1518,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                   <div className="im-subscore-item" key={meta.key}>
                     <div className="im-subscore-head">
                       <span className="im-subscore-name">
-                        {meta.label} · {meta.sub}
-                        <span className="im-target-tag">{part.target} level</span>
+                        {t(meta.labelKey)} · {t(meta.subKey)}
+                        <span className="im-target-tag">{t('cefr.targetLevel', { level: part.target })}</span>
                       </span>
                       <span className="im-subscore-band">
                         {formatMark(part.mark, part.max, part.legacy)}
@@ -1537,7 +1542,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
           <div className="im-section">
             <h3 className="im-section-title">
               <Award size={18} />
-              <span>What you are marked on</span>
+              <span>{t('cefr.criteriaTitle')}</span>
             </h3>
             <div className="im-subscores-grid">
               {CRITERIA_META.map((meta) => {
@@ -1550,8 +1555,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
                   <div className="im-subscore-item" key={meta.key}>
                     <div className="im-subscore-head">
                       <span className="im-subscore-name">
-                        {meta.label}
-                        <span className="im-target-tag">{meta.plain}</span>
+                        {t(meta.plainKey)}
+                        <span className="im-target-tag">{t(meta.officialKey)}</span>
                       </span>
                       <span className="im-subscore-band">
                         {formatMark(c.mark, c.max, c.legacy)}
@@ -1573,8 +1578,8 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
             <div className="im-subscore-item">
               <div className="im-subscore-head">
                 <span className="im-subscore-name">
-                  Pronunciation
-                  <span className="im-target-tag">not in the score</span>
+                  {t('cefr.pronunciation')}
+                  <span className="im-target-tag">{t('cefr.notScored')}</span>
                 </span>
               </div>
               <p className="im-subscore-comment">{feedback.pronunciationNote}</p>
@@ -1587,16 +1592,16 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <h3><PenLine size={14} aria-hidden="true" /> {t('mock.betterAnswer')}</h3>
               <div className="im-better">
                 <div>
-                  <strong style={{ color: '#fca5a5' }}>Siz aytdingiz:</strong>{' '}
+                  <strong style={{ color: '#fca5a5' }}>{t('mock.fixSaid')}</strong>{' '}
                   "{feedback.betterAnswer.original}"
                 </div>
                 <div>
-                  <strong style={{ color: '#86efac' }}>Kuchliroq variant:</strong>{' '}
+                  <strong style={{ color: '#86efac' }}>{t('mock.fixBetter')}</strong>{' '}
                   "{feedback.betterAnswer.improved}"
                 </div>
                 {feedback.betterAnswer.explanation && (
                   <div style={{ color: 'var(--text-secondary)' }}>
-                    Tahlil: {feedback.betterAnswer.explanation}
+                    {t('mock.fixWhy')} {feedback.betterAnswer.explanation}
                   </div>
                 )}
               </div>
@@ -1658,7 +1663,7 @@ export default function CefrMock(props: Partial<CefrMockProps>) {
               <span>{t('mock.retakeCefr')}</span>
             </button>
             <button className="im-btn im-btn--ghost" onClick={() => navigate('mock')}>
-              <span>Bosh sahifaga qaytish</span>
+              <span>{t('mock.goBackHome')}</span>
             </button>
           </div>
         </div>

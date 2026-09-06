@@ -169,8 +169,8 @@ export default function Home() {
               <Users size={18} aria-hidden="true" />
             </span>
             <span className="row__text">
-              <span className="row__title">Partner & Ustoz E'lonlari</span>
-              <span className="row__sub">Sherik, ustoz yoki shogird topish uchun e'lon bering</span>
+              <span className="row__title">{t('home.listingsTitle')}</span>
+              <span className="row__sub">{t('home.listingsSub')}</span>
             </span>
             <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
           </button>

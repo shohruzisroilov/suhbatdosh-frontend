@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { useT, useLang } from '../i18n';
+import { useT } from '../i18n';
 import { getPremiumPlans, createStarsInvoice, getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { notifyHaptic, tapHaptic } from '../utils/haptics';
 import { ArrowLeft, ArrowRight, Star, Zap, Check, PartyPopper, CreditCard, Copy } from 'lucide-react';
 
-const AMOUNT_BY_LANG: Record<string, string> = { uz: "$2 (26 000 so'm)", ru: '$2 (26 000 сум)', en: "$2 (26 000 so'm)" };
+const AMOUNT = "$2 (26 000 so'm)";
 
 export default function Premium() {
   const t = useT();
-  const lang = useLang();
   const { user, setUser, navigate, screenParams } = useAppStore();
-  const amount = AMOUNT_BY_LANG[lang] || AMOUNT_BY_LANG.uz;
+  const amount = AMOUNT;
   const [copied, setCopied] = useState(false);
 
   const [plans, setPlans] = useState<any[] | null>(null);
@@ -225,7 +224,7 @@ export default function Premium() {
                     <span className="bank-card__number">9860 1901 1079 9466</span>
                     <button type="button" className={`bank-card__copy-btn ${copied ? 'copied' : ''}`} onClick={handleCopy}>
                       {copied ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copied ? t('pm.copied') : 'Nusxalash'}</span>
+                      <span>{copied ? t('pm.copied') : t('pm.copy')}</span>
                     </button>
                   </div>
                 </div>

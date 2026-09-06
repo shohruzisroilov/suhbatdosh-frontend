@@ -82,7 +82,7 @@ export function useAuth() {
             initData = `test:${userId}`;
           } else {
             // Production: Telegram initData topilmadi
-            throw new Error('Telegram ilovasi aniqlanmadi. Iltimos, ilovani Telegram bot (@suhbatdosh_app_bot) orqali oching.');
+            throw new Error(translate(undefined, 'auth.notInTelegram'));
           }
         }
 
