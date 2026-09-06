@@ -1,0 +1,37 @@
+name: CI
+
+# Vercel builds and deploys this app on every push, and until now nothing checked it
+# first: a type error or a failing test shipped straight to users. This runs the same
+# checks the backend already gates its deploy on.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # ci, not install: the lockfile is the point of running this at all.
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # A production build also asserts VITE_API_URL is present (see vite.config.ts),
+      # so a placeholder is supplied here rather than the real backend.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: https://ci.invalid

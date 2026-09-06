@@ -1,6 +1,5 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useAppStore from './store/useAppStore';
 import { useAuth } from './hooks/useAuth';
@@ -13,23 +12,72 @@ import BottomNav from './components/BottomNav';
 import MicPermissionModal from './components/MicPermissionModal';
 import ChannelSubscribeModal from './components/ChannelSubscribeModal';
 
+// Eager: the two screens that can be the first thing rendered after sign-in. Anything
+// lazy here would put a spinner in front of the very first paint.
 import Onboarding from './pages/Onboarding.tsx';
 import Home from './pages/Home.tsx';
-import Mock from './pages/Mock.tsx';
-import Leaderboard from './pages/Leaderboard.tsx';
-import Invite from './pages/Invite.tsx';
-import Reviews from './pages/Reviews.tsx';
-import Profile from './pages/Profile.tsx';
-import Settings from './pages/Settings.tsx';
-import Premium from './pages/Premium.tsx';
-import Statistics from './pages/Statistics.tsx';
-import Matching from './pages/Matching.tsx';
-import SessionEnd from './pages/SessionEnd.tsx';
-import IeltsMock from './pages/IeltsMock.tsx';
-import CefrMock from './pages/CefrMock.tsx';
-import Listings from './pages/Listings.tsx';
 
+/**
+ * Everything else is split out.
+ *
+ * The mock exams alone are ~4,000 lines of screen, and Listings another 1,300; all of
+ * it used to sit in the entry bundle whether or not the session ever opened those
+ * screens. That is the wrong trade for an audience on Uzbek mobile data, where the
+ * cost of the first load is paid before anything at all is on screen.
+ *
+ * `Suspense` and the shared LoadingScreen were already wired up for Chat, so the
+ * fallback behaviour is unchanged — there is simply more behind it now.
+ */
 const Chat = lazy(() => import('./pages/Chat.tsx'));
+const Mock = lazy(() => import('./pages/Mock.tsx'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard.tsx'));
+const Invite = lazy(() => import('./pages/Invite.tsx'));
+const Reviews = lazy(() => import('./pages/Reviews.tsx'));
+const Profile = lazy(() => import('./pages/Profile.tsx'));
+const Settings = lazy(() => import('./pages/Settings.tsx'));
+const Premium = lazy(() => import('./pages/Premium.tsx'));
+const Statistics = lazy(() => import('./pages/Statistics.tsx'));
+const Matching = lazy(() => import('./pages/Matching.tsx'));
+const SessionEnd = lazy(() => import('./pages/SessionEnd.tsx'));
+const IeltsMock = lazy(() => import('./pages/IeltsMock.tsx'));
+const CefrMock = lazy(() => import('./pages/CefrMock.tsx'));
+const Listings = lazy(() => import('./pages/Listings.tsx'));
+
+/**
+ * Screens reachable in one tap from Home, fetched once the app is idle.
+ *
+ * Splitting a screen out moves its download to the moment it is opened, which trades a
+ * faster start for a pause on the first tap. Warming the tab bar's destinations in the
+ * background gets both: the entry bundle stays small, and by the time anyone reaches
+ * for a tab its code is already cached.
+ */
+function usePrefetchTabs(ready: boolean) {
+  useEffect(() => {
+    if (!ready) return;
+
+    const warm = () => {
+      void import('./pages/Mock.tsx');
+      void import('./pages/Listings.tsx');
+      void import('./pages/Leaderboard.tsx');
+      void import('./pages/Profile.tsx');
+      void import('./pages/Matching.tsx');
+    };
+
+    // requestIdleCallback is missing on Safari/iOS, which is a large share of Telegram
+    // users; the timeout is the fallback, not an afterthought.
+    const ric = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => number)
+      | undefined;
+
+    if (ric) {
+      const id = ric(warm, { timeout: 3000 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    }
+
+    const id = window.setTimeout(warm, 2000);
+    return () => window.clearTimeout(id);
+  }, [ready]);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +156,7 @@ function TelegramApp() {
   const { screen, navigate, isAuthLoading, appError, user, isSubscribed, setIsSubscribed } = useAppStore();
   useAuth();
   useSocket();
+  usePrefetchTabs(!isAuthLoading && !!user);
 
   if (isAuthLoading) return <LoadingScreen />;
 
@@ -146,15 +195,18 @@ function TelegramApp() {
 }
 
 export default function App() {
+  /**
+   * No router.
+   *
+   * There was a BrowserRouter wrapping a single `path="*"` route, which matched
+   * everything and rendered the same component either way — navigation is the `screen`
+   * string in the store and always has been. It was ~20kB of react-router-dom shipped
+   * to every user to do nothing, plus a second Suspense boundary around a component
+   * that is not lazy.
+   */
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route path="*" element={<TelegramApp />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <TelegramApp />
     </QueryClientProvider>
   );
 }

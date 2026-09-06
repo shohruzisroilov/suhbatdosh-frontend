@@ -537,6 +537,10 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
 
     'conn.disconnected': 'Connection lost — reconnecting…',
     'auth.error': 'Sign-in error. Check your internet and try again.',
+    // A suspension is a dead end by design, so the message has to end somewhere:
+    // it says what happened and gives one place to go. Without it a banned user
+    // sees a generic sign-in failure and retries forever.
+    'auth.banned': 'This account is suspended. If you think this is a mistake, write to @Shohruz_Isroilov.',
 
     'time.justNow': 'Just now',
     'time.minAgo': '{n}m ago',

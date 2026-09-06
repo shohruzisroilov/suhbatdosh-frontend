@@ -43,10 +43,28 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+
+    if (status === 401) {
+      // The token is gone or expired. Dropping it sends App back through useAuth(),
+      // which re-authenticates from Telegram initData without the user noticing.
       useAppStore.getState().setToken(null);
       useAppStore.getState().setUser(null);
     }
+
+    // A ban now takes effect on the next request rather than the next sign-in, so it
+    // can land mid-session. Without this the user just watched every screen fail with
+    // no explanation. Say what happened once, and stop the session.
+    if (status === 403 && err.response?.data?.banned) {
+      const store = useAppStore.getState();
+      store.clearSession();
+      store.setToken(null);
+      store.setUser(null);
+      store.setAppError(
+        'This account is suspended. If you think this is a mistake, write to @Shohruz_Isroilov.'
+      );
+    }
+
     return Promise.reject(err);
   }
 );

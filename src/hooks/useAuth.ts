@@ -86,11 +86,12 @@ export function useAuth() {
           }
         }
 
-        // Debug: initData holati
-        console.log('[Auth] initData length:', initData?.length, 'isProd:', IS_PROD);
-        if (initData && !initData.startsWith('test')) {
-          const p = new URLSearchParams(initData);
-          console.log('[Auth] hash present:', !!p.get('hash'), 'auth_date:', p.get('auth_date'));
+        // initData is a signed credential. Its length, hash and auth_date were logged
+        // on every launch, in production, into a console that anyone can open from
+        // Telegram Desktop's devtools — and screenshots of it end up in bug reports.
+        // Diagnostics stay, but only where they are useful and harmless.
+        if (import.meta.env.DEV) {
+          console.log('[Auth] initData length:', initData?.length);
         }
 
         let authResult;
@@ -151,10 +152,21 @@ export function useAuth() {
         else if (wantsMock) navigate('ielts');
         else navigate('home');
       } catch (err: any) {
-        console.error('Auth error:', err);
         const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
+        const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
-        console.error('[Auth] HTTP status:', err?.response?.status, 'server error:', serverMsg);
+
+        if (import.meta.env.DEV) {
+          console.error('Auth error:', status, serverMsg, err);
+        }
+
+        // A suspended account gets a plain statement of what happened and who to
+        // contact, not a generic "could not sign in" that reads as a bug and sends
+        // them round the retry loop forever.
+        if (status === 403 || err?.response?.data?.banned) {
+          setAppError(translate(tgLang, 'auth.banned'));
+          return;
+        }
 
         if (err?.message?.includes('Telegram')) {
           setAppError(err.message);

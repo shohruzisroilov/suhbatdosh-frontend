@@ -8,6 +8,27 @@
     <meta name="theme-color" content="#090D14" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)" />
     <title>Suhbatdosh — English Speaking Partner</title>
+    <meta
+      name="description"
+      content="Practise speaking English with real people. Get matched with a partner in seconds, or sit a full IELTS or CEFR speaking mock and get a band score."
+    />
+    <link rel="canonical" href="https://suhbatdosh.vercel.app/" />
+
+    <!-- The app itself only ever runs inside Telegram's webview, but its URL gets
+         pasted into chats and channels. These are what renders there. No og:image is
+         declared on purpose: pointing at a file that does not exist produces a broken
+         card, which looks worse than the text-only one Telegram falls back to. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Suhbatdosh" />
+    <meta property="og:title" content="Suhbatdosh — English Speaking Partner" />
+    <meta
+      property="og:description"
+      content="Practise speaking English with real people. Get matched in seconds, or sit an IELTS speaking mock and get a band score."
+    />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Telegram's script is what supplies initData, the theme and the viewport
+         insets, so nothing can render meaningfully before it has run. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
