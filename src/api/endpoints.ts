@@ -133,7 +133,7 @@ export const deleteVocabularyItem = (id: number) =>
 export const getTTSAudio = (text: string, role?: 'examiner') =>
   api.post('/ai-partner/tts', { text, role }).then((r) => r.data);
 
-// ─── AI partner: saved conversations ───────────────────────────────────────
+// ─── AI partner: the thread a talking session writes into ──────────────────
 export interface AiConversationSummary {
   id: string;
   title: string | null;
@@ -143,36 +143,14 @@ export interface AiConversationSummary {
   preview?: string | null;
 }
 
-export interface AiStoredMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  isVoice: boolean;
-  createdAt: string;
-}
-
-export const listAiConversations = (): Promise<{ ok: boolean; conversations: AiConversationSummary[] }> =>
-  api.get('/ai-partner/conversations').then((r) => r.data);
-
 export const createAiConversation = (
   topic?: string | null
 ): Promise<{ ok: boolean; conversation: AiConversationSummary }> =>
   api.post('/ai-partner/conversations', { topic }).then((r) => r.data);
 
-export const getAiConversation = (
-  id: string
-): Promise<{ ok: boolean; conversation: AiConversationSummary & { messages: AiStoredMessage[] } }> =>
-  api.get(`/ai-partner/conversations/${id}`).then((r) => r.data);
-
-export const deleteAiConversation = (id: string) =>
-  api.delete(`/ai-partner/conversations/${id}`).then((r) => r.data);
-
-export const renameAiConversation = (id: string, title: string) =>
-  api.patch(`/ai-partner/conversations/${id}`, { title }).then((r) => r.data);
-
 /**
- * Speech to text on its own, so voice mode can show what the user said while the reply
- * is still being generated. The reply itself comes from streamAiTurn in api/aiStream.
+ * Speech to text on its own, so the spoken half of a turn is captured before the reply
+ * is asked for. The reply itself comes from streamAiTurn in api/aiStream.
  */
 export const transcribeAiAudio = (payload: {
   audioBase64: string;

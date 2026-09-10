@@ -29,7 +29,7 @@ import Home from './pages/Home.tsx';
  * fallback behaviour is unchanged — there is simply more behind it now.
  */
 const Chat = lazy(() => import('./pages/Chat.tsx'));
-const AiChat = lazy(() => import('./pages/AiChat.tsx'));
+const AiTalk = lazy(() => import('./pages/AiTalk.tsx'));
 const Mock = lazy(() => import('./pages/Mock.tsx'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard.tsx'));
 const Invite = lazy(() => import('./pages/Invite.tsx'));
@@ -62,7 +62,7 @@ function usePrefetchTabs(ready: boolean) {
       void import('./pages/Leaderboard.tsx');
       void import('./pages/Profile.tsx');
       void import('./pages/Matching.tsx');
-      void import('./pages/AiChat.tsx');
+      void import('./pages/AiTalk.tsx');
     };
 
     // requestIdleCallback is missing on Safari/iOS, which is a large share of Telegram
@@ -105,7 +105,7 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   statistics: Statistics,
   matching: Matching,
   chat: Chat,
-  ai_chat: AiChat,
+  ai_talk: AiTalk,
   session_end: SessionEnd,
   ielts: IeltsMock,
   ielts_mock: IeltsMock,

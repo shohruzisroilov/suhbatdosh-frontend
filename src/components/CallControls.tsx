@@ -60,6 +60,11 @@ interface CallControlsProps {
   unread?: number;
   speaking?: boolean;
   hidden?: boolean;
+  /**
+   * The AI partner has no camera to show, and no face to look at, so its bar is the
+   * three controls that mean something there: microphone, transcript, end.
+   */
+  showCamera?: boolean;
 }
 
 export default function CallControls({
@@ -72,6 +77,7 @@ export default function CallControls({
   unread = 0,
   speaking = false,
   hidden = false,
+  showCamera = true,
 }: CallControlsProps) {
   const t = useT();
 
@@ -106,16 +112,18 @@ export default function CallControls({
           <span className="cc-label">{micOn ? t('cc.mute') : t('cc.unmute')}</span>
         </div>
 
-        <div className="cc-item">
-          <button
-            className={`cc-btn${camOn ? ' cc-btn--active' : ' cc-btn--off'}`}
-            onClick={handleCam}
-            aria-label={camOn ? t('cc.stop') : t('cc.camera')}
-          >
-            {camOn ? <CamOnIcon /> : <CamOffIcon />}
-          </button>
-          <span className="cc-label">{camOn ? t('cc.stop') : t('cc.camera')}</span>
-        </div>
+        {showCamera && (
+          <div className="cc-item">
+            <button
+              className={`cc-btn${camOn ? ' cc-btn--active' : ' cc-btn--off'}`}
+              onClick={handleCam}
+              aria-label={camOn ? t('cc.stop') : t('cc.camera')}
+            >
+              {camOn ? <CamOnIcon /> : <CamOffIcon />}
+            </button>
+            <span className="cc-label">{camOn ? t('cc.stop') : t('cc.camera')}</span>
+          </div>
+        )}
 
         <div className="cc-item">
           <button className="cc-btn cc-btn--chat" onClick={handleChat} aria-label={t('cc.chat')}>

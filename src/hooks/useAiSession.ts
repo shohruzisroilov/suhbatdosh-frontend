@@ -38,7 +38,7 @@ export function useAiSession() {
       messages: [],
     });
 
-    store.navigate('ai_chat');
+    store.navigate('ai_talk');
     return true;
   }, []);
 }
