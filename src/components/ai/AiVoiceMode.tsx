@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, Loader2, Mic, MicOff, X } from 'lucide-react';
+import { AlertCircle, ArrowUp, Loader2, MessageSquare, Mic, MicOff, X } from 'lucide-react';
 import { transcribeAiAudio } from '../../api/endpoints';
 import { streamAiTurn, AiStreamError } from '../../api/aiStream';
 import { notifyHaptic, tapHaptic } from '../../utils/haptics';
@@ -17,6 +17,8 @@ interface AiVoiceModeProps {
   onTitle?: (title: string) => void;
   /** Words per minute for this turn, accumulated by the caller for the end screen. */
   onWpm?: (wpm: number) => void;
+  /** Opens the saved conversations, without leaving the one in progress. */
+  onOpenHistory?: () => void;
 }
 
 /** Silence this long after speech has started is taken as the end of a turn. */
@@ -47,6 +49,7 @@ export default function AiVoiceMode({
   onVocab,
   onTitle,
   onWpm,
+  onOpenHistory,
 }: AiVoiceModeProps) {
   const t = useT();
   const [status, setStatus] = useState<VoiceStatus>('connecting');
@@ -54,6 +57,7 @@ export default function AiVoiceMode({
   const [userCaption, setUserCaption] = useState('');
   const [aiCaption, setAiCaption] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [typed, setTyped] = useState('');
 
   // Live audio plumbing. All refs: these change many times a second and none of them
   // should cost a render.
@@ -172,6 +176,70 @@ export default function AiVoiceMode({
   }, [setPhase]);
 
   // ── One spoken turn ──────────────────────────────────────────────────────
+  /**
+   * The half of a turn that is the same however the words arrived.
+   *
+   * Speech and typing differ only in how the sentence is captured; from there both
+   * stream the same reply and hear it spoken back. Keeping one path means the typed
+   * turn cannot quietly drift into behaving like the text chat.
+   */
+  const runTurn = useCallback(
+    async (userText: string, turn: number) => {
+      setUserCaption(userText);
+
+      const abort = new AbortController();
+      abortRef.current = abort;
+      streamDoneRef.current = false;
+
+      let reply = '';
+      try {
+        await streamAiTurn(
+          { conversationId, text: userText, voice: true, userLevel, signal: abort.signal },
+          {
+            onDelta: (delta) => {
+              if (turn !== turnRef.current) return;
+              reply += delta;
+              setAiCaption(reply);
+            },
+            onSentence: (_sentence, audioUrl) => {
+              if (turn !== turnRef.current || !audioUrl) return;
+              playQueueRef.current.push(audioUrl);
+              drainQueueRef.current();
+            },
+            onVocab: (vocab) => onVocab?.(vocab),
+            onTitle: (title) => onTitle?.(title),
+            onDone: ({ text }) => {
+              reply = text || reply;
+            },
+          }
+        );
+      } catch (err: any) {
+        if (!mountedRef.current || turn !== turnRef.current) return;
+        const message =
+          err instanceof AiStreamError ? err.message : t('ai.voice.failed');
+        setError(message);
+        setPhase('error');
+        notifyHaptic('error');
+        return;
+      }
+
+      streamDoneRef.current = true;
+      if (!mountedRef.current || turn !== turnRef.current) return;
+
+      onTurn(userText, reply);
+
+      // No audio came back at all — the browser voice is the fallback, so the partner
+      // is never silent just because synthesis was unavailable.
+      if (!playingRef.current && !playQueueRef.current.length) {
+        speakWithBrowser(reply, () => {
+          if (mountedRef.current && turn === turnRef.current) beginListening();
+        });
+        setPhase('speaking');
+      }
+    },
+    [conversationId, userLevel, onTurn, onVocab, onTitle, beginListening, setPhase, t]
+  );
+
   const sendTurn = useCallback(
     async (blob: Blob) => {
       if (!mountedRef.current) return;
@@ -204,61 +272,38 @@ export default function AiVoiceMode({
         return;
       }
 
-      setUserCaption(userText);
-
-      const abort = new AbortController();
-      abortRef.current = abort;
-      streamDoneRef.current = false;
-
-      let reply = '';
-      try {
-        await streamAiTurn(
-          { conversationId, text: userText, voice: true, userLevel, signal: abort.signal },
-          {
-            onDelta: (delta) => {
-              if (turn !== turnRef.current) return;
-              reply += delta;
-              setAiCaption(reply);
-            },
-            onSentence: (_sentence, audioUrl) => {
-              if (turn !== turnRef.current || !audioUrl) return;
-              playQueueRef.current.push(audioUrl);
-              drainQueueRef.current();
-            },
-            onVocab: (vocab) => onVocab?.(vocab),
-            onTitle: (title) => onTitle?.(title),
-            onDone: ({ text }) => {
-              reply = text || reply;
-            },
-          }
-        );
-      } catch (err: any) {
-        if (!mountedRef.current || turn !== turnRef.current) return;
-        const message =
-          err instanceof AiStreamError
-            ? err.message
-            : t('ai.voice.failed');
-        setError(message);
-        setPhase('error');
-        notifyHaptic('error');
-        return;
-      }
-
-      streamDoneRef.current = true;
-      if (!mountedRef.current || turn !== turnRef.current) return;
-
-      onTurn(userText, reply);
-
-      // No audio came back at all — the browser voice is the fallback, so the partner
-      // is never silent just because synthesis was unavailable.
-      if (!playingRef.current && !playQueueRef.current.length) {
-        speakWithBrowser(reply, () => {
-          if (mountedRef.current && turn === turnRef.current) beginListening();
-        });
-        setPhase('speaking');
-      }
+      await runTurn(userText, turn);
     },
-    [conversationId, userLevel, onTurn, onVocab, onTitle, onWpm, beginListening, setPhase]
+    [onWpm, beginListening, setPhase, runTurn]
+  );
+
+  /**
+   * A turn typed instead of spoken.
+   *
+   * The reply still comes back as speech: this is for the times when saying it out
+   * loud is not an option — a quiet room, a word the microphone keeps mishearing —
+   * not a way out of the conversation.
+   */
+  const sendTyped = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || !mountedRef.current) return;
+      if (statusRef.current === 'thinking') return;
+
+      const turn = ++turnRef.current;
+      stopRecording();
+      stopPlayback();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+      setTyped('');
+      setError(null);
+      setPhase('thinking');
+      setAiCaption('');
+      setUserCaption('');
+
+      await runTurn(trimmed, turn);
+    },
+    [runTurn, setPhase, stopRecording, stopPlayback]
   );
 
   const drainQueue = useCallback(async () => {
@@ -462,6 +507,7 @@ export default function AiVoiceMode({
 
   return (
     <div className="vm">
+      <div className="vm__stage">
       {/* ── Dial ────────────────────────────────────────────────────────────
              The radar the matching screen already uses to mean "live and
              listening", with the microphone at its centre instead of a level
@@ -512,47 +558,94 @@ export default function AiVoiceMode({
         )}
       </div>
 
-      {/* ── Controls — the call screen's own control bar. ── */}
-      <div className="vm__controls">
-        <div className="vm__item">
-          <button
-            type="button"
-            className={`vm__btn${muted ? ' vm__btn--off' : ''}${status === 'listening' ? ' vm__btn--speaking' : ''}`}
-            onClick={toggleMute}
-            aria-label={muted ? 'Unmute microphone' : 'Mute microphone'}
-          >
-            {muted ? <MicOff size={22} /> : <Mic size={22} />}
-          </button>
-          <span className="vm__label">{muted ? t('cc.unmute') : t('cc.mute')}</span>
-        </div>
+      </div>
 
-        <div className="vm__item">
+      {/* ── Control bar ─────────────────────────────────────────────────────
+             Everything for the conversation on one row: the saved threads, a way
+             to type a turn when saying it out loud is not an option, the
+             microphone, and the way out. */}
+      <div className="vm__bar">
+        {onOpenHistory && (
           <button
             type="button"
-            className="vm__btn vm__btn--end"
+            className="vm__bar-btn"
             onClick={() => {
-              tapHaptic('medium');
-              onClose();
+              tapHaptic('light');
+              onOpenHistory();
             }}
-            aria-label="Close voice mode"
+            aria-label={t('ai.chats')}
           >
-            <X size={24} strokeWidth={2.4} />
+            <MessageSquare size={19} />
           </button>
-          <span className="vm__label">{t('ai.voice.done')}</span>
-        </div>
+        )}
+
+        <input
+          className="vm__type"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              void sendTyped(typed);
+            }
+          }}
+          placeholder={t('ai.voice.type')}
+          maxLength={2000}
+          aria-label={t('ai.voice.type')}
+        />
+
+        {typed.trim() ? (
+          <button
+            type="button"
+            className="vm__bar-btn vm__bar-btn--send"
+            onClick={() => void sendTyped(typed)}
+            aria-label="Send"
+          >
+            <ArrowUp size={19} strokeWidth={2.5} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`vm__bar-btn${muted ? ' vm__bar-btn--off' : ''}${
+              status === 'listening' ? ' vm__bar-btn--live' : ''
+            }`}
+            onClick={toggleMute}
+            aria-label={muted ? t('cc.unmute') : t('cc.mute')}
+          >
+            {muted ? <MicOff size={19} /> : <Mic size={19} />}
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="vm__bar-btn vm__bar-btn--end"
+          onClick={() => {
+            tapHaptic('medium');
+            onClose();
+          }}
+          aria-label={t('ai.voice.done')}
+        >
+          <X size={19} strokeWidth={2.4} />
+        </button>
       </div>
 
       <style>{`
         .vm {
           position: fixed; inset: 0; z-index: 120;
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          gap: var(--space-4);
-          padding: var(--space-6) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; align-items: center;
+          padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4)
+                   calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
           background:
             radial-gradient(120% 80% at 50% 8%, rgba(0, 168, 255, 0.14) 0%, transparent 60%),
             var(--bg);
           animation: fadeIn 0.24s ease;
+        }
+
+        .vm__stage {
+          flex: 1; min-height: 0; width: 100%;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          gap: var(--space-4);
         }
 
         /* ── Dial ── */
@@ -647,38 +740,40 @@ export default function AiVoiceMode({
           background: var(--danger-bg); color: var(--danger);
         }
 
-        /* ── Controls ── */
-        .vm__controls { display: flex; align-items: flex-end; gap: var(--space-6); }
-        .vm__item {
-          display: flex; flex-direction: column; align-items: center; gap: var(--space-1-5);
+        /* ── Control bar ── */
+        .vm__bar {
+          display: flex; align-items: center; gap: var(--space-2);
+          width: 100%; max-width: 520px;
+          padding: var(--space-2);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--border);
+          background: var(--bg-secondary);
+          box-shadow: var(--shadow-md);
         }
-        .vm__label {
-          font-size: var(--text-2xs); font-weight: var(--weight-semi);
-          color: var(--text-secondary);
+        .vm__type {
+          flex: 1; min-width: 0;
+          height: 44px; padding: 0 var(--space-3);
+          background: transparent; color: var(--text-primary);
+          font-family: inherit; font-size: var(--text-base);
+          border: none; outline: none;
         }
-        .vm__btn {
-          width: 58px; height: 58px; border-radius: 50%;
+        .vm__type::placeholder { color: var(--text-tertiary); }
+
+        .vm__bar-btn {
+          width: 44px; height: 44px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: var(--surface-2); color: var(--text-primary);
-          border: 1px solid var(--border-strong);
-          transition: transform 0.1s, background 0.15s;
+          border-radius: var(--radius-md);
+          background: var(--surface-2); color: var(--text-secondary);
+          transition: transform 0.14s var(--ease-out), background var(--t), color var(--t);
         }
-        .vm__btn:active { transform: scale(0.9); }
-        .vm__btn--off { background: var(--surface-3); color: var(--text-tertiary); }
-        .vm__btn--speaking {
-          background: var(--success-bg); color: var(--success);
-          border-color: rgba(16, 185, 129, 0.5);
-          animation: vmSpeakPulse 1.4s ease-out infinite;
+        .vm__bar-btn:active { transform: scale(0.93); }
+        .vm__bar-btn--live { background: var(--success-bg); color: var(--success); }
+        .vm__bar-btn--off  { background: var(--surface-3); color: var(--text-tertiary); }
+        .vm__bar-btn--send {
+          background: var(--grad-primary); color: var(--btn-text);
+          box-shadow: 0 4px 16px rgba(0, 168, 255, 0.35);
         }
-        @keyframes vmSpeakPulse {
-          0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
-          100% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
-        }
-        .vm__btn--end {
-          width: 66px; height: 66px;
-          background: var(--danger); color: #fff; border-color: transparent;
-          box-shadow: 0 4px 20px rgba(255, 69, 58, 0.45);
-        }
+        .vm__bar-btn--end { background: var(--danger-bg); color: var(--danger); }
       `}</style>
     </div>
   );

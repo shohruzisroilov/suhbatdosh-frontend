@@ -736,6 +736,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'ai.voice.hint': "Just start talking — I'm listening.",
     'ai.voice.youSaid': 'You said',
     'ai.voice.done': 'Done',
+    'ai.voice.type': 'Type instead',
     'ai.voice.micDenied': 'Microphone access is needed for voice mode.',
     'ai.voice.noRecorder': 'This device cannot record audio.',
     'ai.voice.failed': 'Suhbatdosh AI could not reply. Please try again.',

@@ -27,6 +27,7 @@ import {
 } from '../api/endpoints';
 import { streamAiTurn, AiStreamError } from '../api/aiStream';
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
+import LoadingScreen from '../components/LoadingScreen';
 import { useT } from '../i18n';
 import { PART1 } from '../constants/speakingTopics';
 import { notifyHaptic, tapHaptic } from '../utils/haptics';
@@ -75,7 +76,10 @@ export default function AiChat() {
   const [conversations, setConversations] = useState<AiConversationSummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const [voiceOpen, setVoiceOpen] = useState(false);
+  // Tapping the AI partner means "talk to it", so that is what opens: the spoken
+  // conversation, not a text box. Closing it drops back to the transcript of what
+  // was just said, which is also where typing lives for anyone who wants it.
+  const [voiceOpen, setVoiceOpen] = useState(true);
   const [vocab, setVocab] = useState<VocabItem | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -445,6 +449,8 @@ export default function AiChat() {
   const composerHasText = input.trim().length > 0;
   const isEmpty = messages.length === 0;
 
+  if (booting) return <LoadingScreen />;
+
   return (
     <div className="aic">
       {/* ── Header — the app's screen header: title and subtitle on the left,
@@ -487,9 +493,7 @@ export default function AiChat() {
 
       {/* ── Thread ── */}
       <div ref={scrollRef} className="aic__scroll" onScroll={onScroll}>
-        {booting && <p className="aic__note">{t('ai.loading')}</p>}
-
-        {!booting && isEmpty && (
+        {isEmpty && (
           <div className="aic__welcome">
             {/* Same hero language as the Find-a-partner card on Home: this is the
                 other half of the same offer, so it should look like it. */}
@@ -676,6 +680,10 @@ export default function AiChat() {
           conversationId={conversationId}
           userLevel={userLevel}
           onClose={() => setVoiceOpen(false)}
+          onOpenHistory={() => {
+            setHistoryOpen(true);
+            void refreshConversations();
+          }}
           onTurn={appendVoiceTurn}
           onVocab={(item) => setVocab(item)}
           onTitle={(newTitle) => {
@@ -748,7 +756,6 @@ export default function AiChat() {
           overscroll-behavior: contain;
           -webkit-overflow-scrolling: touch;
         }
-        .aic__note { color: var(--text-tertiary); font-size: var(--text-sm); text-align: center; }
 
         /* ── Opening screen ── */
         .aic__welcome { display: flex; flex-direction: column; gap: var(--space-3); }
