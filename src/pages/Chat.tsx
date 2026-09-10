@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useTracks, VideoTrack, useRemoteParticipants, useSpeakingParticipants } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { endSession, sendAIPartnerTurn, getTTSAudio, recordAiPartnerSession } from '../api/endpoints';
+import { endSession } from '../api/endpoints';
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
-import VocabPrompt, { type VocabItem } from '../components/VocabPrompt';
-import AiTopicPicker from '../components/AiTopicPicker';
 import CallControls from '../components/CallControls';
 import ChatOverlay from '../components/ChatOverlay';
 import EndSessionSheet from '../components/EndSessionSheet';
@@ -13,7 +11,7 @@ import Avatar from '../components/Avatar';
 import SpeakingQuestions from '../components/SpeakingQuestions';
 import { useT } from '../i18n';
 import { notifyHaptic } from '../utils/haptics';
-import { AlertCircle, AlertTriangle, X, Sparkles } from 'lucide-react';
+import { AlertCircle, AlertTriangle, X } from 'lucide-react';
 
 function fmt(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -149,125 +147,6 @@ function VideoGrid({ session }: { session: any }) {
   );
 }
 
-function AiVideoGrid({
-  camOn,
-  aiStatus,
-}: {
-  camOn: boolean;
-  aiStatus: 'idle' | 'listening' | 'thinking' | 'speaking';
-}) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [swapped, setSwapped] = useState(false);
-
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    if (camOn) {
-      navigator.mediaDevices
-        ?.getUserMedia({ video: true, audio: false })
-        .then((s) => {
-          stream = s;
-          if (videoRef.current) {
-            videoRef.current.srcObject = s;
-          }
-        })
-        .catch((err) => {
-          console.warn('Camera access error:', err);
-        });
-    }
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, [camOn]);
-
-  const pip = useDrag({ x: -14, y: -130 }, () => setSwapped((v) => !v));
-
-  if (!camOn) return null;
-
-  const isSpeaking = aiStatus === 'speaking';
-  const isListening = aiStatus === 'listening';
-  const isThinking = aiStatus === 'thinking';
-
-  return (
-    <div className="video-grid ai-video-grid">
-      <div className={`video-main ${!swapped && isSpeaking ? 'video-main--speaking' : ''}`}>
-        {swapped ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="ai-user-video"
-          />
-        ) : (
-          <div className="ai-avatar-view">
-            <div className={`ai-orb-container ${aiStatus}`}>
-              <div className="ai-orb-glow" />
-              <div className="ai-orb-core">
-                <Sparkles size={56} className="ai-orb-icon" />
-              </div>
-              {isSpeaking && <div className="ai-wave-ring ring-1" />}
-              {isSpeaking && <div className="ai-wave-ring ring-2" />}
-              {isSpeaking && <div className="ai-wave-ring ring-3" />}
-            </div>
-            <div className="ai-view-badge">
-              <span className={`ai-badge-dot ${aiStatus}`} />
-              <span>
-                {isListening
-                  ? 'Listening...'
-                  : isThinking
-                  ? 'Thinking...'
-                  : isSpeaking
-                  ? 'Speaking...'
-                  : 'Suhbatdosh AI'}
-              </span>
-            </div>
-          </div>
-        )}
-        <div className="video-scrim" />
-        <span className="video-label">
-          {!swapped && isSpeaking && <span className="video-label__dot" />}
-          {swapped ? 'You' : 'Suhbatdosh AI'}
-        </span>
-      </div>
-
-      <div
-        className={`video-pip ${swapped && isSpeaking ? 'video-pip--speaking' : ''}`}
-        style={{
-          right: Math.max(12, -pip.pos.x),
-          bottom: Math.max(12, -pip.pos.y),
-          touchAction: 'none',
-        }}
-        onPointerDown={pip.onPointerDown}
-        onPointerMove={pip.onPointerMove}
-        onPointerUp={pip.onPointerUp}
-      >
-        {!swapped ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="ai-user-video-pip"
-          />
-        ) : (
-          <div className="ai-avatar-view-pip">
-            <Sparkles size={26} className="text-cyan-400" />
-          </div>
-        )}
-        <span className="video-label video-label--pip">{!swapped ? 'You' : 'Suhbatdosh AI'}</span>
-        <div className="video-pip__swap" aria-hidden="true">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-            <path d="M8 3 4 7l4 4" /><path d="M4 7h16" />
-            <path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function friendlyError(msg: string | null, t: any): string {
   if (!msg) return t('call.err.generic');
   const m = msg.toLowerCase();
@@ -318,8 +197,6 @@ export default function Chat() {
   const { joinSession, sendMessage, sendTyping } = useSocket();
   const t = useT();
 
-  const isAiSession = !!session?.isAi;
-
   const [elapsed, setElapsed]       = useState(0);
   const [showChat, setShowChat]     = useState(false);
   const [showEnd, setShowEnd]       = useState(false);
@@ -334,25 +211,6 @@ export default function Chat() {
   const [youSpeaking, setYouSpeaking] = useState(false);
   const [partnerSpeaking, setPartnerSpeaking] = useState(false);
 
-  // AI Voice State
-  const [aiStatus, setAiStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
-  const [aiVocab, setAiVocab] = useState<VocabItem | null>(null);
-  const [aiTopic, setAiTopic] = useState<string | null>(null);
-  const [topicChosen, setTopicChosen] = useState(false);
-  // Pace samples accumulate across the session and are averaged server-side.
-  const wpmSamplesRef = useRef<number[]>([]);
-  const [aiHistory, setAiHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const maxRecordTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSpokenRef = useRef(false);
-  const animationFrameRef = useRef<number | null>(null);
-  const isMountedRef = useRef(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const speechTokenRef = useRef(0);
-
   const handleSpeaking = useCallback((you: boolean, partner: boolean) => {
     setYouSpeaking(you);
     setPartnerSpeaking(partner);
@@ -360,421 +218,18 @@ export default function Chat() {
 
   const timerRef = useRef<any>(null);
 
-  // AI Voice loop effect
   useEffect(() => {
-    isMountedRef.current = true;
-    let timer: NodeJS.Timeout;
-
-    if (isAiSession) {
-      setPartnerConnected(true);
-      const userName = user?.displayName || 'there';
-      const initialGreeting = `Hi ${userName}! I'm Suhbatdosh AI, your speaking partner. What would you like to practice talking about today?`;
-
-      setAiHistory([{ role: 'assistant', content: initialGreeting }]);
-
-      timer = setTimeout(() => {
-        if (isMountedRef.current) {
-          speakAiText(initialGreeting);
-        }
-      }, 500);
-
-      return () => {
-        if (timer) clearTimeout(timer);
-        isMountedRef.current = false;
-        cleanupAiAudio();
-      };
-    }
-    return () => {
-      isMountedRef.current = false;
-      cleanupAiAudio();
-    };
-  }, [isAiSession]);
-
-  function cleanupAiAudio() {
-    speechTokenRef.current += 1;
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        audioRef.current.src = '';
-        audioRef.current.load();
-      } catch {}
-      audioRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try { mediaRecorderRef.current.stop(); } catch {}
-    }
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      try { audioContextRef.current.close(); } catch {}
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setAiStatus('idle');
-  }
-
-  async function speakAiText(text: string, preloadedAudioUrl?: string | null) {
-    if (!isMountedRef.current) return;
-    cleanupAiAudio();
-    speechTokenRef.current += 1;
-    const token = speechTokenRef.current;
-
-    setAiStatus('speaking');
-
-    if (preloadedAudioUrl) {
-      if (!isMountedRef.current || token !== speechTokenRef.current) return;
-      const audio = new Audio(preloadedAudioUrl);
-      audioRef.current = audio;
-      audio.onended = () => {
-        audioRef.current = null;
-        if (isMountedRef.current && token === speechTokenRef.current && micOn) {
-          startAiRecording();
-        } else if (isMountedRef.current && token === speechTokenRef.current) {
-          setAiStatus('idle');
-        }
-      };
-      audio.onerror = () => {
-        audioRef.current = null;
-        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
-      };
-      audio.play().catch(() => {
-        audioRef.current = null;
-        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
-      });
-      return;
-    }
-
-    try {
-      const res = await getTTSAudio(text);
-      if (!isMountedRef.current || token !== speechTokenRef.current) return;
-      if (res?.ok && res?.audioUrl) {
-        const audio = new Audio(res.audioUrl);
-        audioRef.current = audio;
-        audio.onended = () => {
-          audioRef.current = null;
-          if (isMountedRef.current && token === speechTokenRef.current && micOn) {
-            startAiRecording();
-          } else if (isMountedRef.current && token === speechTokenRef.current) {
-            setAiStatus('idle');
-          }
-        };
-        audio.onerror = () => {
-          audioRef.current = null;
-          if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
-        };
-        await audio.play();
-        return;
-      }
-    } catch {}
-
-    if (!isMountedRef.current || token !== speechTokenRef.current) return;
-
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const spokenText = text
-        .replace(/Suhbatdosh AI/gi, 'Soohbahtdosh A I')
-        .replace(/Suhbatdosh/gi, 'Soohbahtdosh')
-        .replace(/Assalomu alaykum/gi, 'Ahssalohmoo ahlaykoom')
-        .replace(/Salom/gi, 'Sahlom')
-        .replace(/Rahmat/gi, 'Rahmat');
-      const utterance = new SpeechSynthesisUtterance(spokenText);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.95;
-      utterance.onend = () => {
-        if (isMountedRef.current && token === speechTokenRef.current && micOn) {
-          startAiRecording();
-        } else if (isMountedRef.current && token === speechTokenRef.current) {
-          setAiStatus('idle');
-        }
-      };
-      utterance.onerror = () => {
-        if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
-      };
-      window.speechSynthesis.speak(utterance);
-    } else {
-      if (isMountedRef.current && token === speechTokenRef.current && micOn) startAiRecording();
-    }
-  }
-
-  async function handleSendAiTurn(audioBase64: string, audioMimeType: string) {
-    if (!isMountedRef.current) return;
-    setAiStatus('thinking');
-
-    try {
-      const res = await sendAIPartnerTurn({
-        audioBase64,
-        audioMimeType,
-        history: aiHistory,
-        userLevel: user?.level ? String(user.level) : undefined,
-        topic: aiTopic,
-      });
-
-      const userText = res.transcription || 'Voice message';
-      const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
-      const audioUrl = res.audioUrl || null;
-
-      setAiHistory((prev) => [
-        ...prev,
-        { role: 'user', content: userText },
-        { role: 'assistant', content: aiResponse },
-      ]);
-
-      // Put both sides in the visible transcript, the way the text mode already does.
-      // A voice conversation used to leave the screen empty, so a learner could not
-      // read back how their speech was actually heard — which is the single most
-      // useful signal Whisper gives them about their pronunciation.
-      const now = Date.now();
-      addMessage({
-        id: String(now),
-        senderId: String(user?.id || 'me'),
-        content: userText,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: true,
-        is_own: true,
-      });
-      addMessage({
-        id: String(now + 1),
-        senderId: 'ai_partner',
-        content: aiResponse,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: false,
-        is_own: false,
-      });
-
-      setAiVocab(res.vocab?.word ? res.vocab : null);
-      if (res.metrics?.wordsPerMinute > 0) wpmSamplesRef.current.push(res.metrics.wordsPerMinute);
-
-      notifyHaptic('success');
-      speakAiText(aiResponse, audioUrl);
-    } catch (err) {
-      console.error('[AI Voice Turn Error]:', err);
-      notifyHaptic('error');
-      setAiStatus('idle');
-      // Auto-restart recording loop after error so session never gets permanently stuck
-      setTimeout(() => {
-        if (isMountedRef.current && micOn) {
-          startAiRecording();
-        }
-      }, 1000);
-    }
-  }
-
-  async function handleSendAiTextTurn(text: string) {
-    if (!isMountedRef.current || !text.trim()) return;
-
-    stopAiRecording();
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-
-    const userText = text.trim();
-
-    addMessage({
-      id: Date.now().toString(),
-      senderId: String(user?.id || 'me'),
-      content: userText,
-      sentAt: new Date().toISOString(),
-      sent_at: new Date().toISOString(),
-      isOwn: true,
-      is_own: true,
-    });
-
-    setAiStatus('thinking');
-
-    try {
-      const res = await sendAIPartnerTurn({
-        text: userText,
-        history: aiHistory,
-        userLevel: user?.level ? String(user.level) : undefined,
-        topic: aiTopic,
-      });
-
-      const aiResponse = res.aiResponse || "That's very interesting! Tell me more?";
-      const audioUrl = res.audioUrl || null;
-
-      addMessage({
-        id: (Date.now() + 1).toString(),
-        senderId: 'ai_partner',
-        content: aiResponse,
-        sentAt: new Date().toISOString(),
-        sent_at: new Date().toISOString(),
-        isOwn: false,
-        is_own: false,
-      });
-
-      setAiHistory((prev) => [
-        ...prev,
-        { role: 'user', content: userText },
-        { role: 'assistant', content: aiResponse },
-      ]);
-
-      setAiVocab(res.vocab?.word ? res.vocab : null);
-      if (res.metrics?.wordsPerMinute > 0) wpmSamplesRef.current.push(res.metrics.wordsPerMinute);
-
-      notifyHaptic('success');
-      speakAiText(aiResponse, audioUrl);
-    } catch {
-      notifyHaptic('error');
-      setAiStatus('idle');
-      setTimeout(() => {
-        if (isMountedRef.current && micOn) startAiRecording();
-      }, 1000);
-    }
-  }
-
-  async function startAiRecording() {
-    if (!isMountedRef.current || !micOn) {
-      setAiStatus('idle');
-      return;
-    }
-    try {
-      if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      hasSpokenRef.current = false;
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-      audioContextRef.current = audioCtx;
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      let sampleCount = 0;
-      let noiseFloorSum = 0;
-      let baseNoiseFloor = 3;
-
-      const checkSilence = () => {
-        if (!isMountedRef.current || mediaRecorder.state === 'inactive') return;
-        analyser.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
-        const averageVolume = sum / bufferLength;
-
-        // Dynamic noise floor calibration (first 10 samples ~ 200ms)
-        if (sampleCount < 10) {
-          noiseFloorSum += averageVolume;
-          sampleCount++;
-          if (sampleCount === 10) {
-            baseNoiseFloor = Math.max(3, Math.round(noiseFloorSum / 10));
-          }
-        }
-
-        const speechThresh = baseNoiseFloor + 2.5;
-        const silenceThresh = baseNoiseFloor + 1.2;
-
-        if (averageVolume > speechThresh) {
-          hasSpokenRef.current = true;
-          if (silenceTimerRef.current) {
-            clearTimeout(silenceTimerRef.current);
-            silenceTimerRef.current = null;
-          }
-        } else if (hasSpokenRef.current) {
-          if (!silenceTimerRef.current && averageVolume <= silenceThresh) {
-            silenceTimerRef.current = setTimeout(() => {
-              stopAiRecording();
-            }, 380);
-          }
-        }
-
-        animationFrameRef.current = requestAnimationFrame(checkSilence);
-      };
-
-      checkSilence();
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        if (maxRecordTimerRef.current) clearTimeout(maxRecordTimerRef.current);
-        stream.getTracks().forEach((t) => t.stop());
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
-        if (audioBlob.size > 150) {
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = () => {
-            const base64Data = (reader.result as string).split(',')[1];
-            if (base64Data) {
-              handleSendAiTurn(base64Data, 'audio/webm');
-            } else {
-              setAiStatus('idle');
-              setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 400);
-            }
-          };
-        } else {
-          setAiStatus('idle');
-          setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 400);
-        }
-      };
-
-      mediaRecorder.start(100);
-      setAiStatus('listening');
-
-      // 3.0-second auto-send safety timer for seamless continuous turn-taking
-      maxRecordTimerRef.current = setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          stopAiRecording();
-        }
-      }, 3000);
-    } catch {
-      setAiStatus('idle');
-      setTimeout(() => { if (isMountedRef.current && micOn) startAiRecording(); }, 1200);
-    }
-  }
-
-  function stopAiRecording() {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-  }
-
-  useEffect(() => {
-    if (!isAiSession && session?.id) joinSession(session.id);
+    if (session?.id) joinSession(session.id);
     const backBtn = window.Telegram?.WebApp?.BackButton;
     const onBack = () => setShowEnd(true);
     if (backBtn) {
       backBtn.show();
       backBtn.onClick(onBack);
     }
-    timerRef.current = setInterval(() => {
-      setElapsed((prevElapsed) => {
-        const next = prevElapsed + 1;
-        if (isAiSession && !user?.isPremium) {
-          const used = user?.dailyMinutes || 0;
-          const limit = user?.dailyLimit || 10;
-          const remSecs = Math.max(0, (limit - used) * 60);
-          if (remSecs > 0 && next >= remSecs) {
-            setTimeout(() => {
-              handleEnd(true);
-            }, 0);
-          }
-        }
-        return next;
-      });
-    }, 1000);
+    timerRef.current = setInterval(() => setElapsed((prev) => prev + 1), 1000);
 
     const timeoutId = setTimeout(() => {
-      if (!isAiSession && !useAppStore.getState().partnerConnected) {
+      if (!useAppStore.getState().partnerConnected) {
         setConnectionTimeout(true);
       }
     }, 25000);
@@ -787,7 +242,7 @@ export default function Chat() {
         backBtn.hide();
       }
     };
-  }, [isAiSession, user?.isPremium, user?.dailyMinutes, user?.dailyLimit]);
+  }, []);
 
   async function handleRetryConnection() {
     if (session?.id) {
@@ -807,39 +262,9 @@ export default function Chat() {
     navigate('home');
   }
 
-  async function handleEnd(isLimitReached = false) {
+  async function handleEnd() {
     if (ending) return;
     setEnding(true);
-    cleanupAiAudio();
-
-    if (isAiSession) {
-      let aiStats: any = null;
-      try {
-        // The transcript goes with it: the server writes the recap that the next
-        // session reads back, and returns the numbers for the end screen.
-        const res = await recordAiPartnerSession({
-          durationSeconds: elapsed,
-          history: aiHistory,
-          wpmSamples: wpmSamplesRef.current,
-        });
-        aiStats = res?.stats || null;
-        if (res?.user) {
-          updateUser(res.user);
-        } else if (res?.addedMinutes) {
-          updateUser({ dailyMinutes: (user?.dailyMinutes || 0) + res.addedMinutes });
-        }
-      } catch (err) {
-        console.error('[AI Session End Error]', err);
-      }
-
-      if (isLimitReached) {
-        setMatchingStatus('limit_reached');
-        navigate('matching');
-        return;
-      }
-      navigate('session_end', { sessionId: 'ai_session', elapsed, isAi: true, aiStats });
-      return;
-    }
 
     if (session?.id) {
       try { await endSession(session.id); } catch {}
@@ -876,7 +301,7 @@ export default function Chat() {
     <div className="call-screen">
 
       {/* LiveKit room for real human calls */}
-      {!isAiSession && isCallActive && livekitToken && livekitUrl && (
+      {isCallActive && livekitToken && livekitUrl && (
         <LiveKitRoom
           {...({
             token: livekitToken,
@@ -901,11 +326,6 @@ export default function Chat() {
           <SpeakingWatcher onChange={handleSpeaking} />
           {camOn && <VideoGrid session={session} />}
         </LiveKitRoom>
-      )}
-
-      {/* AI Video Grid when camera is ON in AI session */}
-      {isAiSession && camOn && (
-        <AiVideoGrid camOn={camOn} aiStatus={aiStatus} />
       )}
 
       {/* Reconnecting banner */}
@@ -943,18 +363,12 @@ export default function Chat() {
       {/* ── Header — audio mode ── */}
       {!camOn && (
         <div className="call-header">
-          <div className={`call-presence${partnerSpeaking || aiStatus === 'speaking' ? ' call-presence--speaking' : ''}`}>
-            {isAiSession ? (
-              <div className="ai-partner-avatar">
-                <Sparkles size={22} className="text-cyan-400" />
-              </div>
-            ) : (
-              <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
-            )}
+          <div className={`call-presence${partnerSpeaking ? ' call-presence--speaking' : ''}`}>
+            <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
           </div>
           <div className="call-header__info">
             <span className="call-header__name">
-              {session?.partnerName || (isAiSession ? 'Suhbatdosh AI' : 'Partner')}
+              {session?.partnerName || 'Partner'}
             </span>
             <div className="call-header__meta">
               <div className="call-header__meta-row">
@@ -962,11 +376,7 @@ export default function Chat() {
                 {(session?.partnerLevel || user?.level) && (
                   <span className="call-tag call-tag--dim">{t(`level.${session?.partnerLevel || user?.level}`)}</span>
                 )}
-                {isAiSession ? (
-                  <span className={`call-status ${aiStatus === 'speaking' ? 'call-status--speaking' : ''}`}>
-                    {aiStatus === 'listening' ? 'Listening...' : aiStatus === 'thinking' ? 'Thinking...' : aiStatus === 'speaking' ? 'Speaking...' : 'Connected'}
-                  </span>
-                ) : partnerSpeaking ? (
+                {partnerSpeaking ? (
                   <span className="call-status call-status--speaking">
                     {t('call.speaking')}
                   </span>
@@ -992,47 +402,21 @@ export default function Chat() {
       {/* ── Speaking section — audio mode ── */}
       {!camOn && (
         <div className="call-body">
-          {/* Asked once, before the first turn: an empty prompt is the hardest place
-              for a learner to start from. */}
-          {isAiSession && !topicChosen && (
-            <AiTopicPicker
-              onPick={(topic) => { setAiTopic(topic); setTopicChosen(true); }}
-            />
-          )}
-
-          {/* Sits between turns rather than interrupting: the partner never stops the
-              conversation to teach, so this is where a session leaves something behind. */}
-          {isAiSession && topicChosen && aiVocab && (
-            <VocabPrompt item={aiVocab} onDone={() => setAiVocab(null)} />
-          )}
           {!partnerConnected && (
             <div className="call-waiting-note">
               <span className="call-waiting-spinner" />
               <span>{t('call.waiting')}</span>
             </div>
           )}
-          {/* The IELTS part cards belong to a session with a person, where the two of
-              you need something to talk about. The AI partner picks its own topic and
-              leads the turn, so they were only clutter over the call controls. */}
-          {!isAiSession && <SpeakingQuestions onDetailChange={setSpeakingDetail} />}
+          <SpeakingQuestions onDetailChange={setSpeakingDetail} />
         </div>
       )}
 
       <CallControls
         micOn={micOn}
         camOn={camOn}
-        isAiSession={isAiSession}
-        speaking={(youSpeaking || aiStatus === 'listening') && micOn}
-        onToggleMic={() => {
-          setMicOn(v => {
-            const next = !v;
-            if (isAiSession) {
-              if (!next) stopAiRecording();
-              else startAiRecording();
-            }
-            return next;
-          });
-        }}
+        speaking={youSpeaking && micOn}
+        onToggleMic={() => setMicOn((v) => !v)}
         onToggleCam={() => setCamOn(v => !v)}
         onEnd={() => setShowEnd(true)}
         onOpenChat={() => setShowChat(true)}
@@ -1043,19 +427,11 @@ export default function Chat() {
       {showChat && (
         <ChatOverlay
           messages={messages}
-          isPartnerTyping={isPartnerTyping || aiStatus === 'thinking'}
+          isPartnerTyping={isPartnerTyping}
           sessionId={session?.id}
           onClose={() => setShowChat(false)}
-          sendMessage={(sId, text) => {
-            if (isAiSession) {
-              handleSendAiTextTurn(text);
-            } else {
-              sendMessage(sId, text);
-            }
-          }}
-          sendTyping={(sId) => {
-            if (!isAiSession) sendTyping(sId);
-          }}
+          sendMessage={sendMessage}
+          sendTyping={sendTyping}
         />
       )}
 
@@ -1083,96 +459,6 @@ export default function Chat() {
           overflow: hidden;
           display: flex;
           flex-direction: column;
-        }
-
-        .ai-partner-avatar {
-          width: 44px; height: 44px; border-radius: 50%;
-          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-          display: flex; align-items: center; justify-content: center;
-          border: 1.5px solid rgba(56, 189, 248, 0.5);
-          box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
-          color: #ffffff;
-        }
-
-        .ai-voice-action-box {
-          width: 100%;
-          padding: 8px 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          z-index: 12;
-        }
-
-        .ai-voice-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 10px 20px;
-          border-radius: 99px;
-          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-          color: #ffffff;
-          font-size: 13px;
-          font-weight: 700;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
-          cursor: pointer;
-          transition: transform 0.15s ease, background 0.15s ease;
-        }
-        .ai-voice-btn:active {
-          transform: scale(0.96);
-        }
-
-        .ai-voice-btn--listening {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          box-shadow: 0 4px 20px rgba(239, 68, 68, 0.45);
-          animation: pulseListening 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulseListening {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-          50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-        }
-
-        .ai-voice-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #ffffff;
-          animation: blinkDot 1s ease-in-out infinite alternate;
-        }
-
-        @keyframes blinkDot {
-          from { opacity: 0.3; }
-          to { opacity: 1; }
-        }
-
-        .ai-voice-status-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 16px;
-          border-radius: 99px;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          font-size: 13px;
-          font-weight: 600;
-          color: #94a3b8;
-        }
-        .ai-voice-status-pill--speaking {
-          color: #38bdf8;
-          border-color: rgba(56, 189, 248, 0.3);
-          background: rgba(56, 189, 248, 0.1);
-        }
-
-        .ai-voice-spinner {
-          width: 14px;
-          height: 14px;
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          border-top-color: #38bdf8;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
         }
 
         .call-bg-glow {
@@ -1430,66 +716,6 @@ export default function Chat() {
           50% { opacity: 0.7; transform: scale(1.15); }
         }
 
-        /* AI Video Grid Styles */
-        .ai-video-grid { position: absolute; inset: 0; z-index: 1; }
-        .ai-user-video, .ai-user-video-pip {
-          width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
-        }
-        .ai-avatar-view {
-          width: 100%; height: 100%;
-          background: radial-gradient(circle at center, #0c192e 0%, #030712 100%);
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          position: relative; overflow: hidden;
-        }
-        .ai-orb-container {
-          position: relative; width: 140px; height: 140px;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .ai-orb-core {
-          width: 90px; height: 90px; border-radius: 50%;
-          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-          border: 2px solid rgba(56, 189, 248, 0.6);
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); z-index: 2;
-        }
-        .ai-orb-icon { color: #ffffff; }
-        .ai-orb-glow {
-          position: absolute; inset: -20px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, transparent 70%);
-          animation: orbPulse 3s ease-in-out infinite;
-        }
-        .ai-wave-ring {
-          position: absolute; border-radius: 50%;
-          border: 2px solid rgba(56, 189, 248, 0.6);
-          animation: waveExpand 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-        }
-        .ring-1 { width: 100px; height: 100px; animation-delay: 0s; }
-        .ring-2 { width: 100px; height: 100px; animation-delay: 0.6s; }
-        .ring-3 { width: 100px; height: 100px; animation-delay: 1.2s; }
-        @keyframes waveExpand {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(2.4); opacity: 0; }
-        }
-        @keyframes orbPulse {
-          0%, 100% { transform: scale(0.95); opacity: 0.7; }
-          50% { transform: scale(1.15); opacity: 1; }
-        }
-        .ai-view-badge {
-          margin-top: 24px; padding: 8px 18px; border-radius: 20px;
-          background: rgba(15, 23, 42, 0.75);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(12px); display: flex; align-items: center; gap: 8px;
-          font-size: 13px; font-weight: 600; color: #f8fafc; z-index: 2;
-        }
-        .ai-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
-        .ai-badge-dot.listening { background: #10b981; box-shadow: 0 0 8px #10b981; }
-        .ai-badge-dot.thinking { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
-        .ai-badge-dot.speaking { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
-        .ai-avatar-view-pip {
-          width: 100%; height: 100%;
-          background: linear-gradient(135deg, #0c192e 0%, #030712 100%);
-          display: flex; align-items: center; justify-content: center;
-        }
       
         /* The call screen is a video surface, so it stays dark whatever Telegram's
            colour scheme says — but the labels inside it are written with the theme's

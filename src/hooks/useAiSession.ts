@@ -2,11 +2,15 @@ import { useCallback } from 'react';
 import useAppStore from '../store/useAppStore';
 
 /**
- * Opens a session with the AI partner.
+ * Opens the AI partner.
  *
- * Shared by Home and the "nobody is free" screen so both enter the session the same
- * way — the setup is fiddly enough (synthetic session id, `isAi`, pre-connected
- * partner, cleared matching state) that two copies would drift.
+ * Shared by Home and the "nobody is free" screen so both enter it the same way, and so
+ * the daily-limit check cannot drift between them.
+ *
+ * The partner used to be entered as a fake call — a synthetic session id, a
+ * pre-connected partner, the human call screen in AI mode. It is a chat now, with its
+ * own screen and its own saved history, so none of that scaffolding is set up any
+ * more; any session left over from a real call is cleared instead.
  *
  * Returns false when the free daily limit is already spent, having moved the store
  * into the limit-reached state so the caller does not need to handle it.
@@ -27,19 +31,14 @@ export function useAiSession() {
     }
 
     useAppStore.setState({
-      session: {
-        id: `ai_${Date.now()}`,
-        partnerName: 'Suhbatdosh AI',
-        partnerLevel: user?.level || 1,
-        isAi: true,
-      },
-      partnerConnected: true,
+      session: null,
+      partnerConnected: false,
       isCallActive: false,
       matchingStatus: 'idle',
       messages: [],
     });
 
-    store.navigate('chat');
+    store.navigate('ai_chat');
     return true;
   }, []);
 }

@@ -60,7 +60,6 @@ interface CallControlsProps {
   unread?: number;
   speaking?: boolean;
   hidden?: boolean;
-  isAiSession?: boolean;
 }
 
 export default function CallControls({
@@ -73,7 +72,6 @@ export default function CallControls({
   unread = 0,
   speaking = false,
   hidden = false,
-  isAiSession = false,
 }: CallControlsProps) {
   const t = useT();
 
@@ -108,18 +106,16 @@ export default function CallControls({
           <span className="cc-label">{micOn ? t('cc.mute') : t('cc.unmute')}</span>
         </div>
 
-        {!isAiSession && (
-          <div className="cc-item">
-            <button
-              className={`cc-btn${camOn ? ' cc-btn--active' : ' cc-btn--off'}`}
-              onClick={handleCam}
-              aria-label={camOn ? t('cc.stop') : t('cc.camera')}
-            >
-              {camOn ? <CamOnIcon /> : <CamOffIcon />}
-            </button>
-            <span className="cc-label">{camOn ? t('cc.stop') : t('cc.camera')}</span>
-          </div>
-        )}
+        <div className="cc-item">
+          <button
+            className={`cc-btn${camOn ? ' cc-btn--active' : ' cc-btn--off'}`}
+            onClick={handleCam}
+            aria-label={camOn ? t('cc.stop') : t('cc.camera')}
+          >
+            {camOn ? <CamOnIcon /> : <CamOffIcon />}
+          </button>
+          <span className="cc-label">{camOn ? t('cc.stop') : t('cc.camera')}</span>
+        </div>
 
         <div className="cc-item">
           <button className="cc-btn cc-btn--chat" onClick={handleChat} aria-label={t('cc.chat')}>
