@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, ArrowUp, Loader2, MessageSquare, Mic, MicOff, X } from 'lucide-react';
+import { AlertCircle, ArrowUp, MessageSquare, Mic, MicOff, X } from 'lucide-react';
 import { transcribeAiAudio } from '../../api/endpoints';
 import { streamAiTurn, AiStreamError } from '../../api/aiStream';
 import { notifyHaptic, tapHaptic } from '../../utils/haptics';
@@ -81,7 +81,7 @@ export default function AiVoiceMode({
   const playingRef = useRef(false);
   const streamDoneRef = useRef(false);
 
-  const orbRef = useRef<HTMLSpanElement | null>(null);
+  const orbRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
   const mutedRef = useRef(false);
@@ -508,25 +508,19 @@ export default function AiVoiceMode({
   return (
     <div className="vm">
       <div className="vm__stage">
-      {/* ── Dial ────────────────────────────────────────────────────────────
-             The radar the matching screen already uses to mean "live and
-             listening", with the microphone at its centre instead of a level
-             badge. Same ripples, same accent, so the two live states in the app
-             read as the same idea. */}
-      <div className={`vm__dial vm__dial--${status}`}>
-        <span className="vm__ripple" aria-hidden="true" />
-        <span className="vm__ripple vm__ripple--2" aria-hidden="true" />
-        <span className="vm__scale" aria-hidden="true"><i /></span>
-        <span className="vm__hole" aria-hidden="true" />
-        <span ref={orbRef} className="vm__core">
-          {status === 'thinking' ? (
-            <Loader2 size={30} className="vm__spinner" aria-hidden="true" />
-          ) : muted ? (
-            <MicOff size={30} strokeWidth={2.2} aria-hidden="true" />
-          ) : (
-            <Mic size={30} strokeWidth={2.2} aria-hidden="true" />
-          )}
-        </span>
+      {/* ── Orb ─────────────────────────────────────────────────────────────
+             One soft sphere, lit from inside. The clouds drifting within it are
+             three blurred blobs clipped to the circle, and the whole thing
+             breathes with the microphone — so the screen is doing something
+             whether the partner is listening or talking, without a spinner or a
+             progress bar ever appearing. */}
+      <div ref={orbRef} className={`vm__orb vm__orb--${status}`}>
+        <div className="vm__orb-sphere">
+          <span className="vm__orb-blob vm__orb-blob--1" />
+          <span className="vm__orb-blob vm__orb-blob--2" />
+          <span className="vm__orb-blob vm__orb-blob--3" />
+          <span className="vm__orb-sheen" />
+        </div>
       </div>
 
       {/* ── State ── */}
@@ -635,9 +629,7 @@ export default function AiVoiceMode({
           display: flex; flex-direction: column; align-items: center;
           padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4)
                    calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
-          background:
-            radial-gradient(120% 80% at 50% 8%, rgba(0, 168, 255, 0.14) 0%, transparent 60%),
-            var(--bg);
+          background: var(--bg);
           animation: fadeIn 0.24s ease;
         }
 
@@ -648,61 +640,96 @@ export default function AiVoiceMode({
           gap: var(--space-4);
         }
 
-        /* ── Dial ── */
-        .vm__dial {
-          position: relative; width: 200px; height: 200px; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .vm__ripple {
-          position: absolute; inset: 0; border-radius: 50%;
-          border: 1.5px solid var(--btn-bg); opacity: 0;
-          animation: radarRipple 2.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
-        }
-        .vm__ripple--2 { animation-delay: 1.4s; }
-        /* The ripples mean "live". While the partner is thinking, nothing is. */
-        .vm__dial--thinking .vm__ripple,
-        .vm__dial--muted .vm__ripple,
-        .vm__dial--error .vm__ripple,
-        .vm__dial--connecting .vm__ripple { animation-play-state: paused; opacity: 0; }
-
-        .vm__scale, .vm__hole { position: absolute; border-radius: 50%; }
-        .vm__scale {
-          inset: 12px;
-          background: var(--border-strong);
-          -webkit-mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
-                  mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
-        }
-        .vm__scale i {
-          position: absolute; inset: 0; border-radius: 50%;
-          background: conic-gradient(from 0deg,
-            transparent 0deg 200deg,
-            var(--btn-bg) 352deg,
-            transparent 356deg);
-          animation: vmScan 3s linear infinite;
-          will-change: transform;
-        }
-        @keyframes vmScan { to { transform: rotate(360deg); } }
-        .vm__dial--muted .vm__scale i,
-        .vm__dial--error .vm__scale i { animation-play-state: paused; opacity: 0.3; }
-        .vm__hole { width: 82%; height: 82%; background: var(--bg); }
-
-        .vm__core {
-          position: relative;
-          width: 108px; height: 108px; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          background: var(--grad-primary); color: #fff;
-          box-shadow: var(--shadow-glow), inset 0 -10px 26px rgba(0, 0, 0, 0.28);
+        /* ── Orb ──
+           The edge stays crisp: the blobs are blurred, not the sphere, and
+           overflow plus a mask keeps their haze inside the circle on both
+           engines. */
+        .vm__orb {
+          position: relative; flex-shrink: 0;
+          width: min(62vw, 232px); aspect-ratio: 1;
           /* --level is written straight from the microphone analyser on every
-             animation frame, so the dial breathes with the room. */
-          transform: scale(calc(1 + var(--level, 0) * 0.14));
-          transition: transform 90ms linear, background var(--t);
+             animation frame, so the sphere swells as the room gets louder. */
+          transform: scale(calc(1 + var(--level, 0) * 0.09));
+          transition: transform 110ms linear;
         }
-        .vm__dial--speaking .vm__core { animation: pulse 1.6s ease-in-out infinite; }
-        .vm__dial--muted .vm__core,
-        .vm__dial--error .vm__core {
-          background: var(--surface-3); color: var(--text-tertiary); box-shadow: none;
+        .vm__orb-sphere {
+          position: absolute; inset: 0;
+          border-radius: 50%; overflow: hidden; isolation: isolate;
+          background:
+            radial-gradient(circle at 32% 72%, #FFFFFF 0%, #E8F3FF 26%, transparent 62%),
+            linear-gradient(150deg, #7FA8FF 0%, #4E7FE8 42%, #2E5BD0 100%);
+          -webkit-mask-image: radial-gradient(circle at center, #000 99%, transparent 100%);
+                  mask-image: radial-gradient(circle at center, #000 99%, transparent 100%);
+          box-shadow: 0 24px 80px rgba(78, 127, 232, 0.30);
+          animation: vmBreathe 7s ease-in-out infinite;
         }
-        .vm__spinner { animation: spin 1s linear infinite; }
+        @keyframes vmBreathe {
+          0%, 100% { transform: scale(1); }
+          50%      { transform: scale(1.035); }
+        }
+
+        .vm__orb-blob {
+          position: absolute; border-radius: 50%;
+          filter: blur(26px); will-change: transform;
+        }
+        .vm__orb-blob--1 {
+          width: 78%; height: 78%; top: -14%; right: -10%;
+          background: radial-gradient(circle, rgba(124, 158, 255, 0.95) 0%, rgba(124, 158, 255, 0) 68%);
+          animation: vmDrift1 11s ease-in-out infinite;
+        }
+        .vm__orb-blob--2 {
+          width: 70%; height: 70%; bottom: -8%; left: -12%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 66%);
+          animation: vmDrift2 9s ease-in-out infinite;
+        }
+        .vm__orb-blob--3 {
+          width: 54%; height: 54%; top: 30%; left: 26%;
+          background: radial-gradient(circle, rgba(0, 198, 255, 0.34) 0%, rgba(0, 198, 255, 0) 70%);
+          animation: vmDrift3 13s ease-in-out infinite;
+        }
+        @keyframes vmDrift1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(-14%, 12%) scale(1.14); }
+        }
+        @keyframes vmDrift2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(16%, -14%) scale(0.9); }
+        }
+        @keyframes vmDrift3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33%      { transform: translate(12%, -10%) scale(1.2); }
+          66%      { transform: translate(-10%, 8%) scale(0.88); }
+        }
+
+        /* A single highlight across the top, which is what reads as "sphere"
+           rather than "flat disc". */
+        .vm__orb-sheen {
+          position: absolute; inset: 0;
+          background: radial-gradient(ellipse 70% 46% at 46% 14%, rgba(255,255,255,0.42) 0%, transparent 70%);
+        }
+
+        /* States. The orb never stops moving entirely — a frozen sphere reads as
+           a crash — but each state moves differently enough to be told apart. */
+        .vm__orb--listening .vm__orb-sphere { animation-duration: 4.5s; }
+        .vm__orb--speaking .vm__orb-sphere  { animation-duration: 1.9s; }
+        .vm__orb--speaking .vm__orb-blob--1 { animation-duration: 4s; }
+        .vm__orb--speaking .vm__orb-blob--2 { animation-duration: 3.2s; }
+        .vm__orb--speaking .vm__orb-blob--3 { animation-duration: 4.6s; }
+        .vm__orb--thinking .vm__orb-sphere  { animation-duration: 2.6s; opacity: 0.72; }
+        .vm__orb--connecting .vm__orb-sphere { opacity: 0.6; }
+        .vm__orb--muted .vm__orb-sphere,
+        .vm__orb--error .vm__orb-sphere {
+          background: linear-gradient(150deg, #2A3446 0%, #1A2232 100%);
+          box-shadow: none;
+        }
+        .vm__orb--muted .vm__orb-blob,
+        .vm__orb--error .vm__orb-blob,
+        .vm__orb--muted .vm__orb-sheen,
+        .vm__orb--error .vm__orb-sheen { opacity: 0.12; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .vm__orb-sphere, .vm__orb-blob { animation: none; }
+        }
 
         /* ── State pill ── */
         .vm__pill { font-size: var(--text-sm); }
