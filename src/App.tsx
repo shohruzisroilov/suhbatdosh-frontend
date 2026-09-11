@@ -115,7 +115,23 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
 
 const TAB_SCREENS = ['home', 'mock', 'listings', 'leaderboard', 'profile'];
 
-function AuthErrorScreen({ message }: { message: string }) {
+function AuthErrorScreen({
+  message,
+  action,
+}: {
+  message: string;
+  action: 'reload' | 'reopen';
+}) {
+  // Closing is the only thing that gets Telegram to hand out a fresh launch, so when
+  // that is the fix it has to be the button — a reload here would put the person back
+  // on this same screen. If the close call is unavailable, reloading is still better
+  // than a dead button.
+  const reopen = () => {
+    const webApp = window.Telegram?.WebApp;
+    if (webApp?.close) webApp.close();
+    else window.location.reload();
+  };
+
   return (
     <div
       style={{
@@ -135,7 +151,7 @@ function AuthErrorScreen({ message }: { message: string }) {
       <AlertTriangle size={44} strokeWidth={1.75} color="var(--danger, #FF453A)" aria-hidden="true" />
       <p style={{ fontSize: 16, lineHeight: 1.5, maxWidth: 280 }}>{message}</p>
       <button
-        onClick={() => window.location.reload()}
+        onClick={action === 'reopen' ? reopen : () => window.location.reload()}
         style={{
           marginTop: 8,
           minHeight: 44,
@@ -149,14 +165,15 @@ function AuthErrorScreen({ message }: { message: string }) {
           cursor: 'pointer',
         }}
       >
-        Try again
+        {action === 'reopen' ? 'Close the app' : 'Try again'}
       </button>
     </div>
   );
 }
 
 function TelegramApp() {
-  const { screen, navigate, isAuthLoading, appError, user, isSubscribed, setIsSubscribed } = useAppStore();
+  const { screen, navigate, isAuthLoading, appError, appErrorAction, user, isSubscribed, setIsSubscribed } =
+    useAppStore();
   useAuth();
   useSocket();
   usePrefetchTabs(!isAuthLoading && !!user);
@@ -164,7 +181,7 @@ function TelegramApp() {
   if (isAuthLoading) return <LoadingScreen />;
 
   // Auth xato bo'ldi va user yo'q — retry screen ko'rsat
-  if (appError && !user) return <AuthErrorScreen message={appError} />;
+  if (appError && !user) return <AuthErrorScreen message={appError} action={appErrorAction} />;
 
   const ScreenComponent = SCREENS[screen] || Home;
   const showTabs = TAB_SCREENS.includes(screen);

@@ -155,6 +155,7 @@ export function useAuth() {
         const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+        const code = err?.response?.data?.code;
 
         if (import.meta.env.DEV) {
           console.error('Auth error:', status, serverMsg, err);
@@ -165,6 +166,16 @@ export function useAuth() {
         // them round the retry loop forever.
         if (status === 403 || err?.response?.data?.banned) {
           setAppError(translate(tgLang, 'auth.banned'));
+          return;
+        }
+
+        // Telegram hands a mini app it resumed from the background the signature it
+        // was launched with, however long ago that was. The person did nothing wrong
+        // and nothing is broken — but a reload runs inside that same webview and gets
+        // the same stale signature back, so the usual "try again" is a loop with no
+        // exit. Closing is what produces a fresh launch, so that is what is offered.
+        if (code === 'INITDATA_EXPIRED') {
+          setAppError(translate(tgLang, 'auth.expired'), 'reopen');
           return;
         }
 

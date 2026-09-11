@@ -554,6 +554,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     // A suspension is a dead end by design, so the message has to end somewhere:
     // it says what happened and gives one place to go. Without it a banned user
     // sees a generic sign-in failure and retries forever.
+    'auth.expired': 'This app session is too old. Close the app and open it again — everything will be where you left it.',
     'auth.banned': 'This account is suspended. If you think this is a mistake, write to @Shohruz_Isroilov.',
     'auth.notInTelegram': 'Open Suhbatdosh inside Telegram. Find @suhbatdosh_app_bot and tap Open.',
 

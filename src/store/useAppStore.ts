@@ -36,7 +36,16 @@ export interface AppState {
   isConnected: boolean;
   setConnected: (connected: boolean) => void;
   appError: string | null;
-  setAppError: (error: string | null) => void;
+  /**
+   * What the error screen should offer.
+   *
+   * 'reload' is the default and is right for anything transient. 'reopen' is for the
+   * one failure a reload cannot fix: Telegram resumed a mini app it had kept in the
+   * background, so the launch signature it handed us is old — and reloading inside
+   * that same webview hands back the very same one. Only closing gets a fresh launch.
+   */
+  appErrorAction: 'reload' | 'reopen';
+  setAppError: (error: string | null, action?: 'reload' | 'reopen') => void;
   micErrorModal: { isOpen: boolean; errorMsg?: string } | null;
   setMicErrorModal: (modal: { isOpen: boolean; errorMsg?: string } | null) => void;
 
@@ -124,7 +133,8 @@ const useAppStore = create<AppState>((set) => ({
   isConnected: true,
   setConnected: (isConnected) => set({ isConnected }),
   appError: null,
-  setAppError: (appError) => set({ appError }),
+  appErrorAction: 'reload',
+  setAppError: (appError, appErrorAction = 'reload') => set({ appError, appErrorAction }),
   micErrorModal: null,
   setMicErrorModal: (micErrorModal) => set({ micErrorModal }),
 
