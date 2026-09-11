@@ -309,17 +309,20 @@ export default function SessionEnd() {
           display: flex; flex-direction: column; gap: 4px; text-align: left;
           box-shadow: 0 4px 16px rgba(255, 159, 10, 0.15);
         }
+        /* The banner is a tint, not a solid colour: the page shows through it, so its
+           text has to follow the scheme rather than assume a dark one. White here put
+           the streak message on pale cream in light mode, where it disappeared. */
         .end-streak-badge {
           display: inline-flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: 800; color: #FF9F0A;
+          font-size: 11px; font-weight: 800; color: var(--accent);
           letter-spacing: 0.04em; text-transform: uppercase;
         }
-        .end-flame-ico { color: #FF9F0A; filter: drop-shadow(0 0 6px rgba(255, 159, 10, 0.6)); }
+        .end-flame-ico { color: var(--accent); filter: drop-shadow(0 0 6px rgba(255, 159, 10, 0.6)); }
         .end-streak-title {
-          font-size: 14px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0;
+          font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 2px 0 0 0;
         }
         .end-streak-sub {
-          font-size: 12px; color: rgba(255, 255, 255, 0.75); margin: 0; line-height: 1.4;
+          font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.4;
         }
 
         .end-report {

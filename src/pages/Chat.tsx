@@ -453,6 +453,12 @@ export default function Chat() {
           --text-secondary: rgba(255,255,255,0.55);
           --border: rgba(255,255,255,0.1);
           --border-strong: rgba(255,255,255,0.2);
+          /* Re-declaring the token does not re-resolve a colour already computed
+             further up: <body> resolved var(--text-primary) against the light scheme
+             before this subtree existed, so anything in here without its own colour
+             inherited near-black onto a dark screen — the chat overlay's title, most
+             visibly. Setting it once here makes the subtree read from these tokens. */
+          color: var(--text-primary);
           position: relative;
           width: 100%; height: 100%;
           background: #080C14;

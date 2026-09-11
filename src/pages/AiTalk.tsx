@@ -276,10 +276,29 @@ export default function AiTalk() {
            tokens are pinned here rather than each rule being patched for light mode —
            the same thing the call screen does. */
         .talk {
-          --bg: #080C14;
-          --text-primary: #ffffff;
-          --text-secondary: rgba(255,255,255,0.55);
-          --border: rgba(255,255,255,0.1);
+          /* The whole palette, not a few of it.
+             This screen stays dark in both colour schemes, and everything drawn
+             inside it — the transcript overlay, the end sheet, the vocabulary card —
+             reads its colours from these tokens. Pinning only some left the rest
+             resolving to the light scheme in light mode, which put white text on a
+             white bubble. color-scheme goes with them so the textarea in the overlay
+             draws its caret and selection dark too. */
+          color-scheme: dark;
+          --bg:             #080C14;
+          --bg-secondary:   #121824;
+          --surface-2:      #1A2232;
+          --surface-3:      #222C3E;
+          --border:         rgba(255, 255, 255, 0.08);
+          --border-strong:  rgba(255, 255, 255, 0.16);
+          --text-primary:   #F8FAFC;
+          --text-secondary: #94A3B8;
+          --text-tertiary:  #64748B;
+          /* Re-declaring the token does not re-resolve a colour already computed
+             further up: <body> resolved var(--text-primary) against the light scheme
+             long before this subtree existed, and everything in here that does not
+             name its own colour inherits that near-black. Setting it once here makes
+             the whole subtree read from the tokens above. */
+          color: var(--text-primary);
           position: relative;
           display: flex; flex-direction: column;
           width: 100%; height: 100dvh;

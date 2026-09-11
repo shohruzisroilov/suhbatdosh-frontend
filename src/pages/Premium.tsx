@@ -326,9 +326,12 @@ export default function Premium() {
         }
         .premium-hero p { font-size: var(--text-sm); color: var(--text-secondary); text-align: center; }
 
+        /* This whole panel was painted in fixed dark values while the page around it
+           follows the scheme, so in light mode it landed as a grey slab with muted text
+           nobody could read. Same design, drawn from the tokens. */
         .premium-matrix {
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
           border-radius: 18px;
           padding: 16px 14px;
           display: flex; flex-direction: column; gap: 14px;
@@ -338,30 +341,30 @@ export default function Premium() {
           display: flex; flex-direction: column; gap: 2px;
         }
         .premium-matrix-title {
-          font-size: 15px; font-weight: 800; color: #ffffff;
+          font-size: 15px; font-weight: 800; color: var(--text-primary);
         }
         .premium-matrix-sub {
-          font-size: 11px; color: #94a3b8;
+          font-size: 11px; color: var(--text-secondary);
         }
 
         .premium-table {
           display: flex; flex-direction: column;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border);
           border-radius: 14px;
           overflow: hidden;
-          background: rgba(0, 0, 0, 0.2);
+          background: var(--bg);
         }
         .premium-table-row {
           display: grid;
           grid-template-columns: 1.4fr 1fr 1fr;
           align-items: center;
           padding: 10px 12px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          border-bottom: 1px solid var(--border);
         }
         .premium-table-row:last-child { border-bottom: none; }
         .premium-table-header {
-          background: rgba(255, 255, 255, 0.05);
-          font-size: 11px; font-weight: 800; color: #94a3b8;
+          background: var(--surface-2);
+          font-size: 11px; font-weight: 800; color: var(--text-secondary);
           text-transform: uppercase; letter-spacing: 0.4px;
           padding: 10px 12px;
         }
@@ -374,25 +377,26 @@ export default function Premium() {
           align-items: center;
         }
         .pro-cell {
-          color: #38bdf8;
+          color: var(--btn-bg);
           font-weight: 700;
         }
+        /* Gold on a light header is unreadable; the rating amber holds in both. */
         .premium-table-header .pro-cell {
-          flex-direction: row; gap: 4px; color: #ffd700;
+          flex-direction: row; gap: 4px; color: var(--rating);
         }
 
         .feat-name {
-          font-size: 12px; font-weight: 700; color: #ffffff; line-height: 1.25;
+          font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.25;
         }
         .feat-desc {
-          font-size: 10px; color: #94a3b8; margin-top: 1px;
+          font-size: 10px; color: var(--text-secondary); margin-top: 1px;
         }
 
         .text-muted {
-          font-size: 11px; color: #64748b; font-weight: 600;
+          font-size: 11px; color: var(--text-tertiary); font-weight: 600;
         }
         .text-highlight {
-          font-size: 11px; font-weight: 800; color: #38bdf8;
+          font-size: 11px; font-weight: 800; color: var(--btn-bg);
         }
 
         .premium-stars { display: flex; flex-direction: column; gap: var(--space-2); }

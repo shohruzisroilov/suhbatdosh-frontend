@@ -377,7 +377,7 @@ const Styles = React.memo(function Styles() {
         border: 1px solid rgba(56, 189, 248, 0.4);
         font-size: 10px;
         font-weight: 700;
-        color: #38bdf8;
+        color: var(--btn-bg);
         letter-spacing: 0.5px;
       }
       .ai-card-content {
@@ -402,16 +402,18 @@ const Styles = React.memo(function Styles() {
         flex-direction: column;
         gap: 2px;
       }
+      /* The card is a blue tint the page shows through, not a solid blue card, so
+         its words follow the scheme. White read as white-on-pale-blue in light mode. */
       .ai-card-title {
         font-size: 16px;
         font-weight: 700;
-        color: #ffffff;
+        color: var(--text-primary);
         margin: 0;
         line-height: 1.25;
       }
       .ai-card-desc {
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
         margin: 0;
       }
       .ai-card-action {
