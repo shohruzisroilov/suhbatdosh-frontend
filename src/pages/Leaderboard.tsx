@@ -179,8 +179,8 @@ export default function Leaderboard() {
           transition: all 0.18s var(--ease-out);
         }
         .lb-scope-btn.on {
-          color: #FFFFFF; background: var(--btn-bg);
-          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.3);
+          color: var(--primary-contrast); background: var(--primary);
+          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
         }
         .lb-scope-btn:active:not(.on) { background: var(--surface-3); color: var(--text-primary); }
 
@@ -225,7 +225,7 @@ export default function Leaderboard() {
           transition: transform 0.15s ease, border-color 0.15s ease;
         }
         .lb-row:active { transform: scale(0.99); }
-        .lb-row.me { border-color: var(--btn-bg) !important; background: rgba(0, 168, 255, 0.06) !important; }
+        .lb-row.me { border-color: var(--primary) !important; background: var(--primary-subtle) !important; }
 
         .lb-row--rank-1 {
           border-color: rgba(255, 215, 0, 0.5);
@@ -267,10 +267,10 @@ export default function Leaderboard() {
         .lb-you {
           font-size: 9px; font-weight: var(--weight-bold);
           padding: 2px 6px; border-radius: 999px;
-          background: var(--btn-bg); color: var(--btn-text);
+          background: var(--primary); color: var(--primary-contrast);
           flex-shrink: 0;
         }
-        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--btn-bg); opacity: 0.8; }
+        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--primary); opacity: 0.9; }
 
         .lb-row__value-col { flex-shrink: 0; text-align: right; }
         .lb-row__value {

@@ -30,9 +30,9 @@ export default function LoadingScreen() {
         .loading-logo {
           width: 76px; height: 76px;
           display: flex; align-items: center; justify-content: center;
-          border-radius: 24px;
-          background: linear-gradient(145deg, #0EA5E9, #0066FF);
-          box-shadow: 0 8px 32px rgba(0, 168, 255, 0.35);
+          border-radius: var(--radius-xl, 24px);
+          background: var(--grad-primary);
+          box-shadow: var(--primary-shadow);
           color: #fff;
           animation: loadingBreath 1.8s ease-in-out infinite;
         }

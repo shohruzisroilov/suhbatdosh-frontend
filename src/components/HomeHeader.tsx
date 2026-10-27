@@ -165,7 +165,7 @@ export default function HomeHeader({
         .hh__level-pill {
           display: inline-flex; align-items: center;
           font-size: 10px; font-weight: var(--weight-heavy);
-          color: var(--btn-bg); background: var(--btn-bg-soft);
+          color: var(--primary); background: var(--primary-subtle);
           padding: 2px 7px; border-radius: var(--radius-full);
           letter-spacing: 0.02em; flex-shrink: 0;
           border: 1px solid rgba(0, 168, 255, 0.3);
@@ -202,7 +202,7 @@ export default function HomeHeader({
         .hh-level-modal {
           width: 90%; max-width: 380px;
           background: var(--bg-secondary); border: 1px solid var(--border);
-          border-radius: 20px; padding: 20px;
+          border-radius: var(--radius-lg); padding: 20px;
           box-shadow: var(--shadow-md);
         }
         .hh-level-header {
@@ -225,15 +225,15 @@ export default function HomeHeader({
         }
         .hh-level-item {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 14px; border-radius: 12px; background: var(--surface-2);
+          padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-2);
           border: 1px solid var(--border); color: var(--text-primary);
           cursor: pointer; transition: all 0.2s ease; text-align: left;
         }
         .hh-level-item:active { transform: scale(0.98); }
         .hh-level-item.active {
-          background: var(--btn-bg-soft);
-          border-color: var(--btn-bg);
-          color: var(--btn-bg);
+          background: var(--primary-subtle);
+          border-color: var(--primary);
+          color: var(--primary);
         }
         .hh-level-item-left { display: flex; align-items: center; gap: 10px; }
         .hh-level-code {
@@ -241,10 +241,10 @@ export default function HomeHeader({
           background: var(--surface-3); color: var(--text-primary);
         }
         .hh-level-item.active .hh-level-code {
-          background: var(--btn-bg); color: var(--btn-text);
+          background: var(--primary); color: var(--primary-contrast);
         }
         .hh-level-name { font-size: 14px; font-weight: 600; }
-        .hh-level-check { color: var(--btn-bg); }
+        .hh-level-check { color: var(--primary); }
       `}</style>
     </>
   );

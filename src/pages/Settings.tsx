@@ -104,7 +104,7 @@ export default function Settings() {
               onClick={() => { selectionHaptic(); setSection('level'); }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-[var(--btn-bg-soft)] text-[var(--btn-bg)]">
+                <div className="p-2 rounded-xl bg-[var(--primary-subtle)] text-[var(--primary)]">
                   <Gauge className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -173,11 +173,11 @@ export default function Settings() {
                     key={lv.value}
                     onClick={() => pickLevel(lv.value)}
                     className={`p-4 cursor-pointer transition-all active:scale-[0.98] ${
-                      selected ? 'border-[var(--btn-bg)] bg-[var(--bg-secondary)]' : 'border-[var(--border)] bg-[var(--bg)]'
+                      selected ? 'border-[var(--primary)] bg-[var(--surface-2)]' : 'border-[var(--border)] bg-[var(--surface)]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-8 text-center text-sm font-black text-[var(--btn-bg)] font-mono">
+                      <span className="w-8 text-center text-sm font-black text-[var(--primary)] font-mono">
                         {t(`level.${lv.value}`)}
                       </span>
                       <div className="flex-1">
@@ -187,8 +187,8 @@ export default function Settings() {
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
                           selected
-                            ? 'bg-[var(--btn-bg)] border-[var(--btn-bg)] text-[var(--btn-text)]'
-                            : 'border-[var(--border)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
+                            : 'border-[var(--border-strong)]'
                         }`}
                       >
                         {selected && <Check className="h-3 w-3" />}
@@ -213,10 +213,10 @@ export default function Settings() {
                     key={g.v}
                     type="button"
                     onClick={() => pickGender(g.v)}
-                    className={`flex-1 min-w-[120px] min-h-[48px] px-4 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                    className={`flex-1 min-w-[120px] min-h-[48px] px-4 py-3 rounded-[var(--radius-md)] border text-xs font-bold transition-all active:scale-95 ${
                       selected
-                        ? 'border-[var(--btn-bg)] bg-[var(--bg-secondary)] text-[var(--text-primary)]'
-                        : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-secondary)]'
+                        ? 'border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]'
+                        : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]'
                     }`}
                   >
                     {t(g.key)}
@@ -231,7 +231,7 @@ export default function Settings() {
         {section === 'notifications' && (
           <div className="space-y-3">
             <p className="text-xs text-[var(--text-secondary)] px-1">{t('settings.notifSub')}</p>
-            <Card className="p-4 border-[var(--border)] bg-[var(--bg)]">
+            <Card className="p-4 border-[var(--border)] bg-[var(--surface)]">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="text-sm font-bold">{t('settings.notifReminders')}</div>
@@ -244,7 +244,7 @@ export default function Settings() {
                   onClick={() => toggleNotif('remindersEnabled', !reminders)}
                   disabled={updateNotifMutation.isPending}
                   className={`w-12 h-7 rounded-full transition-colors relative p-0.5 ${
-                    reminders ? 'bg-[var(--btn-bg)]' : 'bg-[var(--border)]'
+                    reminders ? 'bg-[var(--primary)]' : 'bg-[var(--surface-3)]'
                   }`}
                 >
                   <span

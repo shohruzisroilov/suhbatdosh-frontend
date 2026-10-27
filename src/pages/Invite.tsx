@@ -67,7 +67,7 @@ export default function Invite() {
     <div className="flex flex-col h-full bg-[var(--bg)] text-[var(--text-primary)] overflow-hidden">
       {/* Invite is no longer a tab, so it needs a visible way out — Telegram's own
           back button is not shown in every client. */}
-      <div className="flex items-center gap-1 px-2 pt-2 shrink-0">
+      <div className="flex items-center gap-1 px-2 pt-[calc(8px+env(safe-area-inset-top,0px))] shrink-0">
         <Button
           variant="ghost"
           size="icon"
@@ -82,7 +82,7 @@ export default function Invite() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-2">
         {/* Header */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[var(--btn-bg-soft)] text-[var(--btn-bg)] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[var(--primary-subtle)] text-[var(--primary)] flex items-center justify-center">
             <Gift className="h-6 w-6" />
           </div>
           <h1 className="text-lg font-black tracking-tight">{t('im.title')}</h1>
@@ -96,12 +96,12 @@ export default function Invite() {
             {/* Stats */}
             <Card className="p-4 flex items-center justify-around text-center">
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-xl font-black text-[var(--btn-bg)] font-mono">{loaded ? count : '—'}</span>
+                <span className="text-xl font-black text-[var(--primary)] font-mono">{loaded ? count : '—'}</span>
                 <span className="text-xs text-[var(--text-secondary)] font-medium">{t('im.invited')}</span>
               </div>
               <div className="w-px h-7 bg-[var(--border)]" />
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-xl font-black text-[var(--btn-bg)] font-mono">{loaded ? count : '—'}</span>
+                <span className="text-xl font-black text-[var(--primary)] font-mono">{loaded ? count : '—'}</span>
                 <span className="text-xs text-[var(--text-secondary)] font-medium">{t('im.daysEarned')}</span>
               </div>
             </Card>
@@ -110,7 +110,7 @@ export default function Invite() {
             {loaded && link && (
               <Card
                 onClick={handleCopy}
-                className="p-3 border-dashed border-[var(--btn-bg)] flex items-center justify-between gap-2 cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
+                className="p-3 border-dashed border-[var(--primary)] flex items-center justify-between gap-2 cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
               >
                 <span className="text-xs text-[var(--text-secondary)] truncate flex-1 font-mono">{link}</span>
                 <Button size="sm" type="button" className="h-8 text-xs font-bold gap-1 shrink-0">
@@ -139,7 +139,7 @@ export default function Invite() {
                     >
                       <div className="w-6 flex items-center justify-center">{renderRankBadge(i)}</div>
                       <span className="flex-1 text-xs font-semibold truncate">{u.name}</span>
-                      <span className="text-xs font-bold text-[var(--btn-bg)] font-mono">
+                      <span className="text-xs font-bold text-[var(--primary)] font-mono">
                         {u.count} {u.count === 1 ? t('im.contestFriend') : t('im.contestFriends')}
                       </span>
                     </div>

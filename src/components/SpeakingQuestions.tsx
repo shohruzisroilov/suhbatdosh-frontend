@@ -14,7 +14,7 @@ const PART_META = [
 ];
 
 const PART_ACCENT: Record<number, string> = {
-  1: '59 130 246',
+  1: '0 168 255',
   2: '139 92 246',
   3: '16 185 129',
 };

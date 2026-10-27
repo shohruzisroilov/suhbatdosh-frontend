@@ -80,7 +80,7 @@ export default function SessionRow({ session: s }: SessionRowProps) {
           width: 40px; height: 40px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
           border-radius: var(--radius-full);
-          background: var(--btn-bg-soft); color: var(--btn-bg);
+          background: var(--primary-subtle); color: var(--primary);
         }
         .session-row {
           display: flex; align-items: center; gap: var(--space-3);

@@ -27,12 +27,12 @@ interface AccentTokens {
 
 const ACCENTS: Record<MockAccentName, AccentTokens> = {
   ielts: {
-    accent: '#38bdf8',
-    accent2: '#0ea5e9',
-    onAccent: '#04121f',
-    soft: 'rgba(56, 189, 248, 0.30)',
-    tint: 'rgba(56, 189, 248, 0.16)',
-    glow: 'rgba(56, 189, 248, 0.22)',
+    accent: '#00A8FF',
+    accent2: '#0077EE',
+    onAccent: '#ffffff',
+    soft: 'rgba(0, 168, 255, 0.30)',
+    tint: 'rgba(0, 168, 255, 0.16)',
+    glow: 'rgba(0, 168, 255, 0.22)',
   },
   cefr: {
     accent: '#10b981',

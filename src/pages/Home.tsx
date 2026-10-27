@@ -123,7 +123,7 @@ export default function Home() {
             className="row"
             onClick={() => { tapHaptic('medium'); navigate('listings'); }}
           >
-            <span className="row__ico" style={{ background: 'rgba(0, 168, 255, 0.14)', color: '#00A8FF' }}>
+            <span className="row__ico" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
               <Users size={18} aria-hidden="true" />
             </span>
             <span className="row__text">
@@ -180,19 +180,19 @@ export default function Home() {
         .hero {
           position: relative; isolation: isolate; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(145deg, #0369A1 0%, #0EA5E9 45%, #38BDF8 100%);
+          background: linear-gradient(135deg, #00A8FF 0%, #0077EE 50%, #0055D4 100%);
           border: 1px solid rgba(255, 255, 255, 0.20);
-          border-radius: var(--radius-lg, 20px);
+          border-radius: var(--radius-lg);
           padding: 18px 16px 16px;
           display: flex; flex-direction: column;
-          box-shadow: 0 8px 32px rgba(3, 105, 161, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 8px 30px rgba(0, 168, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
           cursor: pointer;
           transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
           -webkit-tap-highlight-color: transparent;
         }
         .hero:active {
           transform: scale(0.985);
-          box-shadow: 0 4px 16px rgba(3, 105, 161, 0.35), 0 1px 4px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 16px rgba(0, 168, 255, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
         }
         /* Keyboard focus must be visible on the card, not just the button, because
            the button's hit area is the whole card. */
@@ -332,8 +332,8 @@ export default function Home() {
           display: flex; align-items: center; justify-content: center; gap: 6px;
           min-height: 48px;
           background: #FFFFFF;
-          color: #0369A1;
-          border-radius: var(--radius-md, 14px);
+          color: #0077EE;
+          border-radius: var(--radius-md);
           font-size: 15px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);

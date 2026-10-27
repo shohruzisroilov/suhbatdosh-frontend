@@ -990,10 +990,26 @@ export default function Listings(_props: ListingsProps) {
         .listings-page__sub {
           font-size: 11px; color: var(--text-tertiary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .listings-page__mine-btn {
+          width: 36px; height: 36px; border-radius: var(--radius-sm);
+          border: 1px solid var(--border); background: var(--surface-2);
+          color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
+          position: relative; cursor: pointer; transition: all 0.2s var(--ease-out);
+        }
+        .listings-page__mine-btn.active {
+          background: var(--primary-subtle); color: var(--primary); border-color: var(--primary);
+        }
+        .listings-page__mine-dot {
+          position: absolute; top: -3px; right: -3px;
+          min-width: 16px; height: 16px; border-radius: 99px;
+          background: var(--primary); color: var(--primary-contrast);
+          font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+          padding: 0 4px; border: 2px solid var(--bg);
+        }
         .listings-page__add-btn {
           display: flex; align-items: center; gap: 6px;
-          padding: 8px 14px; border-radius: 12px;
-          background: linear-gradient(135deg, #00A8FF 0%, #0077FF 100%);
+          padding: 8px 16px; border-radius: var(--radius-md);
+          background: var(--grad-primary);
           color: #FFFFFF; border: none; font-size: 12px; font-weight: var(--weight-bold);
           box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35); cursor: pointer;
           transition: transform 0.15s var(--ease-out);
@@ -1007,14 +1023,14 @@ export default function Listings(_props: ListingsProps) {
         }
         .listings-tabs::-webkit-scrollbar { display: none; }
         .listings-tab {
-          padding: 6px 12px; border-radius: 20px;
+          padding: 6px 14px; border-radius: var(--radius-full);
           background: var(--bg-secondary); border: 1px solid var(--border);
-          color: var(--text-secondary); font-size: 12px; font-weight: var(--weight-semibold);
+          color: var(--text-secondary); font-size: 12px; font-weight: var(--weight-semi);
           white-space: nowrap; cursor: pointer; transition: all 0.2s var(--ease-out);
         }
         .listings-tab.active {
-          background: var(--btn-bg); color: #fff; border-color: var(--btn-bg);
-          font-weight: var(--weight-bold); shadow: 0 2px 8px rgba(0, 168, 255, 0.25);
+          background: var(--primary); color: var(--primary-contrast); border-color: var(--primary);
+          font-weight: var(--weight-bold); box-shadow: 0 2px 10px rgba(0, 168, 255, 0.25);
         }
 
         /* Search + filters */
@@ -1025,18 +1041,18 @@ export default function Listings(_props: ListingsProps) {
         }
         .listings-filter-btn {
           position: relative; flex-shrink: 0;
-          width: 36px; height: 36px; border-radius: 12px;
+          width: 36px; height: 36px; border-radius: var(--radius-sm);
           border: 1px solid var(--border); background: var(--surface-2);
           color: var(--text-secondary);
           display: flex; align-items: center; justify-content: center;
         }
-        .listings-filter-btn.open { color: var(--btn-bg); border-color: var(--btn-bg); }
+        .listings-filter-btn.open { color: var(--primary); border-color: var(--primary); background: var(--primary-subtle); }
         .listings-filter-btn__dot {
           position: absolute; top: 6px; right: 6px;
-          width: 7px; height: 7px; border-radius: 50%; background: var(--btn-bg);
+          width: 7px; height: 7px; border-radius: 50%; background: var(--primary);
         }
         .listings-clear-btn {
-          flex-shrink: 0; padding: 6px 12px; border-radius: 10px;
+          flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-sm);
           border: 1px solid var(--border); background: var(--surface-2);
           color: var(--text-secondary); font-size: 11px; font-weight: 700;
         }
@@ -1044,14 +1060,18 @@ export default function Listings(_props: ListingsProps) {
           position: absolute; left: 12px; top: 11px; color: var(--text-tertiary); pointer-events: none;
         }
         .listings-search__input {
-          width: 100%; padding: 9px 12px 9px 36px; border-radius: 12px;
+          width: 100%; padding: 9px 12px 9px 36px; border-radius: var(--radius-md);
           border: 1px solid var(--border); background-color: var(--surface-2);
           color: var(--text-primary); font-size: 13px; outline: none;
+          transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
         }
-        .listings-search__input:focus { border-color: var(--btn-bg); }
+        .listings-search__input:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px var(--primary-subtle);
+        }
         .listings-selects { display: flex; gap: 8px; align-items: center; }
         .listings-select {
-          flex: 1; min-width: 0; padding: 8px 30px 8px 10px; border-radius: 10px;
+          flex: 1; min-width: 0; padding: 8px 30px 8px 10px; border-radius: var(--radius-sm);
           border: 1px solid var(--border); background-color: var(--surface-2);
           color: var(--text-primary); font-size: 12px; font-weight: 600; outline: none;
         }
@@ -1063,25 +1083,25 @@ export default function Listings(_props: ListingsProps) {
         }
         .spinner {
           width: 28px; height: 28px; border: 3px solid var(--border);
-          border-top-color: var(--btn-bg); border-radius: 50%; animation: spin 0.8s linear infinite;
+          border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .listings-empty {
           display: flex; flex-direction: column; align-items: center; text-align: center;
           padding: 48px 24px; gap: 12px; background: var(--bg-secondary);
-          border: 1px dashed var(--border); border-radius: 20px; margin-top: 16px;
+          border: 1px dashed var(--border); border-radius: var(--radius-lg); margin-top: 16px;
         }
         .listings-empty__icon {
           width: 54px; height: 54px; border-radius: 50%;
-          background: rgba(0, 168, 255, 0.12); color: var(--btn-bg);
+          background: var(--primary-subtle); color: var(--primary);
           display: flex; align-items: center; justify-content: center;
         }
         .listings-empty h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0; }
         .listings-empty p { font-size: 13px; color: var(--text-tertiary); max-width: 280px; margin: 0; }
         .btn-primary {
           display: flex; align-items: center; gap: 6px; padding: 10px 20px;
-          border-radius: 14px; background: var(--btn-bg); color: #fff; border: none;
+          border-radius: var(--radius-md); background: var(--grad-primary); color: #fff; border: none;
           font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 4px;
         }
 
@@ -1090,22 +1110,22 @@ export default function Listings(_props: ListingsProps) {
         /* Card */
         .listing-card {
           background: var(--bg-secondary); border: 1px solid var(--border);
-          border-radius: 18px; padding: 14px 16px;
+          border-radius: var(--radius-lg); padding: 14px 16px;
           display: flex; flex-direction: column; gap: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-          transition: border-color 0.2s var(--ease-out);
+          box-shadow: var(--shadow-sm);
+          transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
         }
-        .listing-card:hover { border-color: rgba(0, 168, 255, 0.4); }
+        .listing-card:hover { border-color: var(--primary); }
 
         .listing-card__top {
           display: flex; align-items: center; justify-content: space-between; gap: 8px;
         }
         .listing-card__author { display: flex; align-items: center; gap: 10px; }
         .listing-card__avatar-wrap { position: relative; }
-        .listing-card__avatar { width: 38px; height: 38px; border-radius: 12px; object-fit: cover; }
+        .listing-card__avatar { width: 38px; height: 38px; border-radius: var(--radius-sm); object-fit: cover; }
         .listing-card__avatar-placeholder {
-          width: 38px; height: 38px; border-radius: 12px;
-          background: rgba(0, 168, 255, 0.14); color: var(--btn-bg);
+          width: 38px; height: 38px; border-radius: var(--radius-sm);
+          background: var(--primary-subtle); color: var(--primary);
           display: flex; align-items: center; justify-content: center;
           font-weight: 700; font-size: 15px;
         }
@@ -1121,34 +1141,34 @@ export default function Listings(_props: ListingsProps) {
         /* Tags */
         .listing-tag {
           display: inline-flex; align-items: center; gap: 4px;
-          padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+          padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700;
         }
-        .listing-tag--partner { background: rgba(0, 168, 255, 0.14); color: #00A8FF; border: 1px solid rgba(0, 168, 255, 0.3); }
+        .listing-tag--partner { background: var(--primary-subtle); color: var(--primary); border: 1px solid rgba(0, 168, 255, 0.3); }
         .listing-tag--teacher { background: rgba(168, 85, 247, 0.14); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
-        .listing-tag--student { background: rgba(16, 185, 129, 0.14); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .listing-tag--student { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
 
         /* Status badge */
         .status-badge {
           display: inline-flex; align-items: center; gap: 4px;
-          padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;
+          padding: 3px 8px; border-radius: var(--radius-xs); font-size: 10px; font-weight: 700;
         }
-        .status-badge--pending { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .status-badge--approved { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-badge--rejected { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-badge--pending { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-badge--approved { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-badge--rejected { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
         .status-badge--inactive { background: var(--surface-2); color: var(--text-tertiary); border: 1px solid var(--border); }
 
         .listing-card__title { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.3; }
         .listing-card__desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; white-space: pre-line; }
 
         .listing-card__reject-note {
-          padding: 8px 12px; border-radius: 10px; background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.25); color: #EF4444; font-size: 11px;
+          padding: 8px 12px; border-radius: var(--radius-sm); background: var(--danger-bg);
+          border: 1px solid rgba(239, 68, 68, 0.25); color: var(--danger); font-size: 11px;
           display: flex; align-items: flex-start; gap: 6px;
         }
 
         .listing-card__pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .pill {
-          padding: 3px 8px; border-radius: 8px; background: var(--bg);
+          padding: 3px 8px; border-radius: var(--radius-xs); background: var(--bg);
           border: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-secondary);
         }
         .pill--views { margin-left: auto; display: flex; align-items: center; gap: 4px; color: var(--text-tertiary); }
@@ -1157,29 +1177,27 @@ export default function Listings(_props: ListingsProps) {
         .listing-card__actions { margin-top: 4px; }
         .btn-contact {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-          padding: 10px; border-radius: 12px;
-          background: linear-gradient(135deg, #0088CC 0%, #00A8FF 100%);
+          padding: 10px; border-radius: var(--radius-md);
+          background: var(--grad-primary);
           color: #fff; border: none; font-size: 13px; font-weight: 700; cursor: pointer;
-          box-shadow: 0 3px 12px rgba(0, 136, 204, 0.3); transition: transform 0.15s var(--ease-out);
+          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.3); transition: transform 0.15s var(--ease-out);
         }
         .btn-contact:active { transform: scale(0.98); }
 
-        /* Live/Paused on the left, edit and delete together on the right — spreading
-           all three left the edit button stranded in the middle of the card. */
         .my-controls { display: flex; align-items: center; gap: 8px; width: 100%; }
         .my-controls .btn-toggle-active { margin-right: auto; }
         .btn-toggle-active {
-          display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px;
+          display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-sm);
           background: var(--bg); border: 1px solid var(--border); color: var(--text-tertiary);
           font-size: 11px; font-weight: 700; cursor: pointer;
         }
-        .btn-toggle-active.active { background: rgba(16, 185, 129, 0.15); color: #10B981; border-color: rgba(16, 185, 129, 0.3); }
+        .btn-toggle-active.active { background: var(--success-bg); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
         .btn-icon {
-          width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border);
+          width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border);
           background: var(--bg); color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
           cursor: pointer;
         }
-        .btn-icon--danger { color: #EF4444; border-color: rgba(239, 68, 68, 0.3); }
+        .btn-icon--danger { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 
         /* Modal Overlay & Sheet */
         .listings-modal-overlay {
@@ -1192,7 +1210,7 @@ export default function Listings(_props: ListingsProps) {
 
         .listings-modal {
           width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-          background: var(--bg-secondary); border-top-left-radius: 24px; border-top-right-radius: 24px;
+          background: var(--bg-secondary); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl);
           border: 1px solid var(--border); border-bottom: none;
           padding: 20px; display: flex; flex-direction: column; gap: 16px;
           animation: slideUp 0.25s var(--ease-out);
@@ -1200,7 +1218,7 @@ export default function Listings(_props: ListingsProps) {
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .listings-modal__header {
-          display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); pb-12px;
+          display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px;
         }
         .listings-modal__header h3 { font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0; }
         .listings-modal__close {
@@ -1214,49 +1232,52 @@ export default function Listings(_props: ListingsProps) {
         .flex-1 { flex: 1; }
         .form-label { font-size: 12px; font-weight: 700; color: var(--text-primary); }
         .form-input, .form-select, .form-textarea {
-          width: 100%; padding: 10px 12px; border-radius: 12px;
+          width: 100%; padding: 10px 12px; border-radius: var(--radius-md);
           border: 1px solid var(--border); background-color: var(--surface-2);
           color: var(--text-primary); font-size: 13px; outline: none; font-family: inherit;
+          transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
         }
         .form-select { padding-right: 32px; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--btn-bg); }
-        /* Free horizontal resize would break the sheet's layout. */
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px var(--primary-subtle);
+        }
         .form-textarea { resize: vertical; min-height: 92px; }
 
         .type-selector { display: flex; gap: 8px; }
         .type-btn {
-          flex: 1; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--border);
+          flex: 1; padding: 10px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border);
           background: var(--bg); color: var(--text-secondary); font-size: 11px; font-weight: 700;
           display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+          transition: all 0.2s var(--ease-out);
         }
-        .type-btn.active { background: rgba(0, 168, 255, 0.14); color: var(--btn-bg); border-color: var(--btn-bg); }
+        .type-btn.active { background: var(--primary-subtle); color: var(--primary); border-color: var(--primary); }
 
         .modal-notice {
-          padding: 10px 12px; border-radius: 12px; background: rgba(0, 168, 255, 0.1);
-          border: 1px solid rgba(0, 168, 255, 0.25); color: var(--btn-bg); font-size: 11px; line-height: 1.4;
+          padding: 10px 12px; border-radius: var(--radius-sm); background: var(--primary-subtle);
+          border: 1px solid rgba(0, 168, 255, 0.25); color: var(--primary); font-size: 11px; line-height: 1.4;
           display: flex; align-items: flex-start; gap: 8px;
         }
         .modal-notice__icon { flex-shrink: 0; margin-top: 2px; }
 
         .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
         .btn-cancel {
-          flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+          flex: 1; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border);
           background: var(--bg); color: var(--text-primary); font-size: 13px; font-weight: 700; cursor: pointer;
         }
         .btn-submit {
-          flex: 2; padding: 12px; border-radius: 12px; border: none;
-          background: var(--btn-bg); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer;
+          flex: 2; padding: 12px; border-radius: var(--radius-md); border: none;
+          background: var(--grad-primary); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer;
           box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
         }
 
-        /* Clamped description, plus the skeletons shown while a page loads. */
         .listing-card__desc.clamped {
           display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
           overflow: hidden;
         }
         .listing-card__more {
           align-self: flex-start; padding: 0; background: none; border: none;
-          color: var(--btn-bg); font-size: 12px; font-weight: 700; margin-top: -4px;
+          color: var(--primary); font-size: 12px; font-weight: 700; margin-top: -4px;
         }
 
         .listing-card--skeleton { pointer-events: none; }

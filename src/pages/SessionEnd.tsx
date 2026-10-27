@@ -228,10 +228,10 @@ export default function SessionEnd() {
         .end-ico {
           width: 68px; height: 68px; border-radius: var(--radius-full);
           display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(135deg, rgba(0,168,255,0.2), rgba(0,102,255,0.3));
-          border: 1px solid rgba(0,168,255,0.25);
-          color: var(--btn-bg);
-          box-shadow: 0 8px 24px rgba(0,168,255,0.2);
+          background: linear-gradient(135deg, var(--primary-subtle), rgba(0, 102, 255, 0.25));
+          border: 1px solid rgba(0, 168, 255, 0.25);
+          color: var(--primary);
+          box-shadow: 0 8px 24px var(--primary-subtle);
         }
         .end-head h2 {
           font-family: var(--font-display);
@@ -241,7 +241,7 @@ export default function SessionEnd() {
 
         .end-card {
           width: 100%; background: var(--bg-secondary);
-          border: 1px solid var(--border); border-radius: var(--radius-md);
+          border: 1px solid var(--border); border-radius: var(--radius-lg);
           padding: var(--space-1) 0; display: flex; flex-direction: column;
         }
         .end-row {

@@ -75,8 +75,8 @@ export default function Onboarding() {
           <div className="w-11" />
         )}
         <div className="flex items-center gap-2">
-          <span className={`h-2 rounded-full transition-all duration-300 ${step === 1 ? 'w-6 bg-[var(--btn-bg)]' : 'w-2 bg-[var(--border-strong)]'}`} />
-          <span className={`h-2 rounded-full transition-all duration-300 ${step === 2 ? 'w-6 bg-[var(--btn-bg)]' : 'w-2 bg-[var(--border-strong)]'}`} />
+          <span className={`h-2 rounded-full transition-all duration-300 ${step === 1 ? 'w-6 bg-[var(--primary)]' : 'w-2 bg-[var(--border-strong)]'}`} />
+          <span className={`h-2 rounded-full transition-all duration-300 ${step === 2 ? 'w-6 bg-[var(--primary)]' : 'w-2 bg-[var(--border-strong)]'}`} />
         </div>
         <span className="text-xs font-bold text-[var(--text-secondary)] w-11 text-right font-mono">{step}/2</span>
       </div>
@@ -92,8 +92,6 @@ export default function Onboarding() {
               <p className="text-xs text-[var(--text-secondary)]">{t('ob.welcome.sub')}</p>
             </div>
 
-            {/* A real radiogroup: these were <Card onClick> divs, so the first choice
-                the app asks for could not be made with a keyboard or switch control. */}
             <div className="space-y-2" role="radiogroup" aria-labelledby="ob-level-heading">
               {LEVELS.map((n) => {
                 const active = level === n;
@@ -106,11 +104,11 @@ export default function Onboarding() {
                     aria-checked={active}
                     onClick={() => pickLevel(n)}
                     className={`w-full text-left p-3.5 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--btn-bg)] bg-[var(--btn-bg-soft)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
+                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-8 text-center text-sm font-black text-[var(--btn-bg)] font-mono">
+                      <span className="w-8 text-center text-sm font-black text-[var(--primary)] font-mono">
                         {t(`level.${n}`)}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -120,7 +118,7 @@ export default function Onboarding() {
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
                           active
-                            ? 'bg-[var(--btn-bg)] border-[var(--btn-bg)] text-[var(--btn-text)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
                             : 'border-[var(--border-strong)]'
                         }`}
                       >
@@ -156,7 +154,7 @@ export default function Onboarding() {
                     aria-checked={active}
                     onClick={() => pickGender(g.v)}
                     className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--btn-bg)] bg-[var(--btn-bg-soft)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
+                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
@@ -167,7 +165,7 @@ export default function Onboarding() {
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
                           active
-                            ? 'bg-[var(--btn-bg)] border-[var(--btn-bg)] text-[var(--btn-text)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
                             : 'border-[var(--border-strong)]'
                         }`}
                       >

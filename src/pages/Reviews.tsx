@@ -85,15 +85,15 @@ export default function Reviews() {
   return (
     <div className="flex flex-col h-full bg-[var(--bg)] text-[var(--text-primary)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pt-3 border-b border-[var(--border)] shrink-0">
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate('profile')}>
+      <div className="flex items-center justify-between p-4 pt-[calc(12px+env(safe-area-inset-top,0px))] border-b border-[var(--border)] shrink-0 bg-[var(--chrome-bg)] backdrop-blur-md">
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(screenParams?.from || 'profile')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-base font-bold">{t('rm.title')}</h1>
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-[calc(40px+env(safe-area-inset-bottom,0px))]">
         {/* Stats summary */}
         {stats && stats.total > 0 && (
           <Card>

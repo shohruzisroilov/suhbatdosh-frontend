@@ -146,7 +146,7 @@ const Styles = React.memo(function Styles() {
       }
       .mt__ripple {
         position: absolute; inset: 0; border-radius: 50%;
-        border: 1.5px solid var(--btn-bg); opacity: 0;
+        border: 1.5px solid var(--primary); opacity: 0;
         animation: radarRipple 2.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
       }
       .mt__ripple--2 { animation-delay: 1.4s; }
@@ -162,7 +162,7 @@ const Styles = React.memo(function Styles() {
         position: absolute; inset: 0; border-radius: 50%;
         background: conic-gradient(from 0deg,
           transparent 0deg 200deg,
-          var(--btn-bg) 352deg,
+          var(--primary) 352deg,
           transparent 356deg);
         animation: dialScan 3s linear infinite;
         will-change: transform;
@@ -171,9 +171,9 @@ const Styles = React.memo(function Styles() {
       .mt__core {
         position: relative; z-index: 1;
         width: 92px; height: 92px; border-radius: 50%;
-        background: var(--grad-primary); color: var(--btn-text);
+        background: var(--grad-primary); color: var(--primary-contrast);
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: 0 0 40px rgba(0, 168, 255, 0.6), 0 8px 28px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 0 35px rgba(0, 168, 255, 0.5), 0 8px 28px rgba(0, 0, 0, 0.35);
       }
       .mt__core-level {
         font-family: var(--font-display);
@@ -216,7 +216,7 @@ const Styles = React.memo(function Styles() {
       }
       .mt__meta {
         display: flex; align-items: stretch; width: 100%;
-        background: var(--bg-secondary);
+        background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
         overflow: hidden;
@@ -241,115 +241,12 @@ const Styles = React.memo(function Styles() {
       }
       .mt__cancel {
         border: 1px solid var(--border); padding: 0 var(--space-5);
-        border-radius: var(--radius-full); min-height: 40px;
+        border-radius: var(--radius-full); min-height: 44px;
         font-size: var(--text-sm); font-weight: var(--weight-bold);
         color: var(--text-secondary);
         transition: background var(--t), color var(--t);
       }
       .mt__cancel:active { background: var(--surface-2); color: var(--text-primary); }
-
-      /* AI Partner Matching Card Styles */
-      .ai-partner-matching-card {
-        width: 100%;
-        margin-top: 6px;
-        padding: 16px 18px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(3, 105, 161, 0.25) 100%);
-        border: 1.5px solid rgba(56, 189, 248, 0.45);
-        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.2);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: left;
-      }
-      .ai-partner-matching-card:hover, .ai-partner-matching-card:active {
-        transform: translateY(-2px) scale(1.01);
-        border-color: rgba(56, 189, 248, 0.8);
-        box-shadow: 0 12px 30px rgba(2, 132, 199, 0.35);
-        background: linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(3, 105, 161, 0.35) 100%);
-      }
-      .ai-card-glow {
-        position: absolute;
-        top: -30px;
-        right: -30px;
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%);
-        pointer-events: none;
-      }
-      .ai-card-header-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .ai-card-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 12px;
-        background: rgba(56, 189, 248, 0.2);
-        border: 1px solid rgba(56, 189, 248, 0.4);
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--btn-bg);
-        letter-spacing: 0.5px;
-      }
-      .ai-card-content {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-      .ai-card-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
-        flex-shrink: 0;
-      }
-      .ai-card-text {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      /* The card is a blue tint the page shows through, not a solid blue card, so
-         its words follow the scheme. White read as white-on-pale-blue in light mode. */
-      .ai-card-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0;
-        line-height: 1.25;
-      }
-      .ai-card-desc {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin: 0;
-      }
-      .ai-card-action {
-        width: 100%;
-        padding: 10px 14px;
-        border-radius: 12px;
-        background: #0284c7;
-        color: #ffffff;
-        font-size: 13px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
-      }
     `}</style>
   );
 });

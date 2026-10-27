@@ -194,7 +194,7 @@ export default function Statistics() {
         .stx-card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-lg);
           padding: var(--space-4);
           display: flex; flex-direction: column; gap: var(--space-4);
         }
@@ -213,8 +213,8 @@ export default function Statistics() {
           transition: background var(--t), color var(--t);
         }
         .stx-seg-btn--on {
-          background: var(--btn-bg); color: var(--btn-text, #fff);
-          box-shadow: 0 2px 8px rgba(0, 168, 255, 0.25);
+          background: var(--primary); color: var(--primary-contrast);
+          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
         }
 
         .stx-summary {
@@ -256,7 +256,7 @@ export default function Statistics() {
           text-transform: capitalize; white-space: nowrap;
         }
         .stx-chart--dense .stx-bar-day { font-size: var(--text-xs); }
-        .stx-bar-day--today { color: var(--btn-bg); font-weight: var(--weight-heavy); }
+        .stx-bar-day--today { color: var(--primary); font-weight: var(--weight-heavy); }
 
         .stx-empty {
           text-align: center; color: var(--text-secondary);

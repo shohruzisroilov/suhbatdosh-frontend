@@ -120,19 +120,19 @@ export default function Premium() {
           font-size: var(--text-base); font-weight: var(--weight-bold);
         }
         .free-scroll {
-          flex: 1; overflow-y: auto; padding: var(--space-5) var(--space-4) 40px;
+          flex: 1; overflow-y: auto; padding: var(--space-5) var(--space-4) calc(40px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: var(--space-5); max-width: 440px; margin: 0 auto; width: 100%;
         }
         .free-hero {
           text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;
-          padding: 24px 16px; border-radius: 24px;
-          background: linear-gradient(180deg, rgba(0, 168, 255, 0.08) 0%, transparent 100%);
+          padding: 24px 16px; border-radius: var(--radius-xl);
+          background: linear-gradient(180deg, var(--primary-subtle) 0%, transparent 100%);
           border: 1px solid var(--border);
         }
         .free-hero__badge {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 5px 12px; border-radius: 20px;
-          background: rgba(52, 199, 89, 0.15); color: #34C759;
+          padding: 5px 12px; border-radius: var(--radius-full);
+          background: var(--success-bg); color: var(--success);
           font-size: 12px; font-weight: 700;
         }
         .free-hero h2 {
@@ -146,12 +146,12 @@ export default function Premium() {
         }
         .free-feat-item {
           display: flex; align-items: center; gap: 14px;
-          padding: 16px; border-radius: 18px;
-          background: var(--surface-1); border: 1px solid var(--border);
+          padding: 16px; border-radius: var(--radius-lg);
+          background: var(--surface); border: 1px solid var(--border);
         }
         .free-feat-ico {
-          width: 42px; height: 42px; border-radius: 12px;
-          background: rgba(0, 168, 255, 0.12); color: var(--btn-bg);
+          width: 42px; height: 42px; border-radius: var(--radius-md);
+          background: var(--primary-subtle); color: var(--primary);
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .free-feat-text { flex: 1; min-width: 0; }
@@ -161,11 +161,11 @@ export default function Premium() {
         .free-feat-text p {
           font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.4;
         }
-        .free-check { color: #34C759; flex-shrink: 0; }
+        .free-check { color: var(--success); flex-shrink: 0; }
         .free-cta-btn {
           width: 100%; height: 50px; font-size: 15px; font-weight: 700;
           display: flex; align-items: center; justify-content: center; gap: 8px;
-          border-radius: 16px; margin-top: 8px;
+          border-radius: var(--radius-md); background: var(--grad-primary); color: #fff; margin-top: 8px;
         }
       `}</style>
     </div>

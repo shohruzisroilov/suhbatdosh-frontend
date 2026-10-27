@@ -266,23 +266,23 @@ const Styles = React.memo(function Styles() {
         width: 100%;
         box-sizing: border-box;
         resize: none;
-        background: #1E293B;
-        border: 1.5px solid #334155;
-        border-radius: 14px;
+        background: var(--surface-2);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
         padding: 12px 14px 28px;
         font-size: 14px;
-        color: #FFFFFF;
+        color: var(--text-primary);
         font-family: inherit;
         line-height: 1.4;
-        transition: border-color 0.15s ease;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
       }
       .rp-textarea:focus {
         outline: none;
-        border-color: #0ea5e9;
-        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-subtle);
       }
       .rp-textarea::placeholder {
-        color: #64748B;
+        color: var(--text-tertiary);
       }
 
       .rp-char-counter {
@@ -290,21 +290,21 @@ const Styles = React.memo(function Styles() {
         bottom: 8px;
         right: 12px;
         font-size: 11px;
-        color: #64748B;
+        color: var(--text-tertiary);
         font-weight: 500;
         pointer-events: none;
       }
 
       .rp-submit-btn {
         width: 100%;
-        height: 44px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        height: 48px;
+        border-radius: var(--radius-md);
+        background: var(--grad-primary);
         color: #FFFFFF;
         font-size: 15px;
         font-weight: 700;
         border: none;
-        box-shadow: 0 4px 16px rgba(14, 165, 233, 0.35);
+        box-shadow: 0 4px 16px rgba(0, 168, 255, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;

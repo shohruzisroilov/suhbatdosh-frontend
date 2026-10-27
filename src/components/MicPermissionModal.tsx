@@ -254,7 +254,7 @@ export default function MicPermissionModal() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #38bdf8;
+          color: var(--primary);
           margin-bottom: 2px;
         }
 
@@ -270,9 +270,9 @@ export default function MicPermissionModal() {
         .mic-modal-step-num {
           width: 20px; height: 20px;
           border-radius: 50%;
-          background: rgba(56, 189, 248, 0.15);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          color: #38bdf8;
+          background: var(--primary-subtle);
+          border: 1px solid rgba(0, 168, 255, 0.3);
+          color: var(--primary);
           font-size: 11px;
           font-weight: 700;
           display: flex; align-items: center; justify-content: center;
@@ -294,7 +294,7 @@ export default function MicPermissionModal() {
         .mic-modal-btn {
           width: 100%;
           padding: 13px 20px;
-          border-radius: 14px;
+          border-radius: var(--radius-md, 14px);
           font-size: 14.5px;
           font-weight: 600;
           cursor: pointer;
@@ -310,9 +310,9 @@ export default function MicPermissionModal() {
 
         .mic-modal-btn--primary {
           border: 1px solid rgba(255, 255, 255, 0.2);
-          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-          color: #ffffff;
-          box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
+          background: var(--grad-primary);
+          color: var(--primary-contrast, #ffffff);
+          box-shadow: var(--primary-shadow);
         }
         .mic-modal-btn--primary:disabled {
           opacity: 0.75;
@@ -337,10 +337,7 @@ export default function MicPermissionModal() {
           to { transform: rotate(360deg); }
         }
       
-        /* Telegram also runs this app in a light colour scheme, and every surface in
-           this modal is written dark-first in hex. Left alone it drops a near-black
-           card into a white app with white-on-white borders. Only the surfaces and
-           their text are restated; the sky-blue and green accents carry on either. */
+        /* Telegram light mode support */
         .light .mic-modal-overlay { background: rgba(15, 23, 42, 0.45); }
         .light .mic-modal-card {
           background: var(--bg-secondary);
@@ -365,7 +362,7 @@ export default function MicPermissionModal() {
         }
         .light .mic-modal-step-item { color: var(--text-primary); }
         .light .mic-modal-steps-header,
-        .light .mic-modal-step-num { color: #0369A1; }
+        .light .mic-modal-step-num { color: var(--primary); }
         .light .mic-modal-btn--primary { border-color: transparent; }
         .light .mic-modal-btn--secondary {
           background: var(--surface-2);

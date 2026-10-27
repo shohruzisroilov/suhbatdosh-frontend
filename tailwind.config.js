@@ -37,6 +37,13 @@ export default {
           tertiary: 'var(--text-tertiary)',
         },
 
+        primary: {
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          active: 'var(--primary-active)',
+          subtle: 'var(--primary-subtle)',
+          contrast: 'var(--primary-contrast)',
+        },
         brand: {
           DEFAULT: 'var(--btn-bg)',
           hover: 'var(--btn-bg-hover)',

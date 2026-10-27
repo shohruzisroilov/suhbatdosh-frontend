@@ -92,28 +92,25 @@ export default function BottomNav({ active }: BottomNavProps) {
           transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
         }
         .bottom-nav__item:active { transform: scale(0.88); }
-        .bottom-nav__item.active { color: var(--btn-bg); }
+        .bottom-nav__item.active { color: var(--primary); }
 
         .bottom-nav__icon-wrap {
           position: relative;
           display: flex; align-items: center; justify-content: center;
-          width: 40px; height: 32px;
-          border-radius: 10px;
+          width: 44px; height: 32px;
+          border-radius: var(--radius-sm);
           transition: background 0.2s var(--ease-out);
         }
         .bottom-nav__item.active .bottom-nav__icon-wrap {
-          background: rgba(0, 168, 255, 0.14);
+          background: var(--primary-subtle);
         }
         .bottom-nav__active-glow {
-          position: absolute; inset: -6px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(0, 168, 255, 0.22) 0%, transparent 70%);
+          position: absolute; inset: -4px;
+          border-radius: var(--radius-sm);
+          background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 75%);
           pointer-events: none;
         }
         .bottom-nav__label {
-          /* Nav labels sit directly under their icon, so the icon carries the meaning
-             and the label reinforces it — 11px is acceptable here where 11px body
-             copy would not be. */
           font-size: var(--text-2xs); font-weight: var(--weight-bold);
           letter-spacing: 0.03em; line-height: 1;
           transition: color 0.2s var(--ease-out);

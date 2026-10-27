@@ -217,7 +217,7 @@ export default function HomeReviews() {
           align-items: center;
           gap: 4px;
           padding: 2px 8px;
-          border-radius: 10px;
+          border-radius: var(--radius-full);
           background: rgba(234, 179, 8, 0.15);
           border: 1px solid rgba(234, 179, 8, 0.3);
           color: #eab308;
@@ -238,13 +238,13 @@ export default function HomeReviews() {
           align-items: center;
           gap: 6px;
           padding: 8px 12px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          border-radius: var(--radius-md);
+          background: var(--grad-primary);
           color: #ffffff;
           font-size: 12px;
           font-weight: 700;
           border: none;
-          box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.3);
           cursor: pointer;
           transition: transform 0.15s ease;
         }
@@ -271,7 +271,7 @@ export default function HomeReviews() {
           max-width: 240px;
           scroll-snap-align: start;
           padding: 12px;
-          border-radius: 14px;
+          border-radius: var(--radius-md);
           background: var(--surface-2);
           border: 1px solid var(--border);
           display: flex;
@@ -296,8 +296,8 @@ export default function HomeReviews() {
           width: 26px;
           height: 26px;
           border-radius: 50%;
-          background: #0284c7;
-          color: #ffffff;
+          background: var(--primary);
+          color: var(--primary-contrast);
           font-size: 11px;
           font-weight: 700;
           display: flex;

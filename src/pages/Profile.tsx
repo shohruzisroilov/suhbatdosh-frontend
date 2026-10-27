@@ -339,7 +339,7 @@ export default function Profile() {
           position: relative;
           padding: 3px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--btn-bg), #0066FF);
+          background: linear-gradient(135deg, var(--primary), #0066FF);
           margin-bottom: 4px;
         }
         .profile__avatar-ring-inner {
@@ -371,12 +371,12 @@ export default function Profile() {
           transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
         }
         .profile__stat-box--clickable { cursor: pointer; }
-        .profile__stat-box--clickable:active { transform: scale(0.95); border-color: var(--btn-bg); box-shadow: 0 4px 14px rgba(0,168,255,0.15); }
+        .profile__stat-box--clickable:active { transform: scale(0.95); border-color: var(--primary); box-shadow: 0 4px 14px var(--primary-subtle); }
         .profile__stat-icon {
-          width: 28px; height: 28px; border-radius: 9px;
+          width: 28px; height: 28px; border-radius: var(--radius-xs);
           display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
         }
-        .profile__stat-icon--time  { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+        .profile__stat-icon--time  { background: var(--primary-subtle); color: var(--primary); }
         .profile__stat-icon--users { background: rgba(168, 85, 247, 0.14); color: #a855f7; }
         .profile__stat-icon--star  { background: rgba(245, 158, 11, 0.14); color: #f59e0b; }
 
@@ -392,8 +392,7 @@ export default function Profile() {
         .profile__card {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          border-radius: var(--radius-md);
-          /* overflow: hidden OLIB TASHLANDI — row clipping muammosi */
+          border-radius: var(--radius-lg);
           display: flex; flex-direction: column;
         }
         .profile__row {
@@ -404,30 +403,29 @@ export default function Profile() {
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
           background: transparent; cursor: pointer;
-          /* Birinchi va oxirgi row uchun radius */
         }
         .profile__row:first-child {
-          border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
+          border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
         }
         .profile__row:last-child {
           border-bottom: none;
-          border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+          border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
         }
         .profile__row:only-child {
-          border-radius: calc(var(--radius-md) - 1px);
+          border-radius: calc(var(--radius-lg) - 1px);
         }
         .profile__row:active:not(:disabled) { background: var(--surface-2); }
         .profile__row:disabled { cursor: default; opacity: 0.8; }
 
         .profile__row-icon-wrapper {
-          width: 34px; height: 34px; border-radius: 10px;
+          width: 34px; height: 34px; border-radius: var(--radius-sm);
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-        .profile__row-icon-wrapper--blue   { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+        .profile__row-icon-wrapper--blue   { background: var(--primary-subtle); color: var(--primary); }
         .profile__row-icon-wrapper--purple { background: rgba(168, 85, 247, 0.14); color: #a855f7; }
         .profile__row-icon-wrapper--amber  { background: rgba(245, 158, 11, 0.14);  color: #f59e0b; }
-        .profile__row-icon-wrapper--cyan   { background: rgba(6, 182, 212, 0.14);   color: #06b6d4; }
+        .profile__row-icon-wrapper--cyan   { background: var(--primary-subtle);   color: var(--primary); }
         .profile__row-icon-wrapper--rose   { background: rgba(244, 63, 94, 0.14);   color: #f43f5e; }
         .profile__row-icon-wrapper--slate  { background: rgba(148, 163, 184, 0.14); color: #94a3b8; }
         .profile__row-icon-wrapper--green  { background: var(--success-bg);          color: var(--success); }

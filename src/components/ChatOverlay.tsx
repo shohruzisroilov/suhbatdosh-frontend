@@ -205,7 +205,7 @@ export default function ChatOverlay({
           animation: fadeUp 0.15s ease forwards;
         }
         .co-bubble--own {
-          background: var(--btn-bg); color: var(--btn-text);
+          background: var(--primary); color: var(--primary-contrast);
           border-bottom-right-radius: 5px;
         }
         .co-bubble--other {
@@ -243,8 +243,8 @@ export default function ChatOverlay({
           transition: border-color var(--t), box-shadow var(--t);
         }
         .chat-overlay__input-wrap:focus-within {
-          border-color: rgba(42, 171, 238, 0.6);
-          box-shadow: 0 0 0 2px rgba(42, 171, 238, 0.2);
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px var(--primary-subtle);
         }
         .chat-overlay__input {
           width: 100%; background: transparent; color: var(--text-primary);
@@ -264,7 +264,7 @@ export default function ChatOverlay({
           border: none; outline: none;
         }
         .chat-overlay__send.active {
-          background: var(--btn-bg); color: var(--btn-text);
+          background: var(--primary); color: var(--primary-contrast);
         }
         .chat-overlay__send:active:not(:disabled) { transform: scale(0.92); }
       `}</style>
