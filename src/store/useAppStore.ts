@@ -90,6 +90,9 @@ export interface AppState {
   noPartnerYet: boolean;
   setNoPartnerYet: (val: boolean) => void;
 
+  callMode: 'free' | 'ielts';
+  setCallMode: (mode: 'free' | 'ielts') => void;
+
   session: Session | null;
   messages: any[];
   isPartnerTyping: boolean;
@@ -169,6 +172,9 @@ const useAppStore = create<AppState>((set) => ({
   setPartnerPref: (partnerPref) => set({ partnerPref }),
   noPartnerYet: false,
   setNoPartnerYet: (noPartnerYet) => set({ noPartnerYet }),
+
+  callMode: 'free',
+  setCallMode: (callMode) => set({ callMode }),
 
   session: null,
   messages: [],

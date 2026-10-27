@@ -1,32 +1,92 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, ChevronRight, MessageSquare, Users } from 'lucide-react';
+import {
+  Mic,
+  ShieldCheck,
+  ChevronRight,
+  MessageSquare,
+  Users,
+  GraduationCap,
+  Sparkles,
+  Target,
+  BookOpen,
+} from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
 import HomeReviews from '../components/HomeReviews';
+import TopicsLibraryModal from '../components/TopicsLibraryModal';
+import { PART1 } from '../constants/speakingTopics';
 
 /**
- * Bosh sahifa — Conversation-First layout.
+ * Bosh sahifa — Conversation-First layout with Mode Selection & Topic of the Day.
  */
 export default function Home() {
-  const { user, stats, recentSessions, setStats, setRecentSessions, setUser, navigate,
-          homeLoaded, setHomeLoaded, partnerPref, setPartnerPref, waitingCount } = useAppStore();
+  const {
+    user,
+    stats,
+    recentSessions,
+    setStats,
+    setRecentSessions,
+    setUser,
+    navigate,
+    homeLoaded,
+    setHomeLoaded,
+    partnerPref,
+    setPartnerPref,
+    waitingCount,
+    callMode,
+    setCallMode,
+    setSpeakingState,
+  } = useAppStore();
   const t = useT();
 
-  const isFemale  = user?.gender === 'female';
+  const [showTopicsLib, setShowTopicsLib] = useState(false);
+
+  const isFemale = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
 
+  // Topic of the day calculation
+  const dayIndex = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now.getTime() - start.getTime() + (start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000;
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return dayOfYear % PART1.length;
+  }, []);
+  const todayTopic = PART1[dayIndex] || PART1[0];
+  const todayQuestion = todayTopic.questions[0] || 'What is your favorite way to spend a weekend?';
+
+  // Daily goal calculation (15 minutes)
+  const dailyGoalMins = 15;
+  const todayMins = useMemo(() => {
+    if (!recentSessions || recentSessions.length === 0) return stats?.hasPracticedToday ? 15 : 0;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let sum = 0;
+    for (const s of recentSessions) {
+      if (s.ended_at && String(s.ended_at).startsWith(todayStr)) {
+        const dur = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
+        if (dur > 0) sum += dur;
+      }
+    }
+    return sum || (stats?.hasPracticedToday ? 15 : 0);
+  }, [recentSessions, stats]);
+  const goalReached = todayMins >= dailyGoalMins || !!stats?.hasPracticedToday;
+  const goalPct = Math.min(100, Math.round((todayMins / dailyGoalMins) * 100));
+
   useEffect(() => {
-    getMe().then(d => {
-      setStats(d.stats);
-      setRecentSessions(d.recentSessions);
-      if (d.user) setUser(d.user);
-    }).catch(() => {}).finally(() => setHomeLoaded(true));
+    getMe()
+      .then((d) => {
+        setStats(d.stats);
+        setRecentSessions(d.recentSessions);
+        if (d.user) setUser(d.user);
+      })
+      .catch(() => {})
+      .finally(() => setHomeLoaded(true));
   }, []);
 
   return (
@@ -60,11 +120,54 @@ export default function Home() {
         )}
 
 
-        {/* ── Find Partner Hero Card ──
-            The whole card is tappable, but the only control is the button below:
-            its ::after overlay stretches across the card. That keeps one tab stop,
-            a real <button> for keyboard and screen-reader users, and an <h1> that
-            still reads as a heading — which a <section onClick> gave up entirely. */}
+        {/* Daily Goal Card (15 min) */}
+        <div className="home-daily-goal fade-up">
+          <div className="home-daily-goal__head">
+            <div className="home-daily-goal__title-wrap">
+              <span className="home-daily-goal__icon">
+                <Target size={14} />
+              </span>
+              <span className="home-daily-goal__title">Daily Practice Goal</span>
+            </div>
+            <span className={`home-daily-goal__val ${goalReached ? 'completed' : ''}`}>
+              {goalReached ? '🎉 15m Done!' : `${todayMins} / ${dailyGoalMins}m`}
+            </span>
+          </div>
+          <div className="home-daily-goal__track">
+            <div
+              className={`home-daily-goal__fill ${goalReached ? 'completed' : ''}`}
+              style={{ width: `${goalReached ? 100 : Math.max(8, goalPct)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Call Mode Selector */}
+        <div className="home-mode-selector fade-up">
+          <button
+            type="button"
+            className={`home-mode-pill ${callMode === 'free' ? 'active' : ''}`}
+            onClick={() => {
+              selectionHaptic();
+              setCallMode('free');
+            }}
+          >
+            <MessageSquare size={13} />
+            <span>Free Talk</span>
+          </button>
+          <button
+            type="button"
+            className={`home-mode-pill ${callMode === 'ielts' ? 'active' : ''}`}
+            onClick={() => {
+              selectionHaptic();
+              setCallMode('ielts');
+            }}
+          >
+            <GraduationCap size={14} />
+            <span>IELTS Practice</span>
+          </button>
+        </div>
+
+        {/* ── Find Partner Hero Card ── */}
         <section className="hero fade-up">
           {/* Animated background orbs */}
           <div className="hero__orb hero__orb--1" aria-hidden="true" />
@@ -92,8 +195,14 @@ export default function Home() {
 
             {/* Title & description */}
             <div className="hero__content">
-              <h1 className="hero__title">{t('home.ctaTitle')}</h1>
-              <p className="hero__sub">{t('home.ctaSub')}</p>
+              <h1 className="hero__title">
+                {callMode === 'ielts' ? 'IELTS Speaking Partner' : t('home.ctaTitle')}
+              </h1>
+              <p className="hero__sub">
+                {callMode === 'ielts'
+                  ? 'Practise Part 1, 2, and 3 cue cards with real partners'
+                  : t('home.ctaSub')}
+              </p>
             </div>
 
             {/* Mic icon + CTA */}
@@ -107,23 +216,56 @@ export default function Home() {
               <button
                 type="button"
                 className="hero__btn"
-                onClick={() => { tapHaptic('medium'); navigate('matching'); }}
+                onClick={() => {
+                  tapHaptic('medium');
+                  navigate('matching');
+                }}
               >
-                <span>{t('home.start')}</span>
+                <span>{callMode === 'ielts' ? 'Start IELTS Call' : t('home.start')}</span>
                 <ChevronRight size={18} strokeWidth={2.5} />
               </button>
             </div>
           </div>
         </section>
 
+        {/* Topic of the Day & Icebreaker Card */}
+        <div className="home-topic-card fade-up">
+          <div className="home-topic-head">
+            <div className="home-topic-tag">
+              <Sparkles size={13} />
+              <span>Today's Topic · {todayTopic.title}</span>
+            </div>
+            <button
+              type="button"
+              className="home-topic-all-btn"
+              onClick={() => {
+                tapHaptic('light');
+                setShowTopicsLib(true);
+              }}
+            >
+              <BookOpen size={13} />
+              <span>Question Bank</span>
+              <ChevronRight size={13} />
+            </button>
+          </div>
+          <p className="home-topic-question">“{todayQuestion}”</p>
+          <span className="home-topic-sub">Break the ice on your next call with this question</span>
+        </div>
+
         <div className="home__list stagger">
           {/* Partner & Mentor Listings Board */}
           <button
             type="button"
             className="row"
-            onClick={() => { tapHaptic('medium'); navigate('listings'); }}
+            onClick={() => {
+              tapHaptic('medium');
+              navigate('listings');
+            }}
           >
-            <span className="row__ico" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+            <span
+              className="row__ico"
+              style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
+            >
               <Users size={18} aria-hidden="true" />
             </span>
             <span className="row__text">
@@ -132,7 +274,6 @@ export default function Home() {
             </span>
             <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
           </button>
-
         </div>
 
         {/* Recent Practice History */}
@@ -376,6 +517,87 @@ export default function Home() {
         .mini-stat__lbl  { font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
 
         /* ── Sections ── */
+        /* ── Call Mode Selector ── */
+        .home-mode-selector {
+          display: flex; gap: 8px; margin-bottom: 2px;
+        }
+        .home-mode-pill {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+          padding: 10px 12px; border-radius: var(--radius-md);
+          background: var(--surface-2); border: 1px solid var(--border);
+          color: var(--text-secondary); font-size: 13px; font-weight: var(--weight-bold);
+          cursor: pointer; transition: all 0.15s ease;
+        }
+        .home-mode-pill:active { transform: scale(0.97); }
+        .home-mode-pill.active {
+          background: var(--primary-subtle); border-color: var(--primary);
+          color: var(--primary);
+        }
+
+        /* ── Daily Goal Card ── */
+        .home-daily-goal {
+          background: var(--surface); border: 1px solid var(--border);
+          border-radius: var(--radius-md); padding: 12px 14px;
+          display: flex; flex-direction: column; gap: 8px;
+        }
+        .home-daily-goal__head {
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .home-daily-goal__title-wrap {
+          display: flex; align-items: center; gap: 6px;
+        }
+        .home-daily-goal__icon { color: var(--primary); display: flex; }
+        .home-daily-goal__title {
+          font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary);
+          text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .home-daily-goal__val {
+          font-size: 12px; font-weight: var(--weight-heavy); color: var(--text-secondary);
+        }
+        .home-daily-goal__val.completed { color: var(--success); }
+        .home-daily-goal__track {
+          height: 6px; border-radius: var(--radius-full);
+          background: var(--surface-2); overflow: hidden; position: relative;
+        }
+        .home-daily-goal__fill {
+          height: 100%; border-radius: var(--radius-full);
+          background: var(--grad-primary); transition: width 0.4s ease;
+        }
+        .home-daily-goal__fill.completed {
+          background: linear-gradient(90deg, #34C759, #30D158);
+        }
+
+        /* ── Topic of the Day Card ── */
+        .home-topic-card {
+          background: var(--surface); border: 1px solid var(--border);
+          border-radius: var(--radius-lg); padding: 14px 16px;
+          display: flex; flex-direction: column; gap: 8px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+        .home-topic-head {
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .home-topic-tag {
+          display: inline-flex; align-items: center; gap: 5px;
+          font-size: 11px; font-weight: var(--weight-bold);
+          color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .home-topic-all-btn {
+          display: inline-flex; align-items: center; gap: 4px;
+          background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.25);
+          color: var(--primary); padding: 4px 10px; border-radius: var(--radius-full);
+          font-size: 11px; font-weight: var(--weight-bold); cursor: pointer;
+          transition: transform 0.15s ease;
+        }
+        .home-topic-all-btn:active { transform: scale(0.95); }
+        .home-topic-question {
+          font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary);
+          line-height: 1.45;
+        }
+        .home-topic-sub {
+          font-size: 11px; color: var(--text-tertiary); font-weight: var(--weight-medium);
+        }
+
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
         .home__section-head { display: flex; align-items: center; justify-content: space-between; }
 
@@ -415,6 +637,16 @@ export default function Home() {
 
         .home__foot { padding-bottom: var(--space-2); }
       `}</style>
+
+      {/* Standalone Question Bank & Topics Library Sheet */}
+      <TopicsLibraryModal
+        isOpen={showTopicsLib}
+        onClose={() => setShowTopicsLib(false)}
+        onSelectTopic={(topicId, part) => {
+          setSpeakingState(topicId, part, 0);
+          setShowTopicsLib(false);
+        }}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { Users, RotateCcw, Megaphone } from 'lucide-react';
+import { Users, RotateCcw, Megaphone, GraduationCap, MessageSquare } from 'lucide-react';
 
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -12,7 +12,7 @@ function fmtElapsed(s: number): string {
  * Sherik qidirish ekrani.
  */
 export default function Matching() {
-  const { user, navigate, waitingCount } = useAppStore();
+  const { user, navigate, waitingCount, callMode } = useAppStore();
   const { matchingStatus, startSearch, cancel } = useMatch();
   const t = useT();
   const started = useRef(false);
@@ -81,6 +81,20 @@ export default function Matching() {
   return (
     <div className="mt">
       <div className="mt__body scale-in">
+        <div className="mt__mode-badge">
+          {callMode === 'ielts' ? (
+            <>
+              <GraduationCap size={13} />
+              <span>IELTS Practice</span>
+            </>
+          ) : (
+            <>
+              <MessageSquare size={13} />
+              <span>Free Talk</span>
+            </>
+          )}
+        </div>
+
         <div className="mt__dial">
           <span className="mt__ripple" aria-hidden="true" />
           <span className="mt__ripple mt__ripple--2" aria-hidden="true" />
@@ -138,6 +152,14 @@ const Styles = React.memo(function Styles() {
         width: 100%; max-width: 340px;
         display: flex; flex-direction: column; align-items: center;
         gap: var(--space-4); text-align: center;
+      }
+
+      .mt__mode-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 12px; border-radius: var(--radius-full);
+        background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.25);
+        color: var(--primary); font-size: 11px; font-weight: var(--weight-bold);
+        text-transform: uppercase; letter-spacing: 0.05em;
       }
 
       .mt__dial {
