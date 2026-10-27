@@ -119,11 +119,7 @@ export default function Profile() {
           </div>
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
-          {isPremium && (
-            <span className="profile__premium-badge">
-              <Star size={9} fill="currentColor" strokeWidth={0} /> {t('profile.premium')}
-            </span>
-          )}
+
         </div>
 
         {/* Quick Interactive Stats Grid */}
@@ -190,33 +186,21 @@ export default function Profile() {
         {/* Account & Support Section */}
         <div className="profile__section-header">Account</div>
         <div className="profile__card">
-          {/* Subscription / Plan Row */}
-          <button
-            className="profile__row"
-            onClick={() => {
-              if (!isPremium) {
-                tapHaptic('light');
-                navigate('premium', { from: 'profile' });
-              }
-            }}
-            disabled={isPremium}
-          >
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
-              <Star size={14} />
+          {/* Subscription / Plan Row - 100% Free & Unlimited */}
+          <div className="profile__row" style={{ cursor: 'default' }}>
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--green">
+              <Check size={14} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.plan')}</span>
               <span className="profile__row-sub">
-                {isPremium ? t('profile.unlimited') : t('profile.freeSub')}
+                {t('profile.unlimited')}
               </span>
             </div>
-            <span className="profile__row-val">
-              {isPremium
-                ? (premiumUntil ? t('profile.premiumUntil', { date: premiumUntil }) : t('profile.premium'))
-                : t('profile.free')}
+            <span className="profile__row-val" style={{ color: 'var(--success, #34C759)' }}>
+              Free &amp; Unlimited
             </span>
-            {!isPremium && <Chevron />}
-          </button>
+          </div>
 
           {/* Community Reviews Row */}
           <button

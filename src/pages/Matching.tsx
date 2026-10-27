@@ -1,43 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
 import useAppStore from '../store/useAppStore';
-import { useAiSession } from '../hooks/useAiSession';
 import { useT } from '../i18n';
-import { Clock, Users, RotateCcw, Star, Sparkles, Bot, ArrowRight, Zap } from 'lucide-react';
-import { getAiStatus } from '../api/endpoints';
+import { Users, RotateCcw, Megaphone } from 'lucide-react';
 
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-const MOCK_OFFER_AFTER_SEC = 10;
-
 /**
  * Sherik qidirish ekrani.
  */
 export default function Matching() {
-  const { user, navigate, waitingCount, noPartnerYet } = useAppStore();
+  const { user, navigate, waitingCount } = useAppStore();
   const { matchingStatus, startSearch, cancel } = useMatch();
   const t = useT();
   const started = useRef(false);
   const [elapsed, setElapsed] = useState(0);
-  const [aiEnabled, setAiEnabled] = useState(true);
-
-  useEffect(() => {
-    getAiStatus().then((r) => {
-      if (r && typeof r.enabled === 'boolean') setAiEnabled(r.enabled);
-    }).catch(() => {});
-  }, []);
 
   const cancelRef = useRef(cancel);
   cancelRef.current = cancel;
-
-  const openAiSession = useAiSession();
-
-  const startAiCall = () => {
-    cancel();
-    openAiSession();
-  };
 
   useEffect(() => {
     const backBtn = window.Telegram?.WebApp?.BackButton;
@@ -63,34 +45,6 @@ export default function Matching() {
   }, [matchingStatus]);
 
   const isTimeout = matchingStatus === 'timeout';
-  const isLimit   = matchingStatus === 'limit_reached';
-
-  if (isLimit) {
-    return (
-      <div className="mt">
-        <div className="mt__body scale-in">
-          <span className="mt__glyph"><Clock size={30} /></span>
-
-          <div className="mt__copy">
-            <h2 className="mt__title">{t('match.limitTitle', { min: user?.dailyLimit || 10 })}</h2>
-            <p className="mt__desc">{t('match.limitDesc')}</p>
-          </div>
-
-          <button
-            className="btn-primary"
-            onClick={() => navigate('premium', { from: 'home' })}
-          >
-            <Star size={17} strokeWidth={2.5} />
-            {t('match.getPremium')}
-          </button>
-          <p className="mt__fine">{t('match.unlimitedDaily')}</p>
-
-          <button className="btn-quiet" onClick={() => navigate('home')}>{t('common.goBack')}</button>
-        </div>
-        <Styles />
-      </div>
-    );
-  }
 
   if (isTimeout) {
     return (
@@ -105,16 +59,15 @@ export default function Matching() {
 
           <button
             className="btn-primary flex items-center justify-center gap-2"
-            onClick={startAiCall}
-            style={{ background: 'var(--grad-ai)' }}
+            onClick={startSearch}
           >
-            <Sparkles size={18} />
-            <span>{t('match.practiseWithAi')}</span>
+            <RotateCcw size={16} />
+            <span>{t('common.tryAgain')}</span>
           </button>
 
-          <button className="btn-secondary" onClick={startSearch}>
-            <RotateCcw size={16} />
-            {t('common.tryAgain')}
+          <button className="btn-secondary flex items-center justify-center gap-2" onClick={() => navigate('listings')}>
+            <Megaphone size={16} />
+            <span>{t('nav.listings')}</span>
           </button>
           <button className="btn-quiet" onClick={() => navigate('home')}>{t('common.goBack')}</button>
         </div>
@@ -164,39 +117,6 @@ export default function Matching() {
           <p className="mt__hint">{others ? t('match.hintMany') : t('match.hintAlone')}</p>
         </div>
 
-        {/* Instant AI Speaking Partner Option Card */}
-        {aiEnabled && (
-          <div
-            className="ai-partner-matching-card"
-            onClick={startAiCall}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="ai-card-glow" />
-            
-            <div className="ai-card-header-row">
-              <div className="ai-card-badge">
-                <Zap size={12} className="fill-current text-cyan-300 animate-pulse" />
-                <span>INSTANT AI PARTNER • 24/7 ONLINE</span>
-              </div>
-            </div>
-
-            <div className="ai-card-content">
-              <div className="ai-card-icon">
-                <Bot size={28} />
-              </div>
-              <div className="ai-card-text">
-                <h3 className="ai-card-title">Practice English with AI</h3>
-                <p className="ai-card-desc">Instant voice partner • No waiting required</p>
-              </div>
-            </div>
-
-            <div className="ai-card-action">
-              <span>Start Speaking with AI Now</span>
-              <ArrowRight size={16} />
-            </div>
-          </div>
-        )}
 
         <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
       </div>

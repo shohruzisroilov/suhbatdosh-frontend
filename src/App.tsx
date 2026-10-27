@@ -10,7 +10,6 @@ import ConnectionBanner from './components/ConnectionBanner';
 import Toast from './components/Toast';
 import BottomNav from './components/BottomNav';
 import MicPermissionModal from './components/MicPermissionModal';
-import ChannelSubscribeModal from './components/ChannelSubscribeModal';
 
 // Eager: the two screens that can be the first thing rendered after sign-in. Anything
 // lazy here would put a spinner in front of the very first paint.
@@ -29,8 +28,6 @@ import Home from './pages/Home.tsx';
  * fallback behaviour is unchanged — there is simply more behind it now.
  */
 const Chat = lazy(() => import('./pages/Chat.tsx'));
-const AiTalk = lazy(() => import('./pages/AiTalk.tsx'));
-const Mock = lazy(() => import('./pages/Mock.tsx'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard.tsx'));
 const Invite = lazy(() => import('./pages/Invite.tsx'));
 const Reviews = lazy(() => import('./pages/Reviews.tsx'));
@@ -40,33 +37,22 @@ const Premium = lazy(() => import('./pages/Premium.tsx'));
 const Statistics = lazy(() => import('./pages/Statistics.tsx'));
 const Matching = lazy(() => import('./pages/Matching.tsx'));
 const SessionEnd = lazy(() => import('./pages/SessionEnd.tsx'));
-const IeltsMock = lazy(() => import('./pages/IeltsMock.tsx'));
-const CefrMock = lazy(() => import('./pages/CefrMock.tsx'));
 const Listings = lazy(() => import('./pages/Listings.tsx'));
 
 /**
  * Screens reachable in one tap from Home, fetched once the app is idle.
- *
- * Splitting a screen out moves its download to the moment it is opened, which trades a
- * faster start for a pause on the first tap. Warming the tab bar's destinations in the
- * background gets both: the entry bundle stays small, and by the time anyone reaches
- * for a tab its code is already cached.
  */
 function usePrefetchTabs(ready: boolean) {
   useEffect(() => {
     if (!ready) return;
 
     const warm = () => {
-      void import('./pages/Mock.tsx');
       void import('./pages/Listings.tsx');
       void import('./pages/Leaderboard.tsx');
       void import('./pages/Profile.tsx');
       void import('./pages/Matching.tsx');
-      void import('./pages/AiTalk.tsx');
     };
 
-    // requestIdleCallback is missing on Safari/iOS, which is a large share of Telegram
-    // users; the timeout is the fallback, not an afterthought.
     const ric = (window as any).requestIdleCallback as
       | ((cb: () => void, opts?: { timeout: number }) => number)
       | undefined;
@@ -95,7 +81,6 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   onboarding: Onboarding,
   home: Home,
   listings: Listings,
-  mock: Mock,
   leaderboard: Leaderboard,
   invite: Invite,
   reviews: Reviews,
@@ -105,15 +90,16 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   statistics: Statistics,
   matching: Matching,
   chat: Chat,
-  ai_talk: AiTalk,
   session_end: SessionEnd,
-  ielts: IeltsMock,
-  ielts_mock: IeltsMock,
-  cefr: CefrMock,
-  cefr_mock: CefrMock,
+  mock: Home,
+  ai_talk: Home,
+  ielts: Home,
+  ielts_mock: Home,
+  cefr: Home,
+  cefr_mock: Home,
 };
 
-const TAB_SCREENS = ['home', 'mock', 'listings', 'leaderboard', 'profile'];
+const TAB_SCREENS = ['home', 'listings', 'leaderboard', 'profile'];
 
 function AuthErrorScreen({
   message,
@@ -191,11 +177,6 @@ function TelegramApp() {
       <ConnectionBanner />
       <Toast />
       <MicPermissionModal />
-      <ChannelSubscribeModal
-        isOpen={!isSubscribed}
-        onSubscribed={() => setIsSubscribed(true)}
-        telegramId={user?.telegramId || window.Telegram?.WebApp?.initDataUnsafe?.user?.id}
-      />
       <ErrorBoundary>
         <Suspense fallback={<LoadingScreen />}>
           {showTabs ? (

@@ -61,9 +61,6 @@ export default function HomeHeader({
       <header className="hh">
         <div className="hh__avatar-wrapper">
           <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={42} />
-          {user?.isPremium && (
-            <span className="hh__pro-dot" title="Premium Subscriber" />
-          )}
         </div>
 
         <button

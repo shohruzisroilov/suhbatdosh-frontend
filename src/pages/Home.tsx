@@ -3,15 +3,12 @@ import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
-import { Mic, ShieldCheck, Star, ChevronRight, MessageSquare, Users, Bot } from 'lucide-react';
+import { Mic, ShieldCheck, ChevronRight, MessageSquare, Users } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
-import PrimeTimeBanner from '../components/PrimeTimeBanner';
-import DailyProgress from '../components/DailyProgress';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
 import HomeReviews from '../components/HomeReviews';
-import { useAiSession } from '../hooks/useAiSession';
 
 /**
  * Bosh sahifa — Conversation-First layout.
@@ -20,11 +17,9 @@ export default function Home() {
   const { user, stats, recentSessions, setStats, setRecentSessions, setUser, navigate,
           homeLoaded, setHomeLoaded, partnerPref, setPartnerPref, waitingCount } = useAppStore();
   const t = useT();
-  const startAiSession = useAiSession();
 
   const isFemale  = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
-  const isLimitReached = !user?.isPremium && (user?.dailyLimit ?? 0) > 0 && (user?.dailyMinutes ?? 0) >= (user?.dailyLimit ?? 0);
 
   useEffect(() => {
     getMe().then(d => {
@@ -64,25 +59,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* Free-minutes counter and the Premium banner, shown once the daily limit is used up */}
-        {isLimitReached && (
-          <>
-            <DailyProgress
-              dailyMinutes={user?.dailyMinutes || 0}
-              dailyLimit={user?.dailyLimit || 0}
-              onUpgrade={() => navigate('premium', { from: 'home' })}
-            />
-
-            <button className="row" onClick={() => navigate('premium', { from: 'home' })}>
-              <span className="row__ico row__ico--accent"><Star size={18} /></span>
-              <span className="row__text">
-                <span className="row__title">{t('home.getPremium')}</span>
-                <span className="row__sub">{t('home.premiumSub')}</span>
-              </span>
-              <ChevronRight size={18} className="row__arrow" />
-            </button>
-          </>
-        )}
 
         {/* ── Find Partner Hero Card ──
             The whole card is tappable, but the only control is the button below:
@@ -141,24 +117,6 @@ export default function Home() {
         </section>
 
         <div className="home__list stagger">
-          {/* Prime Time Event Banner */}
-          <PrimeTimeBanner />
-
-          {/* The AI partner used to be reachable only from the "nobody is free" screen,
-              so it was found by failing to match rather than by choosing it. */}
-          <button
-            type="button"
-            className="row"
-            onClick={() => { tapHaptic('medium'); startAiSession(); }}
-          >
-            <span className="row__ico row__ico--primary"><Bot size={18} aria-hidden="true" /></span>
-            <span className="row__text">
-              <span className="row__title">{t('ai.title')}</span>
-              <span className="row__sub">{t('ai.sub')}</span>
-            </span>
-            <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
-          </button>
-
           {/* Partner & Mentor Listings Board */}
           <button
             type="button"

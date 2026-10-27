@@ -636,7 +636,6 @@ export default function Listings(_props: ListingsProps) {
                           <span className="listing-card__author-name">
                             {item.user?.displayName || (isMine ? user?.displayName : '') || 'Learner'}
                           </span>
-                          {item.user?.isPremium && <span className="pro-badge">PRO</span>}
                         </div>
                         <span className="listing-card__date">
                           {t('listings.card.level', { n: item.user?.level ?? user?.level ?? 1 })} ·{' '}
