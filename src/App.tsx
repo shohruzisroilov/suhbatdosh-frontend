@@ -91,12 +91,6 @@ const SCREENS: Record<string, React.ComponentType<any>> = {
   matching: Matching,
   chat: Chat,
   session_end: SessionEnd,
-  mock: Home,
-  ai_talk: Home,
-  ielts: Home,
-  ielts_mock: Home,
-  cefr: Home,
-  cefr_mock: Home,
 };
 
 const TAB_SCREENS = ['home', 'listings', 'leaderboard', 'profile'];
