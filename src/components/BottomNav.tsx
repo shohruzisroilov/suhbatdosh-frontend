@@ -2,7 +2,7 @@ import React from 'react';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic } from '../utils/haptics';
-import { Mic, Megaphone, Trophy, User } from 'lucide-react';
+import { Mic, Users, Trophy, User } from 'lucide-react';
 
 interface Tab {
   key: string;
@@ -19,7 +19,7 @@ const TABS: Tab[] = [
   {
     key: 'listings',
     label: 'nav.listings',
-    icon: <Megaphone size={20} strokeWidth={2.2} />,
+    icon: <Users size={20} strokeWidth={2.2} />,
   },
   {
     key: 'leaderboard',

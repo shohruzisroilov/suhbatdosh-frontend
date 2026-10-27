@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
+  BarChart2,
   Check,
   ChevronRight,
   Clock,
@@ -119,7 +120,10 @@ export default function Profile() {
           </div>
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
-
+          <div className="profile__status-badge">
+            <span className="profile__status-dot" />
+            <span>100% Free &amp; Unlimited</span>
+          </div>
         </div>
 
         {/* Quick Interactive Stats Grid */}
@@ -160,71 +164,68 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Settings Section — one door, not three.
-            Level and gender used to live here AND inside Settings, so opening
-            "Notifications" from Profile landed on a menu repeating rows the user had
-            just scrolled past. Settings now owns all three preferences; the level is
-            still one tap away from the home header. */}
-        <div className="profile__section-header">{t('settings.title')}</div>
+        {/* Section 1: Faoliyat & Taraqqiyot (Activity & Progress) */}
+        <div className="profile__section-header">Activity &amp; Progress</div>
         <div className="profile__card">
-          <button
-            className="profile__row"
-            onClick={() => { tapHaptic('light'); navigate('settings', { from: 'profile' }); }}
-          >
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--slate">
-              <SlidersHorizontal size={14} />
-            </span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('settings.title')}</span>
-              <span className="profile__row-sub">{t('profile.settingsSub')}</span>
-            </div>
-            <span className="profile__row-val">{t(`level.${level}`)}</span>
-            <Chevron />
-          </button>
-        </div>
-
-        {/* Account & Support Section */}
-        <div className="profile__section-header">Account</div>
-        <div className="profile__card">
-          {/* Subscription / Plan Row - 100% Free & Unlimited */}
-          <div className="profile__row" style={{ cursor: 'default' }}>
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--green">
-              <Check size={14} />
-            </span>
-            <div className="profile__row-text">
-              <span className="profile__row-title">{t('profile.plan')}</span>
-              <span className="profile__row-sub">
-                {t('profile.unlimited')}
-              </span>
-            </div>
-            <span className="profile__row-val" style={{ color: 'var(--success, #34C759)' }}>
-              Free &amp; Unlimited
-            </span>
-          </div>
-
-          {/* Community Reviews Row */}
           <button
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
-              navigate('reviews');
+              navigate('statistics', { from: 'profile' });
             }}
           >
-            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
-              <MessageSquare size={14} />
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
+              <BarChart2 size={14} />
             </span>
             <div className="profile__row-text">
-              <span className="profile__row-title">{t('profile.reviews')}</span>
-              <span className="profile__row-sub">{t('profile.reviewsSub')}</span>
+              <span className="profile__row-title">Detailed Statistics</span>
+              <span className="profile__row-sub">Practice charts and talk history</span>
             </div>
             <Chevron />
           </button>
 
-          {/* Invite Row — moved out of the bottom nav; a referral link is something
-              you reach for occasionally, not every session. */}
           <button
             className="profile__row"
-            onClick={() => { tapHaptic('light'); navigate('invite', { from: 'profile' }); }}
+            onClick={openRatings}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
+              <Star size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('profile.ratingsModalTitle')}</span>
+              <span className="profile__row-sub">{ratingCount} partner reviews received</span>
+            </div>
+            <span className="profile__row-val">{avgRatingNum} ★</span>
+            <Chevron />
+          </button>
+
+          <button
+            className="profile__row"
+            onClick={() => {
+              tapHaptic('light');
+              navigate('listings');
+            }}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
+              <Users size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('home.listingsTitle')}</span>
+              <span className="profile__row-sub">{t('home.listingsSub')}</span>
+            </div>
+            <Chevron />
+          </button>
+        </div>
+
+        {/* Section 2: Hamjamiyat (Community & Sharing) */}
+        <div className="profile__section-header">Community &amp; Invites</div>
+        <div className="profile__card">
+          <button
+            className="profile__row"
+            onClick={() => {
+              tapHaptic('light');
+              navigate('invite', { from: 'profile' });
+            }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--green">
               <Gift size={14} />
@@ -236,7 +237,45 @@ export default function Profile() {
             <Chevron />
           </button>
 
-          {/* Support Row */}
+          <button
+            className="profile__row"
+            onClick={() => {
+              tapHaptic('light');
+              navigate('reviews');
+            }}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
+              <MessageSquare size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('profile.reviews')}</span>
+              <span className="profile__row-sub">{t('profile.reviewsSub')}</span>
+            </div>
+            <Chevron />
+          </button>
+        </div>
+
+        {/* Section 3: Sozlamalar va Yordam (Settings & Support) */}
+        <div className="profile__section-header">{t('settings.title')} &amp; Support</div>
+        <div className="profile__card">
+          <button
+            className="profile__row"
+            onClick={() => {
+              tapHaptic('light');
+              navigate('settings', { from: 'profile' });
+            }}
+          >
+            <span className="profile__row-icon-wrapper profile__row-icon-wrapper--slate">
+              <SlidersHorizontal size={14} />
+            </span>
+            <div className="profile__row-text">
+              <span className="profile__row-title">{t('settings.title')}</span>
+              <span className="profile__row-sub">{t('profile.settingsSub')}</span>
+            </div>
+            <span className="profile__row-val">{t(`level.${level}`)}</span>
+            <Chevron />
+          </button>
+
           <button
             className="profile__row"
             onClick={() => {
@@ -349,13 +388,18 @@ export default function Profile() {
         }
         .profile__name { font-size: 19px; font-weight: var(--weight-heavy); letter-spacing: -0.4px; text-align: center; color: var(--text-primary); }
         .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -2px; }
-        .profile__premium-badge {
-          margin-top: 2px; padding: 3px 12px; border-radius: var(--radius-full);
-          background: linear-gradient(135deg, #FFD700, #FF9500);
-          color: #1a1000;
-          font-size: 10px; font-weight: var(--weight-heavy); letter-spacing: 0.3px;
-          display: inline-flex; align-items: center; gap: 4px;
-          box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
+        .profile__status-badge {
+          margin-top: 4px; padding: 4px 12px; border-radius: var(--radius-full);
+          background: rgba(52, 199, 89, 0.12);
+          border: 1px solid rgba(52, 199, 89, 0.28);
+          color: var(--success);
+          font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.2px;
+          display: inline-flex; align-items: center; gap: 6px;
+        }
+        .profile__status-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--success);
+          box-shadow: 0 0 8px var(--success);
         }
 
         .profile__stats-grid {

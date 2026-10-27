@@ -30,7 +30,7 @@ export default function HomeHeader({
   doneToday = false,
 }: HomeHeaderProps) {
   const t = useT();
-  const { setUser } = useAppStore();
+  const { setUser, navigate } = useAppStore();
   const [openLevelModal, setOpenLevelModal] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -59,9 +59,14 @@ export default function HomeHeader({
   return (
     <>
       <header className="hh">
-        <div className="hh__avatar-wrapper">
+        <button
+          type="button"
+          className="hh__avatar-wrapper hh__avatar-btn"
+          onClick={() => { tapHaptic('light'); navigate('profile'); }}
+          aria-label={t('nav.profile')}
+        >
           <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={42} />
-        </div>
+        </button>
 
         <button
           type="button"
@@ -145,6 +150,13 @@ export default function HomeHeader({
           flex-shrink: 0; z-index: 10;
         }
         .hh__avatar-wrapper { position: relative; flex-shrink: 0; }
+        .hh__avatar-btn {
+          background: none; border: none; padding: 0; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: var(--radius-full);
+          transition: transform 0.15s var(--ease-out);
+        }
+        .hh__avatar-btn:active { transform: scale(0.92); }
         .hh__pro-dot {
           position: absolute; bottom: 0; right: 0; width: 13px; height: 13px;
           border-radius: 50%;

@@ -5,9 +5,10 @@ import { updateMe, updateNotifications } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
-import { ArrowLeft, ChevronRight, Gauge, User, Bell, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Gauge, User, Bell, Check, Loader2, Mic } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
+import { notifyHaptic } from '../utils/haptics';
 
 const LEVELS = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }];
 
@@ -25,12 +26,13 @@ const TITLES: Record<string, string> = {
 };
 
 export default function Settings() {
-  const { user, setUser, navigate, screenParams } = useAppStore();
+  const { user, setUser, navigate, screenParams, setMicErrorModal } = useAppStore();
   const t = useT();
 
   useTelegramBackButton(() => back());
 
   const [section, setSection] = useState<'menu' | 'level' | 'gender' | 'notifications'>('menu');
+  const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
 
   const level = user?.level || 1;
   const gender = user?.gender || null;
@@ -78,6 +80,30 @@ export default function Settings() {
     // Step out of a sub-section first, then back to whoever opened Settings.
     if (section !== 'menu') setSection('menu');
     else navigate(screenParams?.from || 'profile');
+  }
+
+  async function testMic() {
+    if (micStatus === 'testing') return;
+    tapHaptic('light');
+    setMicStatus('testing');
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Unsupported');
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      notifyHaptic('success');
+      setMicStatus('ok');
+      setTimeout(() => setMicStatus('idle'), 3500);
+    } catch {
+      notifyHaptic('error');
+      setMicStatus('fail');
+      setMicErrorModal({
+        isOpen: true,
+        errorMsg: 'Microphone access is needed for live calls. Please grant permission in your device/Telegram settings.',
+      });
+      setTimeout(() => setMicStatus('idle'), 3500);
+    }
   }
 
   const notifSummary = reminders ? t('settings.notifAllOn') : t('settings.notifNone');
@@ -150,6 +176,50 @@ export default function Settings() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold">{t('settings.notifTitle')}</div>
                   <div className="text-xs text-[var(--text-secondary)] truncate">{notifSummary}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
+              </div>
+            </Card>
+
+            <Card
+              as="button"
+              type="button"
+              className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
+              onClick={testMic}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl transition-colors ${
+                  micStatus === 'ok'
+                    ? 'bg-green-500/15 text-green-500'
+                    : micStatus === 'fail'
+                    ? 'bg-red-500/15 text-red-500'
+                    : 'bg-[var(--primary-subtle)] text-[var(--primary)]'
+                }`}>
+                  {micStatus === 'testing' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : micStatus === 'ok' ? (
+                    <Check className="h-5 w-5" />
+                  ) : (
+                    <Mic className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold">
+                    {micStatus === 'ok'
+                      ? 'Microphone Ready!'
+                      : micStatus === 'testing'
+                      ? 'Testing Microphone…'
+                      : micStatus === 'fail'
+                      ? 'Permission Needed'
+                      : 'Audio & Microphone'}
+                  </div>
+                  <div className="text-xs text-[var(--text-secondary)] truncate">
+                    {micStatus === 'ok'
+                      ? 'Access granted and working'
+                      : micStatus === 'fail'
+                      ? 'Tap to review permission guide'
+                      : 'Tap to test and verify microphone access'}
+                  </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
               </div>
