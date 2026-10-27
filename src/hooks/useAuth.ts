@@ -127,22 +127,14 @@ export function useAuth() {
           setIsSubscribed(authResult.isSubscribed);
         }
 
-        let meData;
+        // Fetch stats and recent sessions safely without blocking user sign-in on timeout
         try {
-          meData = await getMe();
+          const meData = await getMe();
+          if (meData?.stats) setStats(meData.stats);
+          if (meData?.recentSessions) setRecentSessions(meData.recentSessions);
         } catch (meErr) {
-          if (TEST_LOGIN_ALLOWED && initData.startsWith('test')) {
-            meData = {
-              stats: { total_sessions: 12, total_minutes: 145, avg_rating: '4.9', streakCount: 5, hasPracticedToday: true },
-              recentSessions: [],
-            };
-          } else {
-            throw meErr;
-          }
+          console.warn('[Auth] getMe call failed or timed out — continuing login:', meErr);
         }
-
-        setStats(meData.stats);
-        setRecentSessions(meData.recentSessions);
 
         const u = authResult.user;
         const needsOnboarding = !u.hasOnboarded;
