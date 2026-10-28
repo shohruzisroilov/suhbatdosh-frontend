@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { rateSession } from '../api/endpoints';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import ReportSheet from '../components/ReportSheet';
-import Modal from '../components/Modal';
-import ReviewPrompt from '../components/ReviewPrompt';
 import { Star, Check, Flag, PartyPopper, LogOut } from 'lucide-react';
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -40,7 +38,6 @@ export default function SessionEnd() {
   const [loading, setLoading]     = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportDone, setReportDone] = useState<string | null>(null);
-  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const isAi        = !!screenParams?.isAi || !!session?.isAi;
   const aiStats     = screenParams?.aiStats || null;
@@ -48,9 +45,14 @@ export default function SessionEnd() {
   const partnerName = isAi ? 'Suhbatdosh AI' : (session?.partnerName || t('common.yourPartner'));
   const reason      = screenParams?.reason;
 
-  useEffect(() => {
-    if (window.Telegram?.WebApp?.BackButton) window.Telegram.WebApp.BackButton.hide();
-  }, []);
+  function handleGoHome() {
+    tapHaptic('light');
+    clearSession();
+    setMatchingStatus('idle');
+    navigate('home');
+  }
+
+  useTelegramBackButton(handleGoHome);
 
   const dur = (() => {
     if (screenParams?.elapsed) return screenParams.elapsed;
@@ -87,16 +89,7 @@ export default function SessionEnd() {
     navigate('matching');
   }
 
-  function handleGoHome() {
-    tapHaptic('light');
-    setShowReviewModal(true);
-  }
 
-  function finishGoHome() {
-    clearSession();
-    setMatchingStatus('idle');
-    navigate('home');
-  }
 
   return (
     <div className="end-screen">
@@ -180,18 +173,7 @@ export default function SessionEnd() {
 
       </div>
 
-      {showReviewModal && createPortal(
-        <Modal
-          isOpen
-          onClose={finishGoHome}
-          backdropClassName="home-review-modal-backdrop"
-          className="home-review-modal-content scale-in"
-          label={t('rp.title')}
-        >
-          <ReviewPrompt forceShow={true} onClose={finishGoHome} />
-        </Modal>,
-        document.body
-      )}
+
 
       {reportOpen && (
         <ReportSheet
