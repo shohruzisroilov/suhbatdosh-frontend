@@ -37,9 +37,7 @@ export default function SpeakingQuestions({ onDetailChange }: SpeakingQuestionsP
   const { changeSpeakingTopic } = useSocket();
   const t = useT();
 
-  const [view, setView] = useState<'parts' | 'topics' | 'questions' | 'saved'>(
-    speakingTopicId ? 'questions' : 'parts'
-  );
+  const [view, setView] = useState<'parts' | 'topics' | 'questions' | 'saved'>('parts');
   const [browsePart, setBrowsePart] = useState(speakingPart || 1);
   const [query, setQuery] = useState('');
   const [pendingPartnerChange, setPendingPartnerChange] = useState(false);
