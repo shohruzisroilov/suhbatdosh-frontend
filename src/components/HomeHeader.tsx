@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react';
 import Avatar from './Avatar';
 import { useT } from '../i18n';
-import { Flame, ChevronDown, Check, X } from 'lucide-react';
+import { Flame, ChevronDown } from 'lucide-react';
 import { User } from '../types';
-import Modal from './Modal';
 import useAppStore from '../store/useAppStore';
-import { updateMe } from '../api/endpoints';
-import { tapHaptic, selectionHaptic } from '../utils/haptics';
+import { tapHaptic } from '../utils/haptics';
 
 interface HomeHeaderProps {
   user: User | null;
@@ -15,46 +12,16 @@ interface HomeHeaderProps {
   doneToday?: boolean;
 }
 
-const LEVELS = [
-  { id: 1, code: 'A1', name: 'Beginner' },
-  { id: 2, code: 'A2', name: 'Elementary' },
-  { id: 3, code: 'B1', name: 'Intermediate' },
-  { id: 4, code: 'B2', name: 'Upper-Intermediate' },
-  { id: 5, code: 'C1', name: 'Advanced' },
-  { id: 6, code: 'C2', name: 'Proficient' },
-];
-
 export default function HomeHeader({
   user,
   streak = 0,
   doneToday = false,
 }: HomeHeaderProps) {
   const t = useT();
-  const { setUser, navigate } = useAppStore();
-  const [openLevelModal, setOpenLevelModal] = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const { navigate } = useAppStore();
 
   const level = user?.level || 1;
   const shown = Math.max(streak, doneToday ? 1 : 0);
-
-  const handleSelectLevel = async (lvlId: number) => {
-    if (lvlId === level || updating) return;
-    selectionHaptic();
-    setUpdating(true);
-    try {
-      const res = await updateMe({ level: lvlId });
-      if (res?.user) {
-        setUser(res.user);
-      } else {
-        setUser({ ...(user as any), level: lvlId });
-      }
-    } catch {
-      setUser({ ...(user as any), level: lvlId });
-    } finally {
-      setUpdating(false);
-      setOpenLevelModal(false);
-    }
-  };
 
   return (
     <>
@@ -71,7 +38,10 @@ export default function HomeHeader({
         <button
           type="button"
           className="hh__info"
-          onClick={() => { tapHaptic('light'); setOpenLevelModal(true); }}
+          onClick={() => {
+            tapHaptic('light');
+            navigate('settings', { from: 'home', section: 'level' });
+          }}
         >
           <div className="hh__name-row">
             <span className="hh__name">{user?.displayName || t('common.anonymous')}</span>
@@ -94,51 +64,6 @@ export default function HomeHeader({
         </div>
       </header>
 
-      {/* Quick Level Change Modal */}
-      {openLevelModal && createPortal(
-        <Modal
-          isOpen
-          onClose={() => setOpenLevelModal(false)}
-          backdropClassName="home-review-modal-backdrop"
-          className="hh-level-modal scale-in"
-          labelledBy="hh-level-title"
-        >
-            <div className="hh-level-header">
-              <h3 id="hh-level-title">{t('hh.levelTitle')}</h3>
-              <button
-                type="button"
-                className="hh-level-close"
-                onClick={() => setOpenLevelModal(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <p className="hh-level-desc">{t('hh.levelDesc')}</p>
-
-            <div className="hh-level-list">
-              {LEVELS.map((item) => {
-                const isSelected = item.id === level;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`hh-level-item ${isSelected ? 'active' : ''}`}
-                    onClick={() => handleSelectLevel(item.id)}
-                    disabled={updating}
-                  >
-                    <div className="hh-level-item-left">
-                      <span className="hh-level-code">{item.code}</span>
-                      <span className="hh-level-name">{item.name}</span>
-                    </div>
-                    {isSelected && <Check size={18} className="hh-level-check" />}
-                  </button>
-                );
-              })}
-            </div>
-        </Modal>,
-        document.body
-      )}
-
       <style>{`
         .hh {
           display: flex; align-items: center; gap: var(--space-3);
@@ -157,13 +82,6 @@ export default function HomeHeader({
           transition: transform 0.15s var(--ease-out);
         }
         .hh__avatar-btn:active { transform: scale(0.92); }
-        .hh__pro-dot {
-          position: absolute; bottom: 0; right: 0; width: 13px; height: 13px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #FFD700, #FF9500);
-          border: 2px solid var(--bg);
-          box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-        }
         .hh__info {
           flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 2px;
           text-align: left; cursor: pointer;
@@ -208,54 +126,6 @@ export default function HomeHeader({
         }
         .hh__streak-num { font-size: 13px; font-weight: var(--weight-heavy); }
         .hh__streak-label { font-size: 10px; font-weight: var(--weight-medium); opacity: 0.85; }
-
-        /* Level Selector Modal */
-        .hh-level-modal {
-          width: 90%; max-width: 380px;
-          background: var(--bg-secondary); border: 1px solid var(--border);
-          border-radius: var(--radius-lg); padding: 20px;
-          box-shadow: var(--shadow-md);
-        }
-        .hh-level-header {
-          display: flex; align-items: center; justify-content: space-between;
-          margin-bottom: 6px;
-        }
-        .hh-level-header h3 {
-          font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0;
-        }
-        .hh-level-close {
-          background: var(--surface-2); border: none; color: var(--text-secondary);
-          width: 30px; height: 30px; border-radius: 50%; display: flex;
-          align-items: center; justify-content: center; cursor: pointer;
-        }
-        .hh-level-desc {
-          font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.4;
-        }
-        .hh-level-list {
-          display: flex; flex-direction: column; gap: 8px;
-        }
-        .hh-level-item {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-2);
-          border: 1px solid var(--border); color: var(--text-primary);
-          cursor: pointer; transition: all 0.2s ease; text-align: left;
-        }
-        .hh-level-item:active { transform: scale(0.98); }
-        .hh-level-item.active {
-          background: var(--primary-subtle);
-          border-color: var(--primary);
-          color: var(--primary);
-        }
-        .hh-level-item-left { display: flex; align-items: center; gap: 10px; }
-        .hh-level-code {
-          font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 6px;
-          background: var(--surface-3); color: var(--text-primary);
-        }
-        .hh-level-item.active .hh-level-code {
-          background: var(--primary); color: var(--primary-contrast);
-        }
-        .hh-level-name { font-size: 14px; font-weight: 600; }
-        .hh-level-check { color: var(--primary); }
       `}</style>
     </>
   );

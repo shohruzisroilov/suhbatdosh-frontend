@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { getMe, getMyRatings, updateMe } from '../api/endpoints';
-import Modal from '../components/Modal';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
 import { selectionHaptic, tapHaptic } from '../utils/haptics';
 import Avatar from '../components/Avatar';
 import {
+  ArrowLeft,
   BarChart2,
   Check,
   ChevronRight,
@@ -67,10 +68,16 @@ export default function Profile() {
   const { user, stats, setStats, setRecentSessions, setUser, navigate, setHomeLoaded } = useAppStore();
   const t = useT();
 
-  const [showRatingsModal, setShowRatingsModal] = useState(false);
-
+  const [viewMode, setViewMode] = useState<'profile' | 'ratings'>('profile');
   const [ratingsList, setRatingsList] = useState<RatingItem[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(false);
+
+  useTelegramBackButton(() => {
+    if (viewMode === 'ratings') {
+      tapHaptic('light');
+      setViewMode('profile');
+    }
+  });
 
   useEffect(() => {
     getMe()
@@ -81,12 +88,11 @@ export default function Profile() {
       })
       .catch(() => {})
       .finally(() => setHomeLoaded(true));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openRatings = () => {
     tapHaptic('light');
-    setShowRatingsModal(true);
+    setViewMode('ratings');
     setLoadingRatings(true);
     getMyRatings()
       .then((d) => {
@@ -107,6 +113,73 @@ export default function Profile() {
   const uniquePartners = stats.unique_partners || 0;
   const totalMinutes = stats.total_minutes || 0;
   const streakCount = stats?.streakCount || user?.streakCount || 0;
+
+  if (viewMode === 'ratings') {
+    return (
+      <div className="flex flex-col h-full bg-[var(--bg)] text-[var(--text-primary)]">
+        {/* Top bar with back button */}
+        <div className="flex items-center justify-between p-4 pt-[calc(14px+env(safe-area-inset-top,0px))] border-b border-[var(--border)] shrink-0 bg-[var(--chrome-bg)] backdrop-blur-md z-10">
+          <button
+            type="button"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-primary)] active:bg-[var(--surface-2)] transition-colors"
+            onClick={() => {
+              tapHaptic('light');
+              setViewMode('profile');
+            }}
+            aria-label="Back to profile"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-base font-bold">{t('profile.ratingsModalTitle')}</h1>
+          <div className="w-10" />
+        </div>
+
+        {/* Scrollable list */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-[calc(110px+env(safe-area-inset-bottom,0px))]">
+          {loadingRatings ? (
+            <div className="text-center py-16 text-[var(--text-secondary)] text-sm">
+              Loading partner reviews…
+            </div>
+          ) : ratingsList.length > 0 ? (
+            <div className="flex flex-col gap-2.5">
+              {ratingsList.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3.5 p-3.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl shadow-sm"
+                >
+                  <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={42} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-sm truncate text-[var(--text-primary)]">
+                      {item.rater_name || t('common.anonymous')}
+                    </div>
+                    <div className="text-xs text-[var(--text-secondary)]">{formatDate(item.created_at)}</div>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        size={14}
+                        fill={s <= item.score ? '#f59e0b' : 'none'}
+                        color={s <= item.score ? '#f59e0b' : 'var(--text-secondary)'}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-[var(--text-secondary)] space-y-2">
+              <Star size={40} className="mx-auto opacity-35 text-amber-400" />
+              <p className="font-bold text-base text-[var(--text-primary)]">{t('profile.noRatingsYet')}</p>
+              <p className="text-xs max-w-xs mx-auto leading-relaxed">
+                Complete 1-on-1 speaking practice sessions with partners to receive ratings and feedback.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile">
@@ -323,64 +396,6 @@ export default function Profile() {
         <div className="profile__footer" />
       </div>
 
-      {/* Partner Ratings Modal */}
-      {showRatingsModal && (
-        <Modal
-          isOpen
-          onClose={() => setShowRatingsModal(false)}
-          backdropClassName="ratings-modal-backdrop"
-          className="ratings-modal"
-          labelledBy="profile-ratings-title"
-        >
-            <div className="ratings-modal__handle" aria-hidden="true" />
-            <div className="ratings-modal__head">
-              <h2 className="ratings-modal__title" id="profile-ratings-title">{t('profile.ratingsModalTitle')}</h2>
-              <button
-                type="button"
-                className="ratings-modal__close"
-                onClick={() => setShowRatingsModal(false)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="ratings-modal__body">
-              {loadingRatings ? (
-                <div className="ratings-modal__loading">Loading ratings…</div>
-              ) : ratingsList.length > 0 ? (
-                <div className="ratings-modal__list">
-                  {ratingsList.map((item) => (
-                    <div key={item.id} className="ratings-modal__item">
-                      <Avatar name={item.rater_name || undefined} avatarUrl={item.rater_avatar_url || undefined} size={34} />
-                      <div className="ratings-modal__info">
-                        <span className="ratings-modal__name">
-                          {item.rater_name || t('common.anonymous')}
-                        </span>
-                        <span className="ratings-modal__date">{formatDate(item.created_at)}</span>
-                      </div>
-                      <div className="ratings-modal__stars">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={12}
-                            fill={star <= item.score ? '#f59e0b' : 'none'}
-                            color={star <= item.score ? '#f59e0b' : 'var(--text-secondary)'}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="ratings-modal__empty">
-                  <Star size={28} color="var(--text-secondary)" opacity={0.5} />
-                  <p>{t('profile.noRatingsYet')}</p>
-                </div>
-              )}
-            </div>
-        </Modal>
-      )}
-
       <style>{`
         .profile {
           display: flex; flex-direction: column;
@@ -524,62 +539,6 @@ export default function Profile() {
         }
         .profile__chev { color: var(--text-tertiary); flex-shrink: 0; }
         .profile__footer { padding-bottom: 24px; flex-shrink: 0; }
-
-        /* Bottom Sheet Modals */
-        .ratings-modal-backdrop {
-          position: fixed; inset: 0; z-index: 1000;
-          background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(6px);
-          display: flex; align-items: flex-end; justify-content: center;
-        }
-        .ratings-modal {
-          width: 100%; max-width: 500px; max-height: 82vh;
-          background: var(--bg-secondary);
-          border-radius: 24px 24px 0 0;
-          border: 1px solid var(--border-strong); border-bottom: none;
-          display: flex; flex-direction: column; overflow: hidden;
-          box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3);
-          animation: slideUp 0.28s var(--ease-spring) both;
-        }
-        .ratings-modal__handle {
-          width: 40px; height: 4px; border-radius: 2px;
-          background: var(--border-strong); margin: 12px auto 4px;
-          flex-shrink: 0;
-        }
-        .ratings-modal__head {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: var(--space-2) var(--space-4) var(--space-3);
-          border-bottom: 1px solid var(--border);
-        }
-        .ratings-modal__title { font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary); }
-        .ratings-modal__close {
-          background: none; border: none; color: var(--text-secondary);
-          display: flex; align-items: center; justify-content: center;
-          padding: var(--space-1); cursor: pointer; border-radius: var(--radius-full);
-          width: 30px; height: 30px;
-          background: var(--surface-2);
-        }
-        .ratings-modal__close:active { opacity: 0.6; }
-
-        .ratings-modal__body { flex: 1; overflow-y: auto; padding: var(--space-3); }
-        .ratings-modal__loading { text-align: center; padding: var(--space-6); color: var(--text-secondary); font-size: var(--text-sm); }
-        .ratings-modal__list { display: flex; flex-direction: column; gap: var(--space-2); }
-        .ratings-modal__item {
-          display: flex; align-items: center; gap: var(--space-3);
-          padding: var(--space-3); background: var(--surface-2);
-          border: 1px solid var(--border); border-radius: var(--radius-md);
-        }
-        .ratings-modal__info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .ratings-modal__name { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--text-primary); }
-        .ratings-modal__date { font-size: var(--text-xs); color: var(--text-secondary); }
-        .ratings-modal__stars { display: flex; align-items: center; gap: 2px; }
-
-        .ratings-modal__empty {
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: var(--space-3); padding: var(--space-7) var(--space-4); text-align: center; color: var(--text-secondary);
-        }
-        .ratings-modal__empty p { font-size: var(--text-sm); }
-
-        .profile__modal-list { display: flex; flex-direction: column; gap: var(--space-2); }
       `}</style>
     </div>
   );

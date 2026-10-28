@@ -9,7 +9,6 @@ import { ArrowLeft, ChevronRight, Gauge, User, Bell, Check, Loader2, Mic } from 
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { notifyHaptic } from '../utils/haptics';
-import MicTestModal from '../components/MicTestModal';
 
 const LEVELS = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }];
 
@@ -24,6 +23,7 @@ const TITLES: Record<string, string> = {
   level: 'settings.levelTitle',
   gender: 'settings.genderTitle',
   notifications: 'settings.notifTitle',
+  mic: 'Audio & Microphone',
 };
 
 export default function Settings() {
@@ -32,9 +32,10 @@ export default function Settings() {
 
   useTelegramBackButton(() => back());
 
-  const [section, setSection] = useState<'menu' | 'level' | 'gender' | 'notifications'>('menu');
-  const [showMicModal, setShowMicModal] = useState(false);
+  const initialSection = (screenParams?.section as any) || 'menu';
+  const [section, setSection] = useState<'menu' | 'level' | 'gender' | 'notifications' | 'mic'>(initialSection);
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [micVolume, setMicVolume] = useState(0);
 
   const level = user?.level || 1;
   const gender = user?.gender || null;
@@ -79,9 +80,14 @@ export default function Settings() {
 
   function back() {
     tapHaptic('light');
-    // Step out of a sub-section first, then back to whoever opened Settings.
-    if (section !== 'menu') setSection('menu');
-    else navigate(screenParams?.from || 'profile');
+    // If opened directly into a sub-section from another screen (e.g. from home to level)
+    if (screenParams?.section && section === screenParams.section) {
+      navigate(screenParams?.from || 'profile');
+    } else if (section !== 'menu') {
+      setSection('menu');
+    } else {
+      navigate(screenParams?.from || 'profile');
+    }
   }
 
   async function testMic() {
@@ -189,7 +195,7 @@ export default function Settings() {
               className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
               onClick={() => {
                 tapHaptic('light');
-                setShowMicModal(true);
+                setSection('mic');
               }}
             >
               <div className="flex items-center gap-3">
@@ -332,12 +338,71 @@ export default function Settings() {
             </Card>
           </div>
         )}
-      </div>
 
-      <MicTestModal
-        isOpen={showMicModal}
-        onClose={() => setShowMicModal(false)}
-      />
+        {/* Microphone Test Section (Full Page) */}
+        {section === 'mic' && (
+          <div className="space-y-4">
+            <p className="text-xs text-[var(--text-secondary)] px-1">
+              Verify your microphone permissions and audio clarity before starting calls.
+            </p>
+
+            <Card className="p-6 border-[var(--border)] bg-[var(--surface)] text-center flex flex-col items-center gap-4">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
+                micStatus === 'ok'
+                  ? 'bg-green-500/15 text-green-500'
+                  : micStatus === 'fail'
+                  ? 'bg-red-500/15 text-red-500'
+                  : 'bg-[var(--primary-subtle)] text-[var(--primary)]'
+              }`}>
+                {micStatus === 'testing' ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : micStatus === 'ok' ? (
+                  <Check className="w-8 h-8" />
+                ) : (
+                  <Mic className="w-8 h-8" />
+                )}
+              </div>
+
+              <div>
+                <h3 className="font-bold text-base text-[var(--text-primary)]">
+                  {micStatus === 'ok'
+                    ? 'Microphone Working Great!'
+                    : micStatus === 'testing'
+                    ? 'Listening… Speak into your phone'
+                    : micStatus === 'fail'
+                    ? 'Microphone Permission Denied'
+                    : 'Test Your Microphone'}
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-[260px]">
+                  {micStatus === 'ok'
+                    ? 'Your microphone is detected and ready for voice calls.'
+                    : micStatus === 'fail'
+                    ? 'Please grant microphone access in Telegram / iOS device settings.'
+                    : 'Tap the button below to test your audio input.'}
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                className="w-full font-bold mt-2"
+                onClick={testMic}
+                disabled={micStatus === 'testing'}
+              >
+                {micStatus === 'testing' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Testing…
+                  </>
+                ) : micStatus === 'ok' ? (
+                  'Test Again'
+                ) : (
+                  'Start Mic Test'
+                )}
+              </Button>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

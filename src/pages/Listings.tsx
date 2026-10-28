@@ -20,9 +20,11 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   UserCircle,
+  ArrowLeft,
   X,
 } from 'lucide-react';
 import useAppStore from '../store/useAppStore';
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton';
 import { useT } from '../i18n';
 import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import {
@@ -182,6 +184,13 @@ export default function Listings(_props: ListingsProps) {
     () => myListings.filter((item) => item.status === 'pending').length,
     [myListings]
   );
+
+  useTelegramBackButton(() => {
+    if (isModalOpen) {
+      tapHaptic('light');
+      setIsModalOpen(false);
+    }
+  });
 
   useListingViews(
     listings.map((item) => item.id),
@@ -436,7 +445,7 @@ export default function Listings(_props: ListingsProps) {
   ];
 
   return (
-    <div className="listings-page">
+    <div className={isModalOpen ? "listings-form-page" : "listings-page"}>
       {/* Toast Notification */}
       {toastMsg && (
         <div className={`listings-toast listings-toast--${toastMsg.type}`} role="status">
@@ -445,8 +454,172 @@ export default function Listings(_props: ListingsProps) {
         </div>
       )}
 
-      {/* Header */}
-      <div className="listings-page__header">
+      {isModalOpen ? (
+        <>
+          {/* Full-Page Form Header */}
+          <div className="listings-form-page__topbar">
+            <button
+              type="button"
+              className="listings-form-page__back-btn"
+              onClick={() => {
+                tapHaptic('light');
+                setIsModalOpen(false);
+              }}
+              aria-label={t('listings.form.cancel')}
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h2 className="listings-form-page__title">
+              {editingItem ? t('listings.form.editTitle') : t('listings.form.newTitle')}
+            </h2>
+            <div style={{ width: 40 }} />
+          </div>
+
+          {/* Full-Page Scrollable Form Body */}
+          <form onSubmit={handleSubmitModal} className="listings-form-page__body">
+            {/* Type Selection */}
+            <div className="form-group">
+              <label className="form-label">{t('listings.form.type')}</label>
+              <div className="type-selector">
+                {(['partner', 'teacher', 'student'] as ListingType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`type-btn ${formType === type ? 'active' : ''}`}
+                    aria-pressed={formType === type}
+                    onClick={() => { selectionHaptic(); setFormType(type); }}
+                  >
+                    {type === 'partner' && <Users size={18} />}
+                    {type === 'teacher' && <GraduationCap size={18} />}
+                    {type === 'student' && <BookOpen size={18} />}
+                    <span>
+                      {type === 'partner' && t('listings.form.typePartner')}
+                      {type === 'teacher' && t('listings.form.typeTeacher')}
+                      {type === 'student' && t('listings.form.typeStudent')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="listing-title">{t('listings.form.title')}</label>
+              <input
+                id="listing-title"
+                type="text"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                placeholder={t('listings.form.titlePlaceholder')}
+                minLength={3}
+                maxLength={120}
+                className="form-input"
+                required
+              />
+            </div>
+
+            {/* Description Input */}
+            <div className="form-group">
+              <div className="form-label-row">
+                <label className="form-label" htmlFor="listing-desc">{t('listings.form.description')}</label>
+                <span className={`form-counter ${formDescription.trim().length < 10 ? 'short' : ''}`}>
+                  {formDescription.trim().length < 10
+                    ? t('listings.form.charsLeft', { n: 10 - formDescription.trim().length })
+                    : `${formDescription.length}/2000`}
+                </span>
+              </div>
+              <textarea
+                id="listing-desc"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder={t('listings.form.descriptionPlaceholder')}
+                minLength={10}
+                maxLength={2000}
+                rows={4}
+                className="form-textarea"
+                required
+              />
+            </div>
+
+            {/* Requirements row */}
+            <div className="form-row">
+              <div className="form-group flex-1">
+                <label className="form-label" htmlFor="listing-level">{t('listings.form.level')}</label>
+                <select
+                  id="listing-level"
+                  value={formTargetLevel}
+                  onChange={(e) => setFormTargetLevel(e.target.value)}
+                  className="form-select"
+                >
+                  {LEVELS.map((level) => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                  <option value="Any level">{t('listings.form.levelAny')}</option>
+                </select>
+              </div>
+
+              <div className="form-group flex-1">
+                <label className="form-label" htmlFor="listing-gender">{t('listings.form.gender')}</label>
+                <select
+                  id="listing-gender"
+                  value={formGender}
+                  onChange={(e) => setFormGender(e.target.value)}
+                  className="form-select"
+                >
+                  <option value="any">{t('listings.form.genderAny')}</option>
+                  <option value="male">{t('listings.form.genderMale')}</option>
+                  <option value="female">{t('listings.form.genderFemale')}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="listing-contact">{t('listings.form.contact')}</label>
+              <input
+                id="listing-contact"
+                type="text"
+                value={formContact}
+                onChange={(e) => setFormContact(e.target.value)}
+                placeholder={t('listings.form.contactPlaceholder')}
+                className="form-input"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                required
+              />
+              <span className="form-hint">{t('listings.form.contactHint')}</span>
+            </div>
+
+            {/* Notice Box */}
+            <div className="modal-notice">
+              <ShieldCheck size={18} className="modal-notice__icon" />
+              <span>{t('listings.form.notice')}</span>
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setIsModalOpen(false)}
+              >
+                {t('listings.form.cancel')}
+              </button>
+              <button type="submit" disabled={submitting} className="btn-submit">
+                {submitting
+                  ? t('listings.form.sending')
+                  : editingItem
+                    ? t('listings.form.update')
+                    : t('listings.form.submit')}
+              </button>
+            </div>
+          </form>
+        </>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="listings-page__header">
         <div className="listings-page__header-top">
           <div className="listings-page__header-title-wrap">
             <h1 className="listings-page__title">{t('listings.title')}</h1>
@@ -767,174 +940,36 @@ export default function Listings(_props: ListingsProps) {
         )}
       </div>
 
-      {/* Modal Sheet for Creating / Editing Announcement */}
-      {isModalOpen && (
-        <div
-          className="listings-modal-overlay"
-          // A tap outside closes an empty sheet. Once there is something written in it,
-          // a stray tap must not be able to throw it away.
-          onClick={() => {
-            if (!formTitle.trim() && !formDescription.trim()) setIsModalOpen(false);
-          }}
-        >
-          <div className="listings-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <div className="listings-modal__header">
-              <h3>{editingItem ? t('listings.form.editTitle') : t('listings.form.newTitle')}</h3>
-              <button
-                type="button"
-                className="listings-modal__close"
-                aria-label={t('listings.form.cancel')}
-                onClick={() => setIsModalOpen(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitModal} className="listings-modal__body">
-              {/* Type Selection */}
-              <div className="form-group">
-                <label className="form-label">{t('listings.form.type')}</label>
-                <div className="type-selector">
-                  {(['partner', 'teacher', 'student'] as ListingType[]).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      className={`type-btn ${formType === type ? 'active' : ''}`}
-                      aria-pressed={formType === type}
-                      onClick={() => { selectionHaptic(); setFormType(type); }}
-                    >
-                      {type === 'partner' && <Users size={18} />}
-                      {type === 'teacher' && <GraduationCap size={18} />}
-                      {type === 'student' && <BookOpen size={18} />}
-                      <span>
-                        {type === 'partner' && t('listings.form.typePartner')}
-                        {type === 'teacher' && t('listings.form.typeTeacher')}
-                        {type === 'student' && t('listings.form.typeStudent')}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Title Input */}
-              <div className="form-group">
-                <label className="form-label" htmlFor="listing-title">{t('listings.form.title')}</label>
-                <input
-                  id="listing-title"
-                  type="text"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder={t('listings.form.titlePlaceholder')}
-                  minLength={3}
-                  maxLength={120}
-                  className="form-input"
-                  required
-                />
-              </div>
-
-              {/* Description Input */}
-              <div className="form-group">
-                <div className="form-label-row">
-                  <label className="form-label" htmlFor="listing-desc">{t('listings.form.description')}</label>
-                  {/* The 10-character minimum used to be discoverable only by failing. */}
-                  <span className={`form-counter ${formDescription.trim().length < 10 ? 'short' : ''}`}>
-                    {formDescription.trim().length < 10
-                      ? t('listings.form.charsLeft', { n: 10 - formDescription.trim().length })
-                      : `${formDescription.length}/2000`}
-                  </span>
-                </div>
-                <textarea
-                  id="listing-desc"
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder={t('listings.form.descriptionPlaceholder')}
-                  minLength={10}
-                  maxLength={2000}
-                  rows={4}
-                  className="form-textarea"
-                  required
-                />
-              </div>
-
-              {/* Requirements row */}
-              <div className="form-row">
-                <div className="form-group flex-1">
-                  <label className="form-label" htmlFor="listing-level">{t('listings.form.level')}</label>
-                  <select
-                    id="listing-level"
-                    value={formTargetLevel}
-                    onChange={(e) => setFormTargetLevel(e.target.value)}
-                    className="form-select"
-                  >
-                    {LEVELS.map((level) => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                    <option value="Any level">{t('listings.form.levelAny')}</option>
-                  </select>
-                </div>
-
-                <div className="form-group flex-1">
-                  <label className="form-label" htmlFor="listing-gender">{t('listings.form.gender')}</label>
-                  <select
-                    id="listing-gender"
-                    value={formGender}
-                    onChange={(e) => setFormGender(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="any">{t('listings.form.genderAny')}</option>
-                    <option value="male">{t('listings.form.genderMale')}</option>
-                    <option value="female">{t('listings.form.genderFemale')}</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Contact Info */}
-              <div className="form-group">
-                <label className="form-label" htmlFor="listing-contact">{t('listings.form.contact')}</label>
-                <input
-                  id="listing-contact"
-                  type="text"
-                  value={formContact}
-                  onChange={(e) => setFormContact(e.target.value)}
-                  placeholder={t('listings.form.contactPlaceholder')}
-                  className="form-input"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  required
-                />
-                <span className="form-hint">{t('listings.form.contactHint')}</span>
-              </div>
-
-              {/* Notice Box */}
-              <div className="modal-notice">
-                <ShieldCheck size={18} className="modal-notice__icon" />
-                <span>{t('listings.form.notice')}</span>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  {t('listings.form.cancel')}
-                </button>
-                <button type="submit" disabled={submitting} className="btn-submit">
-                  {submitting
-                    ? t('listings.form.sending')
-                    : editingItem
-                      ? t('listings.form.update')
-                      : t('listings.form.submit')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        </>
       )}
 
       <style>{`
+        .listings-form-page {
+          display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg);
+        }
+        .listings-form-page__topbar {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
+          background: var(--chrome-bg-soft); backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10;
+        }
+        .listings-form-page__back-btn {
+          width: 40px; height: 40px; border-radius: var(--radius-full);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--text-primary); background: transparent; border: none;
+          transition: background 0.15s ease; cursor: pointer;
+        }
+        .listings-form-page__back-btn:active { background: var(--surface-2); }
+        .listings-form-page__title {
+          font-size: var(--text-base); font-weight: var(--weight-heavy); color: var(--text-primary);
+          margin: 0;
+        }
+        .listings-form-page__body {
+          flex: 1; overflow-y: auto;
+          padding: var(--space-4) var(--space-4) calc(100px + env(safe-area-inset-bottom, 0px));
+          display: flex; flex-direction: column; gap: var(--space-4);
+        }
+
         .listings-page {
           display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg);
           position: relative;
