@@ -88,6 +88,7 @@ export default function SessionRow({ session: s }: SessionRowProps) {
           background: var(--bg-secondary);
           border-radius: var(--radius-md);
           border: 1px solid var(--border);
+          box-shadow: var(--shadow-sm);
           transition: background var(--t), transform var(--t);
           cursor: default;
         }

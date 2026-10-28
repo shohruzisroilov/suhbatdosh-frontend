@@ -1010,11 +1010,11 @@ export default function Listings(_props: ListingsProps) {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 16px; border-radius: var(--radius-md);
           background: var(--grad-primary);
-          color: #FFFFFF; border: none; font-size: 12px; font-weight: var(--weight-bold);
-          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35); cursor: pointer;
+          color: #FFFFFF; border: none; font-size: 13px; font-weight: var(--weight-bold);
+          box-shadow: 0 4px 14px rgba(40, 120, 240, 0.25); cursor: pointer;
           transition: transform 0.15s var(--ease-out);
         }
-        .listings-page__add-btn:active { transform: scale(0.95); }
+        .listings-page__add-btn:active { transform: scale(0.96); }
 
         /* Tabs */
         .listings-tabs {
@@ -1023,14 +1023,17 @@ export default function Listings(_props: ListingsProps) {
         }
         .listings-tabs::-webkit-scrollbar { display: none; }
         .listings-tab {
-          padding: 6px 14px; border-radius: var(--radius-full);
+          padding: 7px 15px; border-radius: var(--radius-full);
           background: var(--bg-secondary); border: 1px solid var(--border);
           color: var(--text-secondary); font-size: 12px; font-weight: var(--weight-semi);
           white-space: nowrap; cursor: pointer; transition: all 0.2s var(--ease-out);
         }
+        .listings-tab:hover {
+          color: var(--primary);
+        }
         .listings-tab.active {
-          background: var(--primary); color: var(--primary-contrast); border-color: var(--primary);
-          font-weight: var(--weight-bold); box-shadow: 0 2px 10px rgba(0, 168, 255, 0.25);
+          background: var(--primary); color: #FFFFFF; border-color: var(--primary);
+          font-weight: var(--weight-bold); box-shadow: 0 2px 8px rgba(40, 120, 240, 0.25);
         }
 
         /* Search + filters */
@@ -1143,21 +1146,21 @@ export default function Listings(_props: ListingsProps) {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700;
         }
-        .listing-tag--partner { background: var(--primary-subtle); color: var(--primary); border: 1px solid rgba(0, 168, 255, 0.3); }
-        .listing-tag--teacher { background: rgba(168, 85, 247, 0.14); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
-        .listing-tag--student { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .listing-tag--partner { background: var(--primary-subtle); color: var(--primary); border: 1px solid rgba(40, 120, 240, 0.25); }
+        .listing-tag--teacher { background: rgba(168, 85, 247, 0.12); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.25); }
+        .listing-tag--student { background: var(--soft-green); color: var(--success); border: 1px solid rgba(33, 184, 135, 0.25); }
 
         /* Status badge */
         .status-badge {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 3px 8px; border-radius: var(--radius-xs); font-size: 10px; font-weight: 700;
         }
-        .status-badge--pending { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-        .status-badge--approved { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-badge--pending { background: var(--soft-yellow); color: #B45309; border: 1px solid rgba(255, 200, 87, 0.35); }
+        .status-badge--approved { background: var(--soft-green); color: var(--success); border: 1px solid rgba(33, 184, 135, 0.3); }
         .status-badge--rejected { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
         .status-badge--inactive { background: var(--surface-2); color: var(--text-tertiary); border: 1px solid var(--border); }
 
-        .listing-card__title { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.3; }
+        .listing-card__title { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.35; }
         .listing-card__desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; white-space: pre-line; }
 
         .listing-card__reject-note {
@@ -1168,7 +1171,7 @@ export default function Listings(_props: ListingsProps) {
 
         .listing-card__pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .pill {
-          padding: 3px 8px; border-radius: var(--radius-xs); background: var(--bg);
+          padding: 4px 9px; border-radius: var(--radius-sm); background: var(--bg);
           border: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-secondary);
         }
         .pill--views { margin-left: auto; display: flex; align-items: center; gap: 4px; color: var(--text-tertiary); }
@@ -1180,7 +1183,7 @@ export default function Listings(_props: ListingsProps) {
           padding: 10px; border-radius: var(--radius-md);
           background: var(--grad-primary);
           color: #fff; border: none; font-size: 13px; font-weight: 700; cursor: pointer;
-          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.3); transition: transform 0.15s var(--ease-out);
+          box-shadow: 0 4px 14px rgba(40, 120, 240, 0.25); transition: transform 0.15s var(--ease-out);
         }
         .btn-contact:active { transform: scale(0.98); }
 
@@ -1191,7 +1194,7 @@ export default function Listings(_props: ListingsProps) {
           background: var(--bg); border: 1px solid var(--border); color: var(--text-tertiary);
           font-size: 11px; font-weight: 700; cursor: pointer;
         }
-        .btn-toggle-active.active { background: var(--success-bg); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
+        .btn-toggle-active.active { background: var(--soft-green); color: var(--success); border-color: rgba(33, 184, 135, 0.3); }
         .btn-icon {
           width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border);
           background: var(--bg); color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
@@ -1202,7 +1205,7 @@ export default function Listings(_props: ListingsProps) {
         /* Modal Overlay & Sheet */
         .listings-modal-overlay {
           position: fixed; inset: 0; z-index: 1000;
-          background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);
+          background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px);
           display: flex; align-items: flex-end; justify-content: center;
           animation: fadeIn 0.2s var(--ease-out);
         }
@@ -1213,6 +1216,7 @@ export default function Listings(_props: ListingsProps) {
           background: var(--bg-secondary); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl);
           border: 1px solid var(--border); border-bottom: none;
           padding: 20px; display: flex; flex-direction: column; gap: 16px;
+          box-shadow: var(--shadow-lg);
           animation: slideUp 0.25s var(--ease-out);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -1255,7 +1259,7 @@ export default function Listings(_props: ListingsProps) {
 
         .modal-notice {
           padding: 10px 12px; border-radius: var(--radius-sm); background: var(--primary-subtle);
-          border: 1px solid rgba(0, 168, 255, 0.25); color: var(--primary); font-size: 11px; line-height: 1.4;
+          border: 1px solid rgba(40, 120, 240, 0.25); color: var(--primary); font-size: 11px; line-height: 1.4;
           display: flex; align-items: flex-start; gap: 8px;
         }
         .modal-notice__icon { flex-shrink: 0; margin-top: 2px; }
@@ -1268,7 +1272,7 @@ export default function Listings(_props: ListingsProps) {
         .btn-submit {
           flex: 2; padding: 12px; border-radius: var(--radius-md); border: none;
           background: var(--grad-primary); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer;
-          box-shadow: 0 4px 14px rgba(0, 168, 255, 0.35);
+          box-shadow: 0 4px 14px rgba(40, 120, 240, 0.25);
         }
 
         .listing-card__desc.clamped {

@@ -103,8 +103,8 @@ export default function Onboarding() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => pickLevel(n)}
-                    className={`w-full text-left p-3.5 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
+                    className={`w-full text-left p-3.5 cursor-pointer transition-all active:scale-[0.99] border rounded-2xl ${
+                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-secondary)]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -118,8 +118,8 @@ export default function Onboarding() {
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
                           active
-                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
-                            : 'border-[var(--border-strong)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[#FFFFFF]'
+                            : 'border-[var(--border)]'
                         }`}
                       >
                         {active && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -153,8 +153,8 @@ export default function Onboarding() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => pickGender(g.v)}
-                    className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.99] border ${
-                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border-strong)] bg-[var(--surface-2)]'
+                    className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.99] border rounded-2xl ${
+                      active ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-secondary)]'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
@@ -165,8 +165,8 @@ export default function Onboarding() {
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
                           active
-                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
-                            : 'border-[var(--border-strong)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[#FFFFFF]'
+                            : 'border-[var(--border)]'
                         }`}
                       >
                         {active && <Check className="h-3 w-3" strokeWidth={3} />}

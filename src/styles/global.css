@@ -9,95 +9,89 @@
 @tailwind utilities;
 
 :root {
-  /* The browser has to be told which way the theme runs, or it draws every native
-     control — select buttons and their dropdown panels, scrollbars, autofill, date
-     pickers — in its light default. That is why a <select> showed up as a pale box
-     with near-invisible text on these dark surfaces.
-     useAuth() puts .light or .dark on <html> from Telegram's colorScheme, so this
-     pairs with the .light override below. */
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* ─── Color Palette (Dark Theme Default) ──────────────────────────────────── */
-  --bg:             #090D14;   /* Deep midnight background */
-  --bg-secondary:   #121824;   /* Surface cards */
-  --surface-2:      #1A2232;   /* Inset panels & inputs */
-  --surface-3:      #222C3E;   /* Hover / active highlights */
+  /* ─── Color Palette (Design Direction: Friendly, Modern & Clean) ─────────── */
+  --bg:               #F7F9FC;   /* Main background */
+  --surface:          #FFFFFF;   /* Clean white surface */
+  --bg-secondary:     #FFFFFF;   /* Card surface */
+  --surface-2:        #F0F3F8;   /* Muted background / inset panels */
+  --surface-3:        #E6EBF2;   /* Hover / active highlights */
+  --surface-inset:    #F0F3F8;
+  --surface-hover:    #EAF2FF;
 
-  /* Standard Brand Design Tokens (Section 2) */
-  --primary:          #00A8FF;   /* Main official brand color */
-  --primary-hover:    #0096E6;   /* Brand hover state */
-  --primary-active:   #0085CC;   /* Brand active / pressed state */
-  --primary-subtle:   rgba(0, 168, 255, 0.12); /* Brand subtle background */
-  --primary-contrast: #FFFFFF;   /* Readable foreground on brand */
-  --background:       #090D14;
-  --surface:          #121824;
-  --surface-inset:    #1A2232;
-  --surface-hover:    #222C3E;
+  /* Primary Blue */
+  --primary:          #2878F0;
+  --primary-hover:    #1F66D0;
+  --primary-active:   #1A55B0;
+  --primary-subtle:   #EAF2FF;   /* Soft blue background */
+  --primary-contrast: #FFFFFF;
 
-  --border:         rgba(255, 255, 255, 0.08);
-  --border-strong:  rgba(255, 255, 255, 0.16);
+  --btn-bg:           #2878F0;
+  --btn-bg-hover:     #1F66D0;
+  --btn-text:         #FFFFFF;
+  --link-color:       #2878F0;
 
-  /* Translucent chrome (bottom nav, sticky header). Separate from --bg-secondary
-     because these sit over scrolling content and need alpha for the blur to read. */
-  --chrome-bg:      rgba(9, 13, 20, 0.92);
-  --chrome-bg-soft: rgba(9, 13, 20, 0.85);
-  --glass-bg:       rgba(18, 24, 36, 0.70);
+  /* Soft Backgrounds & Accents */
+  --soft-blue:        #EAF2FF;
+  --soft-green:       #E6F8F0;
+  --soft-yellow:      #FFF5DE;
 
-  --text-primary:   #F8FAFC;   /* Ultra clear white */
-  --text-secondary: #94A3B8;   /* Soft slate text */
-  --text-tertiary:  #64748B;   /* Dim caption text */
+  /* Typography Colors */
+  --text-primary:     #182338;
+  --text-secondary:   #6B778C;
+  --text-tertiary:    #9AA5B8;
 
-  /* Primary Brand Accent (Electric Azure / Telegram Cyan) */
-  --btn-bg:         #00A8FF;
-  --btn-bg-hover:   #0096E6;
-  --btn-text:       #FFFFFF;
-  --link-color:     #00A8FF;
+  /* Status & Accents */
+  --success:          #21B887;
+  --success-bg:       #E6F8F0;
 
-  /* Warm Accent (Streak, Rating, Gold Ranks) */
-  --accent:         #FF9F0A;
-  --rating:         #F59E0B;
+  --accent:           #FFC857;
+  --accent-bg:        #FFF5DE;
+  --rating:           #FFC857;
+  --rating-bg:        #FFF5DE;
 
-  /* Status Colors & Tokens */
-  --success:        #10B981;
-  --warning:        #F59E0B;
-  --danger:         #FF453A;
-  --error:          #FF453A;
-  --info:           #00A8FF;
+  --warning:          #F59E0B;
+  --warning-bg:       #FFF5DE;
 
-  --success-bg:     rgba(16, 185, 129, 0.14);
-  --warning-bg:     rgba(245, 158, 11, 0.14);
-  --danger-bg:      rgba(255, 69, 58, 0.14);
-  --error-bg:       rgba(255, 69, 58, 0.14);
-  --info-bg:        rgba(0, 168, 255, 0.14);
-  --rating-bg:      rgba(245, 158, 11, 0.14);
-  --accent-bg:      rgba(255, 159, 10, 0.14);
-  --btn-bg-soft:    rgba(0, 168, 255, 0.14);
+  --danger:           #FF453A;
+  --danger-bg:        #FFEBEA;
+  --error:            #FF453A;
+  --error-bg:         #FFEBEA;
+
+  --info:             #2878F0;
+  --info-bg:          #EAF2FF;
+
+  --border:           #E6EBF2;
+  --border-strong:    #D5DDE8;
+
+  /* Translucent chrome */
+  --chrome-bg:        rgba(255, 255, 255, 0.92);
+  --chrome-bg-soft:   rgba(255, 255, 255, 0.85);
+  --glass-bg:         rgba(255, 255, 255, 0.80);
 
   /* Gradients */
-  --grad-primary:   linear-gradient(135deg, #00A8FF 0%, #0066FF 100%);
-  --grad-hero:      linear-gradient(135deg, rgba(0, 168, 255, 0.18) 0%, rgba(0, 102, 255, 0.05) 100%);
-  --grad-ai:        linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
-  --grad-streak:    linear-gradient(135deg, #FF9F0A 0%, #FF6B00 100%);
-  --grad-gold:      linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  --grad-silver:    linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
-  --grad-bronze:    linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+  --grad-primary:     linear-gradient(135deg, #2878F0 0%, #1F66D0 100%);
+  --grad-hero:        linear-gradient(135deg, #2878F0 0%, #1F66D0 60%, #1754B8 100%);
+  --grad-ai:          linear-gradient(135deg, #2878F0 0%, #00B4D8 100%);
+  --grad-streak:      linear-gradient(135deg, #FFC857 0%, #FF9F0A 100%);
+  --grad-gold:        linear-gradient(135deg, #FFD700 0%, #FFC857 100%);
+  --grad-silver:      linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
+  --grad-bronze:      linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
 
   /* ─── Typography ───────────────────────────────────────────────────────── */
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Bricolage Grotesque', var(--font-body);
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* 12px is the floor for anything a person has to read. --text-2xs exists only
-     for non-essential ornament (nav labels, rank superscripts) where the meaning is
-     also carried by an icon or position. */
   --text-2xs:  11px;
   --text-xs:   12px;
   --text-sm:   13px;
   --text-base: 15px;
   --text-md:   17px;
-  --text-lg:   21px;
-  --text-xl:   27px;
-  --text-2xl:  34px;
-  --text-3xl:  54px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  30px;
+  --text-3xl:  42px;
 
   --weight-normal: 400;
   --weight-medium: 500;
@@ -105,7 +99,7 @@
   --weight-bold:   700;
   --weight-heavy:  800;
 
-  /* ─── Spacing (4px system) ─────────────────────────────────────────────── */
+  /* ─── Spacing (8px based system) ───────────────────────────────────────── */
   --space-0-5:  2px;
   --space-1:    4px;
   --space-1-5:  6px;
@@ -120,14 +114,15 @@
   --radius-xs:   6px;
   --radius-sm:   10px;
   --radius-md:   14px;
-  --radius-lg:   18px;
+  --radius-lg:   16px;
   --radius-xl:   24px;
   --radius-full: 9999px;
 
   /* ─── Elevation & Shadows ──────────────────────────────────────────────── */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 25px rgba(0, 168, 255, 0.3);
+  --shadow-sm: 0 1px 3px rgba(24, 35, 56, 0.05), 0 1px 2px rgba(24, 35, 56, 0.03);
+  --shadow-md: 0 4px 16px -2px rgba(24, 35, 56, 0.08), 0 2px 6px -1px rgba(24, 35, 56, 0.04);
+  --shadow-lg: 0 12px 32px -4px rgba(24, 35, 56, 0.12);
+  --shadow-glow: 0 0 25px rgba(40, 120, 240, 0.25);
 
   /* ─── Transitions & Motion ─────────────────────────────────────────────── */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
@@ -141,66 +136,70 @@
   --icon-lg: 24px;
 }
 
-/* Light Mode Overrides */
-.light {
-  color-scheme: light;
+/* Dark Mode Overrides (for Telegram Dark Scheme) */
+.dark {
+  color-scheme: dark;
 
-  --bg:             #F8FAFC;
-  --bg-secondary:   #FFFFFF;
-  --surface-2:      #F1F5F9;
-  --surface-3:      #E2E8F0;
+  --bg:               #0B0F19;
+  --surface:          #131B2A;
+  --bg-secondary:     #131B2A;
+  --surface-2:        #1A2438;
+  --surface-3:        #222F48;
+  --surface-inset:    #1A2438;
+  --surface-hover:    #222F48;
 
-  --primary:          #0096E6;
-  --primary-hover:    #0085CC;
-  --primary-active:   #0072B3;
-  --primary-subtle:   rgba(0, 150, 230, 0.12);
+  --primary:          #2878F0;
+  --primary-hover:    #3E8BFF;
+  --primary-active:   #1F66D0;
+  --primary-subtle:   rgba(40, 120, 240, 0.16);
   --primary-contrast: #FFFFFF;
-  --background:       #F8FAFC;
-  --surface:          #FFFFFF;
-  --surface-inset:    #F1F5F9;
-  --surface-hover:    #E2E8F0;
 
-  --border:         rgba(15, 23, 42, 0.08);
-  --border-strong:  rgba(15, 23, 42, 0.16);
+  --btn-bg:           #2878F0;
+  --btn-bg-hover:     #3E8BFF;
+  --btn-text:         #FFFFFF;
+  --link-color:       #2878F0;
 
-  --chrome-bg:      rgba(248, 250, 252, 0.92);
-  --chrome-bg-soft: rgba(248, 250, 252, 0.85);
-  --glass-bg:       rgba(255, 255, 255, 0.70);
+  --soft-blue:        rgba(40, 120, 240, 0.16);
+  --soft-green:       rgba(33, 184, 135, 0.16);
+  --soft-yellow:      rgba(255, 200, 87, 0.16);
 
-  --text-primary:   #0F172A;
-  --text-secondary: #475569;
-  --text-tertiary:  #94A3B8;
+  --text-primary:     #F8FAFC;
+  --text-secondary:   #94A3B8;
+  --text-tertiary:    #64748B;
 
-  --btn-bg:         #0096E6;
-  --btn-bg-hover:   #0085CC;
-  --btn-text:       #FFFFFF;
-  --link-color:     #0096E6;
+  --success:          #21B887;
+  --success-bg:       rgba(33, 184, 135, 0.16);
 
-  --accent:         #EA580C;
-  --rating:         #D97706;
+  --accent:           #FFC857;
+  --accent-bg:        rgba(255, 200, 87, 0.16);
+  --rating:           #FFC857;
+  --rating-bg:        rgba(255, 200, 87, 0.16);
 
-  --success:        #059669;
-  --warning:        #B45309;
-  --danger:         #DC2626;
-  --error:          #DC2626;
-  --info:           #0096E6;
+  --warning:          #F59E0B;
+  --warning-bg:       rgba(245, 158, 11, 0.16);
 
-  --success-bg:     rgba(5, 150, 105, 0.12);
-  --warning-bg:     rgba(217, 119, 6, 0.12);
-  --danger-bg:      rgba(220, 38, 38, 0.12);
-  --error-bg:       rgba(220, 38, 38, 0.12);
-  --info-bg:        rgba(0, 150, 230, 0.12);
-  --rating-bg:      rgba(217, 119, 6, 0.12);
-  --accent-bg:      rgba(234, 88, 12, 0.12);
-  --btn-bg-soft:    rgba(0, 150, 230, 0.12);
+  --danger:           #FF453A;
+  --danger-bg:        rgba(255, 69, 58, 0.16);
+  --error:            #FF453A;
+  --error-bg:         rgba(255, 69, 58, 0.16);
 
-  --grad-primary:   linear-gradient(135deg, #0096E6 0%, #0052CC 100%);
-  --grad-hero:      linear-gradient(135deg, rgba(0, 150, 230, 0.1) 0%, rgba(0, 82, 204, 0.03) 100%);
-  --grad-ai:        linear-gradient(135deg, #0091C2 0%, #0055CC 100%);
+  --info:             #2878F0;
+  --info-bg:          rgba(40, 120, 240, 0.16);
 
-  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.10);
-  --shadow-glow: 0 0 25px rgba(0, 150, 230, 0.2);
+  --border:           rgba(255, 255, 255, 0.08);
+  --border-strong:    rgba(255, 255, 255, 0.16);
+
+  --chrome-bg:        rgba(11, 15, 25, 0.92);
+  --chrome-bg-soft:   rgba(11, 15, 25, 0.85);
+  --glass-bg:         rgba(19, 27, 42, 0.75);
+
+  --grad-primary:     linear-gradient(135deg, #2878F0 0%, #1F66D0 100%);
+  --grad-hero:        linear-gradient(135deg, #2878F0 0%, #1F66D0 60%, #1754B8 100%);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 25px rgba(40, 120, 240, 0.3);
 }
 
 /* Reset & Base Styles */
@@ -284,6 +283,7 @@ h1, h2, h3 {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--t), border-color var(--t), box-shadow var(--t);
 }
 .card--glass {
@@ -292,13 +292,14 @@ h1, h2, h3 {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-strong);
 }
-.card--inset { background: var(--surface-2); }
+.card--inset { background: var(--surface-2); box-shadow: none; }
 .card--interactive {
   cursor: pointer;
 }
 .card--interactive:active {
   transform: scale(0.985);
-  border-color: var(--btn-bg);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
 }
 
 .eyebrow {
@@ -312,29 +313,30 @@ h1, h2, h3 {
 /* ─── Buttons ─────────────────────────────────────────────────────────────── */
 .btn-primary {
   display: flex; align-items: center; justify-content: center; gap: var(--space-2);
-  width: 100%; min-height: 52px; padding: var(--space-3) var(--space-5);
+  width: 100%; min-height: 50px; padding: var(--space-3) var(--space-5);
   background: var(--grad-primary); color: var(--btn-text);
   border-radius: var(--radius-md);
   font-size: var(--text-base); font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
-  box-shadow: 0 4px 20px rgba(0, 168, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(40, 120, 240, 0.28);
   transition: transform var(--t), opacity var(--t), box-shadow var(--t);
   user-select: none;
 }
-.btn-primary:active { transform: scale(0.975); opacity: 0.92; box-shadow: 0 2px 10px rgba(0, 168, 255, 0.15); }
-.btn-primary:disabled { opacity: 0.4; pointer-events: none; box-shadow: none; }
+.btn-primary:active { transform: scale(0.975); opacity: 0.94; box-shadow: 0 2px 8px rgba(40, 120, 240, 0.15); }
+.btn-primary:disabled { opacity: 0.45; pointer-events: none; box-shadow: none; }
 
 .btn-secondary {
   display: flex; align-items: center; justify-content: center; gap: var(--space-2);
   width: 100%; min-height: 50px; padding: var(--space-3) var(--space-5);
   background: var(--bg-secondary); color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   font-size: var(--text-base); font-weight: var(--weight-semi);
-  transition: transform var(--t), opacity var(--t), background var(--t);
+  transition: transform var(--t), opacity var(--t), background var(--t), border-color var(--t);
 }
-.btn-secondary:active { transform: scale(0.975); background: var(--surface-2); }
-.btn-secondary:disabled { opacity: 0.4; pointer-events: none; }
+.btn-secondary:active { transform: scale(0.975); background: var(--surface-2); border-color: var(--border-strong); }
+.btn-secondary:disabled { opacity: 0.45; pointer-events: none; }
 
 .btn-quiet, .btn-ghost {
   display: flex; align-items: center; justify-content: center; gap: var(--space-1-5);

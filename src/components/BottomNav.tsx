@@ -79,41 +79,42 @@ export default function BottomNav({ active }: BottomNavProps) {
           -webkit-backdrop-filter: blur(20px);
           padding-bottom: env(safe-area-inset-bottom, 0px);
           flex-shrink: 0;
+          box-shadow: 0 -2px 10px rgba(24, 35, 56, 0.03);
         }
         .bottom-nav__inner {
           display: flex; align-items: center; justify-content: space-around;
-          height: 64px; max-width: 480px; margin: 0 auto;
+          height: 62px; max-width: 480px; margin: 0 auto;
         }
         .bottom-nav__item {
           flex: 1; height: 100%;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 4px; color: var(--text-tertiary);
+          gap: 3px; color: var(--text-secondary);
           position: relative;
-          transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
+          transition: color 0.18s var(--ease-out), transform 0.12s var(--ease-out);
         }
-        .bottom-nav__item:active { transform: scale(0.88); }
-        .bottom-nav__item.active { color: var(--primary); }
+        .bottom-nav__item:active { transform: scale(0.90); }
+        .bottom-nav__item.active { color: var(--primary); font-weight: var(--weight-bold); }
 
         .bottom-nav__icon-wrap {
           position: relative;
           display: flex; align-items: center; justify-content: center;
-          width: 44px; height: 32px;
-          border-radius: var(--radius-sm);
+          width: 46px; height: 30px;
+          border-radius: var(--radius-full);
           transition: background 0.2s var(--ease-out);
         }
         .bottom-nav__item.active .bottom-nav__icon-wrap {
           background: var(--primary-subtle);
         }
         .bottom-nav__active-glow {
-          position: absolute; inset: -4px;
-          border-radius: var(--radius-sm);
-          background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 75%);
+          position: absolute; inset: 0;
+          border-radius: var(--radius-full);
+          background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 80%);
           pointer-events: none;
         }
         .bottom-nav__label {
-          font-size: var(--text-2xs); font-weight: var(--weight-bold);
-          letter-spacing: 0.03em; line-height: 1;
-          transition: color 0.2s var(--ease-out);
+          font-size: 11px; font-weight: var(--weight-semibold, 600);
+          letter-spacing: 0.01em; line-height: 1.1;
+          transition: color 0.18s var(--ease-out);
         }
       `}</style>
     </nav>

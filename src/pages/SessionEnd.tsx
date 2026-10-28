@@ -228,10 +228,10 @@ export default function SessionEnd() {
         .end-ico {
           width: 68px; height: 68px; border-radius: var(--radius-full);
           display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(135deg, var(--primary-subtle), rgba(0, 102, 255, 0.25));
-          border: 1px solid rgba(0, 168, 255, 0.25);
+          background: var(--primary-subtle);
+          border: 1px solid rgba(40, 120, 240, 0.25);
           color: var(--primary);
-          box-shadow: 0 8px 24px var(--primary-subtle);
+          box-shadow: 0 4px 16px rgba(40, 120, 240, 0.2);
         }
         .end-head h2 {
           font-family: var(--font-display);
@@ -243,6 +243,7 @@ export default function SessionEnd() {
           width: 100%; background: var(--bg-secondary);
           border: 1px solid var(--border); border-radius: var(--radius-lg);
           padding: var(--space-1) 0; display: flex; flex-direction: column;
+          box-shadow: var(--shadow-sm);
         }
         .end-row {
           display: flex; justify-content: space-between; align-items: center;
@@ -261,10 +262,10 @@ export default function SessionEnd() {
         .star {
           width: 46px; height: 46px;
           display: flex; align-items: center; justify-content: center;
-          color: var(--border-strong);
+          color: var(--border);
           transition: color var(--t), transform var(--t-spring);
         }
-        .star.on     { color: var(--rating); }
+        .star.on     { color: #FFC857; fill: #FFC857; }
         .star:active { transform: scale(0.85); }
 
         .end-skip {
@@ -288,6 +289,7 @@ export default function SessionEnd() {
           border-radius: var(--radius-md);
           border: 1px solid var(--border);
           background: var(--bg-secondary);
+          box-shadow: var(--shadow-sm);
         }
         .end-ai-stat__value {
           font-family: var(--font-display);
@@ -303,26 +305,23 @@ export default function SessionEnd() {
         .end-streak-banner {
           width: 100%;
           border-radius: var(--radius-lg);
-          background: linear-gradient(135deg, rgba(255, 159, 10, 0.12) 0%, rgba(234, 179, 8, 0.08) 100%);
-          border: 1px solid rgba(255, 159, 10, 0.3);
+          background: var(--soft-yellow);
+          border: 1px solid rgba(255, 200, 87, 0.45);
           padding: 14px 16px;
           display: flex; flex-direction: column; gap: 4px; text-align: left;
-          box-shadow: 0 4px 16px rgba(255, 159, 10, 0.15);
+          box-shadow: 0 4px 14px rgba(255, 200, 87, 0.12);
         }
-        /* The banner is a tint, not a solid colour: the page shows through it, so its
-           text has to follow the scheme rather than assume a dark one. White here put
-           the streak message on pale cream in light mode, where it disappeared. */
         .end-streak-badge {
           display: inline-flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: 800; color: var(--accent);
+          font-size: 11px; font-weight: 800; color: #B45309;
           letter-spacing: 0.04em; text-transform: uppercase;
         }
-        .end-flame-ico { color: var(--accent); filter: drop-shadow(0 0 6px rgba(255, 159, 10, 0.6)); }
+        .end-flame-ico { color: #FFC857; filter: drop-shadow(0 0 4px rgba(255, 200, 87, 0.6)); }
         .end-streak-title {
-          font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 2px 0 0 0;
+          font-size: 14px; font-weight: 700; color: #182338; margin: 2px 0 0 0;
         }
         .end-streak-sub {
-          font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.4;
+          font-size: 12px; color: #6B778C; margin: 0; line-height: 1.4;
         }
 
         .end-report {

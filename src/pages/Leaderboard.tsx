@@ -17,7 +17,7 @@ function Row({ row, index, me, valueText }: { row: any; index: number; me: any; 
 
   let rankBadge = null;
   if (rank === 1) {
-    rankBadge = <Crown size={16} className="text-[#FFD700] fill-[#FFD700]" />;
+    rankBadge = <Crown size={18} className="text-[#D97706] fill-[#FFC857]" />;
   } else if (rank === 2) {
     rankBadge = <span className="lb-rank-badge lb-rank-badge--2">2</span>;
   } else if (rank === 3) {
@@ -179,26 +179,26 @@ export default function Leaderboard() {
           transition: all 0.18s var(--ease-out);
         }
         .lb-scope-btn.on {
-          color: var(--primary-contrast); background: var(--primary);
-          box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
+          color: #FFFFFF; background: var(--primary);
+          box-shadow: 0 2px 8px rgba(40, 120, 240, 0.25);
         }
         .lb-scope-btn:active:not(.on) { background: var(--surface-3); color: var(--text-primary); }
 
         .lb-tabs {
           display: flex; gap: var(--space-1);
           margin: 0 var(--space-4) var(--space-3);
-          padding: 3px;
+          padding: 4px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
         }
         .lb-tab {
           flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 9px var(--space-2);
+          padding: 8px var(--space-2);
           font-size: var(--text-xs); font-weight: var(--weight-bold);
           color: var(--text-secondary);
           border: none;
-          border-radius: calc(var(--radius-md) - 3px);
+          border-radius: calc(var(--radius-md) - 4px);
           transition: all var(--t);
           cursor: pointer;
         }
@@ -222,23 +222,24 @@ export default function Leaderboard() {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
+          box-shadow: var(--shadow-sm);
           transition: transform 0.15s ease, border-color 0.15s ease;
         }
         .lb-row:active { transform: scale(0.99); }
         .lb-row.me { border-color: var(--primary) !important; background: var(--primary-subtle) !important; }
 
         .lb-row--rank-1 {
-          border-color: rgba(255, 215, 0, 0.5);
-          background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, var(--bg-secondary) 70%);
-          box-shadow: 0 4px 18px rgba(255, 215, 0, 0.1);
+          border-color: rgba(255, 200, 87, 0.6);
+          background: linear-gradient(90deg, #FFFDF5 0%, var(--bg-secondary) 75%);
+          box-shadow: 0 4px 14px rgba(255, 200, 87, 0.15);
         }
         .lb-row--rank-2 {
-          border-color: rgba(226, 232, 240, 0.35);
-          background: linear-gradient(90deg, rgba(226, 232, 240, 0.07) 0%, var(--bg-secondary) 70%);
+          border-color: rgba(203, 213, 225, 0.7);
+          background: linear-gradient(90deg, #F8FAFC 0%, var(--bg-secondary) 75%);
         }
         .lb-row--rank-3 {
-          border-color: rgba(245, 158, 11, 0.35);
-          background: linear-gradient(90deg, rgba(245, 158, 11, 0.07) 0%, var(--bg-secondary) 70%);
+          border-color: rgba(252, 211, 77, 0.6);
+          background: linear-gradient(90deg, #FFFDF8 0%, var(--bg-secondary) 75%);
         }
 
         .lb-rank-col {
@@ -253,8 +254,8 @@ export default function Leaderboard() {
           width: 22px; height: 22px; border-radius: 50%;
           font-size: 11px; font-weight: var(--weight-heavy);
         }
-        .lb-rank-badge--2 { background: rgba(226, 232, 240, 0.18); color: #E2E8F0; border: 1px solid rgba(226, 232, 240, 0.4); }
-        .lb-rank-badge--3 { background: rgba(245, 158, 11, 0.18); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .lb-rank-badge--2 { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+        .lb-rank-badge--3 { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
 
         .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .lb-row__name-line {
@@ -267,7 +268,7 @@ export default function Leaderboard() {
         .lb-you {
           font-size: 9px; font-weight: var(--weight-bold);
           padding: 2px 6px; border-radius: 999px;
-          background: var(--primary); color: var(--primary-contrast);
+          background: var(--primary); color: #FFFFFF;
           flex-shrink: 0;
         }
         .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--primary); opacity: 0.9; }
@@ -275,7 +276,7 @@ export default function Leaderboard() {
         .lb-row__value-col { flex-shrink: 0; text-align: right; }
         .lb-row__value {
           font-size: 13px; font-weight: var(--weight-heavy);
-          color: var(--accent); white-space: nowrap;
+          color: var(--primary); white-space: nowrap;
         }
 
         .lb-empty {

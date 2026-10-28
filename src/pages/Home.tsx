@@ -9,6 +9,7 @@ import {
   ChevronRight,
   MessageSquare,
   Users,
+  Flame,
 } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
@@ -82,7 +83,6 @@ export default function Home() {
         <section className="hero fade-up">
           <div className="hero__orb hero__orb--1" aria-hidden="true" />
           <div className="hero__orb hero__orb--2" aria-hidden="true" />
-          <div className="hero__orb hero__orb--3" aria-hidden="true" />
 
           <div className="hero__inner">
             {/* Live badge & presence */}
@@ -113,7 +113,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Boshqaruv tugmasi: Asosiy Sherik Topish */}
+            {/* Main Action Button */}
             <button
               type="button"
               className="hero__main-btn"
@@ -125,7 +125,7 @@ export default function Home() {
               <div className="hero__mic-ring">
                 <div className="hero__mic-pulse" />
                 <div className="hero__mic-icon">
-                  <Mic size={20} strokeWidth={2.5} />
+                  <Mic size={19} strokeWidth={2.5} />
                 </div>
               </div>
               <span>{t('home.start')}</span>
@@ -133,6 +133,32 @@ export default function Home() {
             </button>
           </div>
         </section>
+
+        {/* ── SPEAKING PROGRESS (Section 7.B) ── */}
+        {homeLoaded && (
+          <div className="home__progress-card fade-up">
+            <div className="home__progress-left">
+              <div className="home__progress-icon">
+                <Flame size={18} className="text-[#FF9F0A]" />
+              </div>
+              <div className="home__progress-text">
+                <div className="home__progress-title">
+                  {stats?.hasPracticedToday ? 'Practiced today!' : 'Daily Practice'}
+                </div>
+                <div className="home__progress-sub">
+                  {(stats?.total_minutes || 0) > 0
+                    ? `${stats.total_minutes} mins total · ${stats?.streakCount || 0} day streak`
+                    : 'Practice 5 mins today to start your streak'}
+                </div>
+              </div>
+            </div>
+            {stats?.hasPracticedToday ? (
+              <span className="home__progress-badge done">Done</span>
+            ) : (
+              <span className="home__progress-badge todo">Today</span>
+            )}
+          </div>
+        )}
 
         {/* ── HAMKORLAR E'LONLARI (Listings Board) ── */}
         <button
@@ -145,7 +171,7 @@ export default function Home() {
         >
           <span
             className="row__ico"
-            style={{ background: 'rgba(255, 159, 10, 0.12)', color: '#FF9F0A' }}
+            style={{ background: 'var(--soft-yellow, #FFF5DE)', color: '#D97706' }}
           >
             <Users size={18} aria-hidden="true" />
           </span>
@@ -187,7 +213,7 @@ export default function Home() {
         .home { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); }
         .home__scroll {
           flex: 1; overflow-y: auto;
-          padding: var(--space-3) var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
+          padding: var(--space-3) var(--space-4) calc(90px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: var(--space-3);
         }
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -196,12 +222,12 @@ export default function Home() {
         .hero {
           position: relative; isolation: isolate; overflow: hidden;
           flex-shrink: 0;
-          background: linear-gradient(135deg, #00A8FF 0%, #0077EE 50%, #0055D4 100%);
+          background: var(--grad-hero);
           border: 1px solid rgba(255, 255, 255, 0.20);
           border-radius: var(--radius-lg);
           padding: 18px 16px;
           display: flex; flex-direction: column;
-          box-shadow: 0 8px 30px rgba(0, 168, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 8px 24px -4px rgba(40, 120, 240, 0.32), var(--shadow-sm);
           transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
           -webkit-tap-highlight-color: transparent;
         }
@@ -286,11 +312,11 @@ export default function Home() {
         .hero__main-btn {
           display: flex; align-items: center; justify-content: center; gap: 10px;
           min-height: 50px; width: 100%;
-          background: #FFFFFF; color: #0077EE;
+          background: #FFFFFF; color: var(--primary, #2878F0);
           border-radius: var(--radius-md); border: none;
           font-size: 15px; font-weight: var(--weight-heavy);
           letter-spacing: -0.01em;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
           cursor: pointer;
           transition: transform 0.15s var(--ease-out);
           margin-top: 4px;
@@ -306,7 +332,7 @@ export default function Home() {
         .hero__mic-pulse {
           position: absolute; inset: -3px;
           border-radius: 50%;
-          border: 1.5px solid rgba(0, 119, 238, 0.3);
+          border: 1.5px solid rgba(40, 120, 240, 0.35);
           animation: micRingPulse 2s ease-out infinite;
         }
         @keyframes micRingPulse {
@@ -315,7 +341,47 @@ export default function Home() {
         }
         .hero__mic-icon {
           display: flex; align-items: center; justify-content: center;
-          color: #0077EE;
+          color: var(--primary, #2878F0);
+        }
+
+        /* ── Progress Card (Section 7.B) ── */
+        .home__progress-card {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 12px 14px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          box-shadow: var(--shadow-sm);
+        }
+        .home__progress-left {
+          display: flex; align-items: center; gap: 10px; min-width: 0;
+        }
+        .home__progress-icon {
+          width: 36px; height: 36px; border-radius: var(--radius-sm);
+          display: flex; align-items: center; justify-content: center;
+          background: var(--soft-yellow, #FFF5DE); flex-shrink: 0;
+        }
+        .home__progress-text {
+          display: flex; flex-direction: column; gap: 1px; min-width: 0;
+        }
+        .home__progress-title {
+          font-size: 13px; font-weight: var(--weight-bold);
+          color: var(--text-primary);
+        }
+        .home__progress-sub {
+          font-size: 11px; color: var(--text-secondary);
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .home__progress-badge {
+          font-size: 11px; font-weight: var(--weight-bold);
+          padding: 3px 8px; border-radius: var(--radius-full);
+          flex-shrink: 0;
+        }
+        .home__progress-badge.done {
+          background: var(--soft-green, #E6F8F0); color: var(--success, #21B887);
+        }
+        .home__progress-badge.todo {
+          background: var(--primary-subtle, #EAF2FF); color: var(--primary, #2878F0);
         }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }

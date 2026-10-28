@@ -190,8 +190,8 @@ const Styles = React.memo(function Styles() {
 
       .mt__mode-badge {
         display: inline-flex; align-items: center; gap: 6px;
-        padding: 4px 12px; border-radius: var(--radius-full);
-        background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.25);
+        padding: 5px 14px; border-radius: var(--radius-full);
+        background: var(--primary-subtle); border: 1px solid rgba(40, 120, 240, 0.25);
         color: var(--primary); font-size: 11px; font-weight: var(--weight-bold);
         text-transform: uppercase; letter-spacing: 0.05em;
       }
@@ -202,7 +202,7 @@ const Styles = React.memo(function Styles() {
       }
       .mt__ripple {
         position: absolute; inset: 0; border-radius: 50%;
-        border: 1.5px solid var(--primary); opacity: 0;
+        border: 2px solid var(--primary); opacity: 0;
         animation: radarRipple 2.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
       }
       .mt__ripple--2 { animation-delay: 1.4s; }
@@ -210,7 +210,7 @@ const Styles = React.memo(function Styles() {
       .mt__scale, .mt__hole { position: absolute; border-radius: 50%; }
       .mt__scale {
         inset: 12px;
-        background: var(--border-strong);
+        background: var(--border);
         -webkit-mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
                 mask-image: repeating-conic-gradient(from -0.8deg, #000 0deg 1.6deg, transparent 1.6deg 7.5deg);
       }
@@ -227,9 +227,9 @@ const Styles = React.memo(function Styles() {
       .mt__core {
         position: relative; z-index: 1;
         width: 92px; height: 92px; border-radius: 50%;
-        background: var(--grad-primary); color: var(--primary-contrast);
+        background: var(--grad-primary); color: #FFFFFF;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: 0 0 35px rgba(0, 168, 255, 0.5), 0 8px 28px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 0 35px rgba(40, 120, 240, 0.35), 0 8px 24px rgba(40, 120, 240, 0.2);
       }
       .mt__core-level {
         font-family: var(--font-display);
@@ -241,8 +241,8 @@ const Styles = React.memo(function Styles() {
       .mt__glyph {
         width: 68px; height: 68px; border-radius: var(--radius-full);
         display: flex; align-items: center; justify-content: center;
-        background: var(--surface-2); color: var(--text-secondary);
-        border: 1px solid var(--border);
+        background: var(--soft-yellow); color: #B45309;
+        border: 1px solid rgba(255, 200, 87, 0.4);
       }
 
       .mt__copy { display: flex; flex-direction: column; gap: var(--space-1-5); }

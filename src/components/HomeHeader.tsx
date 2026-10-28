@@ -180,13 +180,13 @@ export default function HomeHeader({
           color: var(--primary); background: var(--primary-subtle);
           padding: 2px 7px; border-radius: var(--radius-full);
           letter-spacing: 0.02em; flex-shrink: 0;
-          border: 1px solid rgba(0, 168, 255, 0.3);
+          border: 1px solid rgba(40, 120, 240, 0.25);
           transition: transform 0.15s ease;
         }
         .hh__info:active .hh__level-pill {
           transform: scale(0.96);
         }
-        .hh__sub { font-size: var(--text-xs); color: var(--text-tertiary); }
+        .hh__sub { font-size: var(--text-xs); color: var(--text-secondary); }
         
         .hh__actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         
@@ -198,17 +198,16 @@ export default function HomeHeader({
           transition: all 0.25s var(--ease-out);
         }
         .hh__streak--active {
-          background: rgba(255, 159, 10, 0.14);
-          border-color: rgba(255, 159, 10, 0.4);
-          color: #FF9F0A;
-          box-shadow: 0 0 16px rgba(255, 159, 10, 0.2);
+          background: var(--accent-bg);
+          border-color: rgba(255, 200, 87, 0.5);
+          color: #B45309;
+          box-shadow: 0 1px 8px rgba(255, 200, 87, 0.25);
         }
         .hh__flame-icon {
-          color: #FF9F0A;
-          filter: drop-shadow(0 0 5px rgba(255, 159, 10, 0.7));
+          color: #F59E0B;
         }
         .hh__streak-num { font-size: 13px; font-weight: var(--weight-heavy); }
-        .hh__streak-label { font-size: 10px; font-weight: var(--weight-medium); opacity: 0.8; }
+        .hh__streak-label { font-size: 10px; font-weight: var(--weight-medium); opacity: 0.85; }
 
         /* Level Selector Modal */
         .hh-level-modal {
