@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Star,
   Users,
+  Flame,
   X,
 } from 'lucide-react';
 
@@ -101,12 +102,11 @@ export default function Profile() {
   const premiumUntil = formatDate(user?.premiumUntil);
 
   const level = user?.level || 1;
-  const gender = user?.gender || null;
-
   const avgRatingNum = Number(stats.avg_rating || 0).toFixed(1);
   const ratingCount = stats.rating_count || 0;
   const uniquePartners = stats.unique_partners || 0;
   const totalMinutes = stats.total_minutes || 0;
+  const streakCount = stats?.streakCount || user?.streakCount || 0;
 
   return (
     <div className="profile">
@@ -114,19 +114,30 @@ export default function Profile() {
         {/* User Hero Header */}
         <div className="profile__hero">
           <div className="profile__avatar-ring">
-            <div className="profile__avatar-ring-inner">
-              <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={58} />
-            </div>
+            <Avatar name={user?.displayName || undefined} avatarUrl={user?.avatarUrl || undefined} size={64} />
           </div>
           <h1 className="profile__name">{user?.displayName || t('common.anonymous')}</h1>
           {user?.username && <p className="profile__username">@{user.username}</p>}
-          <div className="profile__status-badge">
-            <span className="profile__status-dot" />
-            <span>100% Free &amp; Unlimited</span>
+          <div className="profile__pills-row">
+            <button
+              type="button"
+              className="profile__level-badge"
+              onClick={() => {
+                tapHaptic('light');
+                navigate('settings', { from: 'profile' });
+              }}
+            >
+              <span>{t(`level.${level}`)} · {t(`levelName.${level}`)}</span>
+              <ChevronRight size={12} />
+            </button>
+            <span className="profile__status-badge">
+              <span className="profile__status-dot" />
+              <span>Free &amp; Unlimited</span>
+            </span>
           </div>
         </div>
 
-        {/* Quick Interactive Stats Grid */}
+        {/* 4-Item Quick Stats Grid */}
         <div className="profile__stats-grid">
           <div
             className="profile__stat-box profile__stat-box--clickable"
@@ -136,7 +147,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__stat-icon profile__stat-icon--time">
-              <Clock size={13} />
+              <Clock size={15} />
             </span>
             <span className="profile__stat-value">{formatPracticeTime(totalMinutes)}</span>
             <span className="profile__stat-label">{t('profile.timeTalked')}</span>
@@ -144,7 +155,7 @@ export default function Profile() {
 
           <div className="profile__stat-box">
             <span className="profile__stat-icon profile__stat-icon--users">
-              <Users size={13} />
+              <Users size={15} />
             </span>
             <span className="profile__stat-value">{uniquePartners}</span>
             <span className="profile__stat-label">{t('profile.partners')}</span>
@@ -155,19 +166,28 @@ export default function Profile() {
             onClick={openRatings}
           >
             <span className="profile__stat-icon profile__stat-icon--star">
-              <Star size={13} fill="currentColor" />
+              <Star size={15} fill="currentColor" />
             </span>
             <span className="profile__stat-value">{avgRatingNum} ★</span>
             <span className="profile__stat-label">
-              {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+              {ratingCount} {ratingCount === 1 ? 'review' : 'reviews'}
             </span>
+          </div>
+
+          <div className="profile__stat-box">
+            <span className="profile__stat-icon profile__stat-icon--flame">
+              <Flame size={15} />
+            </span>
+            <span className="profile__stat-value">{streakCount}</span>
+            <span className="profile__stat-label">Day Streak</span>
           </div>
         </div>
 
-        {/* Section 1: Faoliyat & Taraqqiyot (Activity & Progress) */}
+        {/* Section 1: Activity & Progress */}
         <div className="profile__section-header">Activity &amp; Progress</div>
         <div className="profile__card">
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -175,7 +195,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--blue">
-              <BarChart2 size={14} />
+              <BarChart2 size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">Detailed Statistics</span>
@@ -185,11 +205,12 @@ export default function Profile() {
           </button>
 
           <button
+            type="button"
             className="profile__row"
             onClick={openRatings}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--amber">
-              <Star size={14} />
+              <Star size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.ratingsModalTitle')}</span>
@@ -200,6 +221,7 @@ export default function Profile() {
           </button>
 
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -207,7 +229,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--cyan">
-              <Users size={14} />
+              <Users size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('home.listingsTitle')}</span>
@@ -217,10 +239,11 @@ export default function Profile() {
           </button>
         </div>
 
-        {/* Section 2: Hamjamiyat (Community & Sharing) */}
-        <div className="profile__section-header">Community &amp; Invites</div>
+        {/* Section 2: Community & Invites */}
+        <div className="profile__section-header">Community &amp; Sharing</div>
         <div className="profile__card">
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -228,7 +251,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--green">
-              <Gift size={14} />
+              <Gift size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('nav.invite')}</span>
@@ -238,6 +261,7 @@ export default function Profile() {
           </button>
 
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -245,7 +269,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--purple">
-              <MessageSquare size={14} />
+              <MessageSquare size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.reviews')}</span>
@@ -255,10 +279,11 @@ export default function Profile() {
           </button>
         </div>
 
-        {/* Section 3: Sozlamalar va Yordam (Settings & Support) */}
+        {/* Section 3: Preferences & Support */}
         <div className="profile__section-header">{t('settings.title')} &amp; Support</div>
         <div className="profile__card">
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -266,7 +291,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--slate">
-              <SlidersHorizontal size={14} />
+              <SlidersHorizontal size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('settings.title')}</span>
@@ -277,6 +302,7 @@ export default function Profile() {
           </button>
 
           <button
+            type="button"
             className="profile__row"
             onClick={() => {
               tapHaptic('light');
@@ -284,7 +310,7 @@ export default function Profile() {
             }}
           >
             <span className="profile__row-icon-wrapper profile__row-icon-wrapper--rose">
-              <LifeBuoy size={14} />
+              <LifeBuoy size={16} />
             </span>
             <div className="profile__row-text">
               <span className="profile__row-title">{t('profile.support')}</span>
@@ -359,41 +385,49 @@ export default function Profile() {
         .profile {
           display: flex; flex-direction: column;
           height: 100%; background: var(--bg);
-          /* overflow: hidden EMAS — scroll kerakli */
         }
         .profile__scroll {
           flex: 1;
           min-height: 0;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          padding: var(--space-3) var(--space-4) calc(140px + env(safe-area-inset-bottom, 0px));
+          padding: var(--space-3) var(--space-4) calc(110px + env(safe-area-inset-bottom, 0px));
           display: flex; flex-direction: column; gap: 12px;
         }
 
         .profile__hero {
           display: flex; flex-direction: column; align-items: center; gap: 6px;
-          padding: 12px 0 4px;
+          padding: 8px 0 2px;
+          flex-shrink: 0;
         }
         .profile__avatar-ring {
           position: relative;
           padding: 3px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-          margin-bottom: 4px;
-        }
-        .profile__avatar-ring-inner {
-          padding: 2px;
-          border-radius: 50%;
-          background: var(--bg);
+          background: linear-gradient(135deg, var(--primary), #38bdf8);
+          margin-bottom: 2px;
+          box-shadow: 0 4px 14px rgba(40, 120, 240, 0.25);
         }
         .profile__name { font-size: 19px; font-weight: var(--weight-heavy); letter-spacing: -0.4px; text-align: center; color: var(--text-primary); }
-        .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -2px; }
+        .profile__username { font-size: 12px; color: var(--text-secondary); margin-top: -3px; }
+        .profile__pills-row {
+          display: flex; align-items: center; gap: 8px; margin-top: 4px;
+          flex-wrap: wrap; justify-content: center;
+        }
+        .profile__level-badge {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 4px 10px; border-radius: var(--radius-full);
+          background: var(--primary-subtle); border: 1px solid rgba(40, 120, 240, 0.25);
+          color: var(--primary); font-size: 11px; font-weight: var(--weight-bold);
+          cursor: pointer; transition: transform 0.15s ease;
+        }
+        .profile__level-badge:active { transform: scale(0.96); }
         .profile__status-badge {
-          margin-top: 4px; padding: 4px 12px; border-radius: var(--radius-full);
+          padding: 4px 10px; border-radius: var(--radius-full);
           background: var(--soft-green);
           border: 1px solid rgba(33, 184, 135, 0.3);
           color: var(--success);
-          font-size: 11px; font-weight: var(--weight-bold); letter-spacing: 0.2px;
+          font-size: 11px; font-weight: var(--weight-bold);
           display: inline-flex; align-items: center; gap: 6px;
         }
         .profile__status-dot {
@@ -402,35 +436,39 @@ export default function Profile() {
         }
 
         .profile__stats-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2px;
+          display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 2px;
+          flex-shrink: 0;
         }
         .profile__stat-box {
           background: var(--bg-secondary);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
-          padding: 12px 8px;
+          padding: 10px 4px;
           display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-          gap: 4px;
+          gap: 3px;
           box-shadow: var(--shadow-sm);
           transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+          box-sizing: border-box;
         }
         .profile__stat-box--clickable { cursor: pointer; }
         .profile__stat-box--clickable:active { transform: scale(0.96); border-color: var(--primary); box-shadow: 0 4px 14px var(--primary-subtle); }
         .profile__stat-icon {
-          width: 28px; height: 28px; border-radius: var(--radius-xs);
+          width: 26px; height: 26px; border-radius: var(--radius-xs);
           display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
         }
         .profile__stat-icon--time  { background: var(--primary-subtle); color: var(--primary); }
         .profile__stat-icon--users { background: var(--soft-green); color: var(--success); }
         .profile__stat-icon--star  { background: var(--soft-yellow); color: #D97706; }
+        .profile__stat-icon--flame { background: rgba(255, 159, 10, 0.16); color: #FF9F0A; }
 
-        .profile__stat-value { font-size: 15px; font-weight: var(--weight-heavy); color: var(--text-primary); letter-spacing: -0.3px; }
-        .profile__stat-label { font-size: 10px; color: var(--text-secondary); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.05em; }
+        .profile__stat-value { font-size: 14px; font-weight: var(--weight-heavy); color: var(--text-primary); letter-spacing: -0.3px; line-height: 1.1; }
+        .profile__stat-label { font-size: 9px; color: var(--text-secondary); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.1; }
 
         .profile__section-header {
           font-size: 11px; font-weight: var(--weight-bold);
           color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em;
           padding: 4px 2px 0;
+          flex-shrink: 0;
         }
 
         .profile__card {
@@ -439,25 +477,27 @@ export default function Profile() {
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-sm);
           display: flex; flex-direction: column;
+          flex-shrink: 0;
+          width: 100%;
+          box-sizing: border-box;
+          overflow: hidden;
         }
         .profile__row {
           display: flex; align-items: center; gap: 12px;
-          width: 100%; text-align: left;
-          padding: 14px 14px;
+          width: 100%; min-height: 56px;
+          box-sizing: border-box;
+          text-align: left;
+          padding: 12px 14px;
           border-bottom: 1px solid var(--border);
           transition: background-color 0.15s, opacity 0.15s;
           border-top: none; border-left: none; border-right: none;
           background: transparent; cursor: pointer;
-        }
-        .profile__row:first-child {
-          border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+          flex-shrink: 0;
+          -webkit-appearance: none;
+          appearance: none;
         }
         .profile__row:last-child {
           border-bottom: none;
-          border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
-        }
-        .profile__row:only-child {
-          border-radius: calc(var(--radius-lg) - 1px);
         }
         .profile__row:active:not(:disabled) { background: var(--surface-2); }
         .profile__row:disabled { cursor: default; opacity: 0.8; }
@@ -468,9 +508,9 @@ export default function Profile() {
           flex-shrink: 0;
         }
         .profile__row-icon-wrapper--blue   { background: var(--primary-subtle); color: var(--primary); }
-        .profile__row-icon-wrapper--purple { background: var(--primary-subtle); color: var(--primary); }
+        .profile__row-icon-wrapper--purple { background: rgba(147, 51, 234, 0.12); color: #9333ea; }
         .profile__row-icon-wrapper--amber  { background: var(--soft-yellow); color: #D97706; }
-        .profile__row-icon-wrapper--cyan   { background: var(--primary-subtle); color: var(--primary); }
+        .profile__row-icon-wrapper--cyan   { background: rgba(6, 182, 212, 0.12); color: #0891b2; }
         .profile__row-icon-wrapper--rose   { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
         .profile__row-icon-wrapper--slate  { background: var(--surface-2); color: var(--text-secondary); }
         .profile__row-icon-wrapper--green  { background: var(--soft-green); color: var(--success); }
@@ -480,10 +520,10 @@ export default function Profile() {
         .profile__row-sub { font-size: 11px; color: var(--text-secondary); line-height: 1.35; }
         .profile__row-val {
           font-size: 11px; font-weight: var(--weight-bold); color: var(--text-secondary);
-          white-space: nowrap; flex-shrink: 0;
+          white-space: nowrap; flex-shrink: 0; margin-right: 2px;
         }
         .profile__chev { color: var(--text-tertiary); flex-shrink: 0; }
-        .profile__footer { padding-bottom: 20px; }
+        .profile__footer { padding-bottom: 24px; flex-shrink: 0; }
 
         /* Bottom Sheet Modals */
         .ratings-modal-backdrop {

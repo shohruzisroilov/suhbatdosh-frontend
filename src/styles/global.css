@@ -284,6 +284,8 @@ h1, h2, h3 {
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  box-sizing: border-box;
   transition: transform var(--t), border-color var(--t), box-shadow var(--t);
 }
 .card--glass {
@@ -450,6 +452,8 @@ h1, h2, h3 {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   text-align: left;
+  flex-shrink: 0;
+  box-sizing: border-box;
   transition: transform var(--t), background var(--t), border-color var(--t);
 }
 .row:active { transform: scale(0.99); background: var(--surface-2); }

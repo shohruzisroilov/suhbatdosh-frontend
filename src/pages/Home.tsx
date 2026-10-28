@@ -311,7 +311,7 @@ export default function Home() {
         /* CTA main button */
         .hero__main-btn {
           display: flex; align-items: center; justify-content: center; gap: 10px;
-          min-height: 50px; width: 100%;
+          min-height: 52px; width: 100%;
           background: #FFFFFF; color: var(--primary, #2878F0);
           border-radius: var(--radius-md); border: none;
           font-size: 15px; font-weight: var(--weight-heavy);
@@ -320,6 +320,10 @@ export default function Home() {
           cursor: pointer;
           transition: transform 0.15s var(--ease-out);
           margin-top: 4px;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          -webkit-appearance: none;
+          appearance: none;
         }
         .hero__main-btn:active {
           transform: scale(0.97);
@@ -352,6 +356,7 @@ export default function Home() {
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
           box-shadow: var(--shadow-sm);
+          flex-shrink: 0;
         }
         .home__progress-left {
           display: flex; align-items: center; gap: 10px; min-width: 0;
@@ -384,7 +389,7 @@ export default function Home() {
           background: var(--primary-subtle, #EAF2FF); color: var(--primary, #2878F0);
         }
 
-        .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
+        .home__section { display: flex; flex-direction: column; gap: var(--space-2); flex-shrink: 0; }
         .home__section-head { display: flex; align-items: center; justify-content: space-between; }
 
         /* ── Toggle Row extras ── */
@@ -413,6 +418,7 @@ export default function Home() {
           padding: var(--space-6) var(--space-5); text-align: center;
           background: var(--bg-secondary); border: 1px solid var(--border);
           border-radius: var(--radius-lg);
+          flex-shrink: 0;
         }
         .home__empty-ico {
           width: 48px; height: 48px; border-radius: var(--radius-full);
