@@ -70,9 +70,10 @@ export function useAuth() {
           urlParams.get('ref') ||
           null;
 
-        const wantsMatch = startParam === 'match' || urlParams.get('match') === '1';
+        const roomCode = startParam?.startsWith('room_') ? startParam.replace('room_', '') : null;
+        const wantsMatch = startParam === 'match' || urlParams.get('match') === '1' || Boolean(roomCode);
         const wantsMock = startParam === 'mock' || urlParams.get('mock') === '1';
-        if (startParam === 'match' || startParam === 'mock') startParam = null;
+        if (startParam === 'match' || startParam === 'mock' || roomCode) startParam = null;
 
         if (!initData) {
           if (TEST_LOGIN_ALLOWED) {
@@ -140,8 +141,8 @@ export function useAuth() {
         const needsOnboarding = !u.hasOnboarded;
 
         if (needsOnboarding) navigate('onboarding');
+        else if (roomCode) navigate('matching', { roomCode });
         else if (wantsMatch) navigate('matching');
-        else if (wantsMock) navigate('ielts');
         else navigate('home');
       } catch (err: any) {
         const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;

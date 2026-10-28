@@ -13,13 +13,17 @@ import {
   Sparkles,
   Target,
   BookOpen,
+  Volume2,
+  Users2,
+  Trophy,
 } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
-import HomeReviews from '../components/HomeReviews';
 import TopicsLibraryModal from '../components/TopicsLibraryModal';
+import MicTestModal from '../components/MicTestModal';
+import PrivateRoomModal from '../components/PrivateRoomModal';
 import { PART1 } from '../constants/speakingTopics';
 
 /**
@@ -46,6 +50,8 @@ export default function Home() {
   const t = useT();
 
   const [showTopicsLib, setShowTopicsLib] = useState(false);
+  const [showMicTest, setShowMicTest] = useState(false);
+  const [showPrivateRoom, setShowPrivateRoom] = useState(false);
 
   const isFemale = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
@@ -77,6 +83,23 @@ export default function Home() {
   }, [recentSessions, stats]);
   const goalReached = todayMins >= dailyGoalMins || !!stats?.hasPracticedToday;
   const goalPct = Math.min(100, Math.round((todayMins / dailyGoalMins) * 100));
+
+  // Weekly challenge goal calculation (60 minutes)
+  const weeklyGoalMins = 60;
+  const weeklyMins = useMemo(() => {
+    if (!recentSessions || recentSessions.length === 0) return Math.min(60, stats?.total_minutes || 0);
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let sum = 0;
+    for (const s of recentSessions) {
+      if (s.ended_at && new Date(s.ended_at).getTime() >= oneWeekAgo) {
+        const dur = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
+        if (dur > 0) sum += dur;
+      }
+    }
+    return sum || Math.min(60, stats?.total_minutes || 0);
+  }, [recentSessions, stats]);
+  const weeklyGoalReached = weeklyMins >= weeklyGoalMins;
+  const weeklyGoalPct = Math.min(100, Math.round((weeklyMins / weeklyGoalMins) * 100));
 
   useEffect(() => {
     getMe()
@@ -120,62 +143,42 @@ export default function Home() {
         )}
 
 
-        {/* Daily Goal Card (15 min) */}
-        <div className="home-daily-goal fade-up">
-          <div className="home-daily-goal__head">
-            <div className="home-daily-goal__title-wrap">
-              <span className="home-daily-goal__icon">
-                <Target size={14} />
-              </span>
-              <span className="home-daily-goal__title">Daily Practice Goal</span>
-            </div>
-            <span className={`home-daily-goal__val ${goalReached ? 'completed' : ''}`}>
-              {goalReached ? '🎉 15m Done!' : `${todayMins} / ${dailyGoalMins}m`}
-            </span>
-          </div>
-          <div className="home-daily-goal__track">
-            <div
-              className={`home-daily-goal__fill ${goalReached ? 'completed' : ''}`}
-              style={{ width: `${goalReached ? 100 : Math.max(8, goalPct)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Call Mode Selector */}
-        <div className="home-mode-selector fade-up">
-          <button
-            type="button"
-            className={`home-mode-pill ${callMode === 'free' ? 'active' : ''}`}
-            onClick={() => {
-              selectionHaptic();
-              setCallMode('free');
-            }}
-          >
-            <MessageSquare size={13} />
-            <span>Free Talk</span>
-          </button>
-          <button
-            type="button"
-            className={`home-mode-pill ${callMode === 'ielts' ? 'active' : ''}`}
-            onClick={() => {
-              selectionHaptic();
-              setCallMode('ielts');
-            }}
-          >
-            <GraduationCap size={14} />
-            <span>IELTS Practice</span>
-          </button>
-        </div>
-
-        {/* ── Find Partner Hero Card ── */}
+        {/* ── 1. ASOSIY QO'NG'IROQ MARKAZI (Hero Card) ── */}
         <section className="hero fade-up">
-          {/* Animated background orbs */}
           <div className="hero__orb hero__orb--1" aria-hidden="true" />
           <div className="hero__orb hero__orb--2" aria-hidden="true" />
           <div className="hero__orb hero__orb--3" aria-hidden="true" />
 
           <div className="hero__inner">
-            {/* Live badge */}
+            {/* Rejim tanlash (Free Talk yoki IELTS Practice) */}
+            <div className="hero-mode-switch">
+              <button
+                type="button"
+                className={`hero-mode-btn ${callMode === 'free' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectionHaptic();
+                  setCallMode('free');
+                }}
+              >
+                <MessageSquare size={13} />
+                <span>Free Talk</span>
+              </button>
+              <button
+                type="button"
+                className={`hero-mode-btn ${callMode === 'ielts' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectionHaptic();
+                  setCallMode('ielts');
+                }}
+              >
+                <GraduationCap size={14} />
+                <span>IELTS Practice</span>
+              </button>
+            </div>
+
+            {/* Live badge & presence */}
             <div className="hero__top-row">
               <span className="hero__tag">
                 <span className="hero__live-dot" />
@@ -193,7 +196,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Title & description */}
+            {/* Sarlavha va Tavsif */}
             <div className="hero__content">
               <h1 className="hero__title">
                 {callMode === 'ielts' ? 'IELTS Speaking Partner' : t('home.ctaTitle')}
@@ -205,30 +208,68 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Mic icon + CTA */}
-            <div className="hero__cta-row">
-              <div className="hero__mic-ring">
-                <div className="hero__mic-pulse" />
-                <div className="hero__mic-icon">
-                  <Mic size={22} strokeWidth={2.5} />
-                </div>
-              </div>
+            {/* Boshqaruv tugmalari: Asosiy Sherik Topish + Do'st bilan Xona */}
+            <div className="hero__actions-wrap">
               <button
                 type="button"
-                className="hero__btn"
+                className="hero__main-btn"
                 onClick={() => {
-                  tapHaptic('medium');
+                  tapHaptic('heavy');
                   navigate('matching');
                 }}
               >
+                <div className="hero__mic-ring">
+                  <div className="hero__mic-pulse" />
+                  <div className="hero__mic-icon">
+                    <Mic size={20} strokeWidth={2.5} />
+                  </div>
+                </div>
                 <span>{callMode === 'ielts' ? 'Start IELTS Call' : t('home.start')}</span>
                 <ChevronRight size={18} strokeWidth={2.5} />
+              </button>
+
+              <button
+                type="button"
+                className="hero__friend-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  tapHaptic('medium');
+                  setShowPrivateRoom(true);
+                }}
+              >
+                <Users2 size={16} />
+                <span>Do'st bilan suhbat (Xona / Havola)</span>
               </button>
             </div>
           </div>
         </section>
 
-        {/* Topic of the Day & Icebreaker Card */}
+        {/* ── 2. KUNLIK VA HAFTALIK MASHQ MAQSADI (Ixcham yagona kartochka) ── */}
+        <div className="home-goal-card fade-up">
+          <div className="home-goal-top">
+            <div className="home-goal-label">
+              <Target size={14} className="home-goal-icon" />
+              <span>Daily Practice Goal</span>
+            </div>
+            <div className="home-goal-badges">
+              <span className={`home-goal-badge ${goalReached ? 'done' : ''}`}>
+                {goalReached ? '🎉 15m Done' : `${todayMins} / 15m`}
+              </span>
+              <span className={`home-goal-badge weekly ${weeklyGoalReached ? 'done' : ''}`}>
+                <Trophy size={11} />
+                <span>{weeklyGoalReached ? '🏆 60m' : `${weeklyMins}/60m`}</span>
+              </span>
+            </div>
+          </div>
+          <div className="home-goal-track">
+            <div
+              className={`home-goal-fill ${goalReached ? 'completed' : ''}`}
+              style={{ width: `${goalReached ? 100 : Math.max(6, goalPct)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* ── 3. BUGUNGI MAVZU (Icebreaker & Question Bank) ── */}
         <div className="home-topic-card fade-up">
           <div className="home-topic-head">
             <div className="home-topic-tag">
@@ -243,40 +284,53 @@ export default function Home() {
                 setShowTopicsLib(true);
               }}
             >
-              <BookOpen size={13} />
+              <BookOpen size={12} />
               <span>Question Bank</span>
-              <ChevronRight size={13} />
+              <ChevronRight size={12} />
             </button>
           </div>
           <p className="home-topic-question">“{todayQuestion}”</p>
-          <span className="home-topic-sub">Break the ice on your next call with this question</span>
+          <span className="home-topic-hint">Break the ice on your next call with this question</span>
         </div>
 
-        <div className="home__list stagger">
-          {/* Partner & Mentor Listings Board */}
+        {/* ── 4. FOYDALI BO'LIMLAR (2 ta qulay kartochka: E'lonlar va Mikrofon) ── */}
+        <div className="home-quick-grid fade-up">
           <button
             type="button"
-            className="row"
+            className="home-quick-item"
             onClick={() => {
               tapHaptic('medium');
               navigate('listings');
             }}
           >
-            <span
-              className="row__ico"
-              style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
-            >
-              <Users size={18} aria-hidden="true" />
-            </span>
-            <span className="row__text">
-              <span className="row__title">{t('home.listingsTitle')}</span>
-              <span className="row__sub">{t('home.listingsSub')}</span>
-            </span>
-            <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
+            <div className="home-quick-icon" style={{ background: 'rgba(255, 159, 10, 0.12)', color: '#FF9F0A' }}>
+              <Users size={18} />
+            </div>
+            <div className="home-quick-info">
+              <strong>{t('home.listingsTitle')}</strong>
+              <span>Find study partners or tutors</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="home-quick-item"
+            onClick={() => {
+              tapHaptic('light');
+              setShowMicTest(true);
+            }}
+          >
+            <div className="home-quick-icon" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+              <Volume2 size={18} />
+            </div>
+            <div className="home-quick-info">
+              <strong>Mikrofonni sinash</strong>
+              <span>Real-time audio visualizer</span>
+            </div>
           </button>
         </div>
 
-        {/* Recent Practice History */}
+        {/* ── 5. OXIRGI SUHBATLAR TARIXI ── */}
         {!homeLoaded ? (
           <section className="home__section">
             <p className="eyebrow">{t('home.recent')}</p>
@@ -299,10 +353,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Social proof sits last: it is for people still deciding, and a returning
-            user has already decided. */}
-        <HomeReviews />
-
         <div className="home__foot" />
       </div>
 
@@ -316,7 +366,6 @@ export default function Home() {
         }
         .home__list { display: flex; flex-direction: column; gap: var(--space-2); }
 
-        /* ── AI Mock Grid Section ── */
         /* ── Hero / Find Partner Card ── */
         .hero {
           position: relative; isolation: isolate; overflow: hidden;
@@ -324,35 +373,11 @@ export default function Home() {
           background: linear-gradient(135deg, #00A8FF 0%, #0077EE 50%, #0055D4 100%);
           border: 1px solid rgba(255, 255, 255, 0.20);
           border-radius: var(--radius-lg);
-          padding: 18px 16px 16px;
+          padding: 16px;
           display: flex; flex-direction: column;
           box-shadow: 0 8px 30px rgba(0, 168, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
-          cursor: pointer;
           transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
           -webkit-tap-highlight-color: transparent;
-        }
-        .hero:active {
-          transform: scale(0.985);
-          box-shadow: 0 4px 16px rgba(0, 168, 255, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
-        }
-        /* Keyboard focus must be visible on the card, not just the button, because
-           the button's hit area is the whole card. */
-        .hero:has(.hero__btn:focus-visible) {
-          outline: 2px solid #FFFFFF;
-          outline-offset: 2px;
-        }
-        .hero__btn:focus-visible { outline: none; }
-        /* Expands the button's hit area to the whole card. Resolves against .hero,
-           which is the nearest positioned ancestor. */
-        .hero__btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-        }
-        /* Where :has() is unavailable the button keeps its own focus ring. */
-        @supports not selector(:has(*)) {
-          .hero__btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
         }
 
         /* Animated background orbs */
@@ -381,9 +406,31 @@ export default function Home() {
         @keyframes orbFloat2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
         @keyframes orbFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5px,5px) scale(0.95); } }
 
-        /* Deliberately unpositioned: the button's ::after overlay resolves inset:0
-           against .hero, so nothing between them may create a positioning context. */
         .hero__inner { display: flex; flex-direction: column; gap: 12px; }
+
+        /* Mode Switcher pill inside Hero */
+        .hero-mode-switch {
+          display: inline-flex;
+          align-self: flex-start;
+          gap: 3px;
+          background: rgba(0, 0, 0, 0.22);
+          padding: 3px;
+          border-radius: var(--radius-full);
+          backdrop-filter: blur(6px);
+        }
+        .hero-mode-btn {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 5px 12px; border-radius: var(--radius-full);
+          border: none; background: transparent;
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 11px; font-weight: var(--weight-bold);
+          cursor: pointer; transition: all 0.18s ease;
+        }
+        .hero-mode-btn.active {
+          background: #FFFFFF;
+          color: #0077EE;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
 
         /* Top row: live badge + online count */
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }
@@ -433,146 +480,110 @@ export default function Home() {
           color: rgba(255, 255, 255, 0.85);
         }
 
-        /* Mic ring + CTA button row */
-        .hero__cta-row {
-          display: flex; align-items: center; gap: 12px;
-          margin-top: 2px;
+        /* CTA buttons inside Hero */
+        .hero__actions-wrap {
+          display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
+        }
+        .hero__main-btn {
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          min-height: 48px; width: 100%;
+          background: #FFFFFF; color: #0077EE;
+          border-radius: var(--radius-md); border: none;
+          font-size: 15px; font-weight: var(--weight-heavy);
+          letter-spacing: -0.01em;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          cursor: pointer;
+          transition: transform 0.15s var(--ease-out);
+        }
+        .hero__main-btn:active {
+          transform: scale(0.97);
         }
         .hero__mic-ring {
           position: relative; flex-shrink: 0;
-          width: 48px; height: 48px;
+          width: 30px; height: 30px;
+          display: flex; align-items: center; justify-content: center;
         }
         .hero__mic-pulse {
-          position: absolute; inset: -4px;
+          position: absolute; inset: -3px;
           border-radius: 50%;
-          border: 2px solid rgba(255,255,255,0.4);
+          border: 1.5px solid rgba(0, 119, 238, 0.3);
           animation: micRingPulse 2s ease-out infinite;
-        }
-        .hero__mic-pulse::after {
-          content: '';
-          position: absolute; inset: -6px;
-          border-radius: 50%;
-          border: 1.5px solid rgba(255,255,255,0.2);
-          animation: micRingPulse 2s ease-out 0.6s infinite;
         }
         @keyframes micRingPulse {
           0% { transform: scale(0.85); opacity: 0.9; }
           100% { transform: scale(1.35); opacity: 0; }
         }
         .hero__mic-icon {
-          position: absolute; inset: 0;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(255,255,255,0.22);
-          border: 1.5px solid rgba(255,255,255,0.45);
-          border-radius: 50%;
-          color: #FFFFFF;
-          backdrop-filter: blur(4px);
-        }
-        .hero__btn {
-          flex: 1;
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-          min-height: 48px;
-          background: #FFFFFF;
           color: #0077EE;
+        }
+        .hero__friend-btn {
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          min-height: 38px; width: 100%;
+          background: rgba(255, 255, 255, 0.18);
+          color: #FFFFFF;
+          border: 1px solid rgba(255, 255, 255, 0.32);
           border-radius: var(--radius-md);
-          font-size: 15px; font-weight: var(--weight-heavy);
-          letter-spacing: -0.01em;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-          transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+          font-size: 12px; font-weight: var(--weight-bold);
           cursor: pointer;
+          backdrop-filter: blur(4px);
+          transition: all 0.15s ease;
         }
-        .hero__btn:active {
-          transform: scale(0.97);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-        }
-
-        /* ── Mini Stats Row ── */
-        .mini-stats {
-          display: flex; align-items: center;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-md);
-          padding: 12px 16px;
-          gap: 0;
-        }
-        .mini-stat {
-          flex: 1; display: flex; align-items: center; gap: 10px;
-        }
-        .mini-stat__divider {
-          width: 1px; height: 32px;
-          background: var(--border);
-          flex-shrink: 0;
-          margin: 0 4px;
-        }
-        .mini-stat__ico {
-          width: 30px; height: 30px; border-radius: 8px;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; font-size: 14px;
-        }
-        .mini-stat__ico--blue  { background: rgba(0, 168, 255, 0.14); color: var(--btn-bg); }
-        .mini-stat__ico--green { background: rgba(16, 185, 129, 0.14); color: var(--success); }
-        .mini-stat__ico--gold  { background: var(--rating-bg); }
-        .mini-stat__info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .mini-stat__val  { font-size: 15px; font-weight: var(--weight-heavy); color: var(--text-primary); letter-spacing: -0.3px; }
-        .mini-stat__lbl  { font-size: 10px; font-weight: var(--weight-bold); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
-
-        /* ── Sections ── */
-        /* ── Call Mode Selector ── */
-        .home-mode-selector {
-          display: flex; gap: 8px; margin-bottom: 2px;
-        }
-        .home-mode-pill {
-          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 10px 12px; border-radius: var(--radius-md);
-          background: var(--surface-2); border: 1px solid var(--border);
-          color: var(--text-secondary); font-size: 13px; font-weight: var(--weight-bold);
-          cursor: pointer; transition: all 0.15s ease;
-        }
-        .home-mode-pill:active { transform: scale(0.97); }
-        .home-mode-pill.active {
-          background: var(--primary-subtle); border-color: var(--primary);
-          color: var(--primary);
+        .hero__friend-btn:active {
+          transform: scale(0.98);
+          background: rgba(255, 255, 255, 0.28);
         }
 
-        /* ── Daily Goal Card ── */
-        .home-daily-goal {
+        /* ── Unified Practice Goal Card ── */
+        .home-goal-card {
           background: var(--surface); border: 1px solid var(--border);
           border-radius: var(--radius-md); padding: 12px 14px;
           display: flex; flex-direction: column; gap: 8px;
         }
-        .home-daily-goal__head {
+        .home-goal-top {
           display: flex; align-items: center; justify-content: space-between;
         }
-        .home-daily-goal__title-wrap {
-          display: flex; align-items: center; gap: 6px;
+        .home-goal-label {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 12px; font-weight: var(--weight-bold);
+          color: var(--text-primary);
         }
-        .home-daily-goal__icon { color: var(--primary); display: flex; }
-        .home-daily-goal__title {
-          font-size: 12px; font-weight: var(--weight-bold); color: var(--text-primary);
-          text-transform: uppercase; letter-spacing: 0.04em;
+        .home-goal-icon { color: var(--primary); }
+        .home-goal-badges {
+          display: inline-flex; align-items: center; gap: 6px;
         }
-        .home-daily-goal__val {
-          font-size: 12px; font-weight: var(--weight-heavy); color: var(--text-secondary);
+        .home-goal-badge {
+          font-size: 11px; font-weight: var(--weight-heavy);
+          padding: 2px 7px; border-radius: var(--radius-full);
+          background: var(--surface-2); color: var(--text-secondary);
         }
-        .home-daily-goal__val.completed { color: var(--success); }
-        .home-daily-goal__track {
+        .home-goal-badge.done {
+          background: rgba(52, 199, 89, 0.14); color: var(--success);
+        }
+        .home-goal-badge.weekly {
+          display: inline-flex; align-items: center; gap: 3px;
+          color: #FFB300; background: rgba(255, 179, 0, 0.12);
+        }
+        .home-goal-badge.weekly.done {
+          color: #FF9F0A; background: rgba(255, 159, 10, 0.18);
+        }
+        .home-goal-track {
           height: 6px; border-radius: var(--radius-full);
-          background: var(--surface-2); overflow: hidden; position: relative;
+          background: var(--surface-2); overflow: hidden;
         }
-        .home-daily-goal__fill {
+        .home-goal-fill {
           height: 100%; border-radius: var(--radius-full);
           background: var(--grad-primary); transition: width 0.4s ease;
         }
-        .home-daily-goal__fill.completed {
+        .home-goal-fill.completed {
           background: linear-gradient(90deg, #34C759, #30D158);
         }
 
         /* ── Topic of the Day Card ── */
         .home-topic-card {
           background: var(--surface); border: 1px solid var(--border);
-          border-radius: var(--radius-lg); padding: 14px 16px;
-          display: flex; flex-direction: column; gap: 8px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+          border-radius: var(--radius-md); padding: 12px 14px;
+          display: flex; flex-direction: column; gap: 6px;
         }
         .home-topic-head {
           display: flex; align-items: center; justify-content: space-between;
@@ -580,22 +591,50 @@ export default function Home() {
         .home-topic-tag {
           display: inline-flex; align-items: center; gap: 5px;
           font-size: 11px; font-weight: var(--weight-bold);
-          color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;
+          color: var(--primary); text-transform: uppercase; letter-spacing: 0.04em;
         }
         .home-topic-all-btn {
-          display: inline-flex; align-items: center; gap: 4px;
-          background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.25);
-          color: var(--primary); padding: 4px 10px; border-radius: var(--radius-full);
-          font-size: 11px; font-weight: var(--weight-bold); cursor: pointer;
-          transition: transform 0.15s ease;
+          display: inline-flex; align-items: center; gap: 3px;
+          background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.2);
+          color: var(--primary); padding: 3px 8px; border-radius: var(--radius-full);
+          font-size: 10px; font-weight: var(--weight-bold); cursor: pointer;
         }
         .home-topic-all-btn:active { transform: scale(0.95); }
         .home-topic-question {
-          font-size: 14px; font-weight: var(--weight-bold); color: var(--text-primary);
-          line-height: 1.45;
+          font-size: 13px; font-weight: var(--weight-semibold); color: var(--text-primary);
+          line-height: 1.35; margin: 0;
         }
-        .home-topic-sub {
-          font-size: 11px; color: var(--text-tertiary); font-weight: var(--weight-medium);
+        .home-topic-hint {
+          font-size: 11px; color: var(--text-tertiary);
+        }
+
+        /* ── Quick Tools Grid (Listings & Mic Test) ── */
+        .home-quick-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .home-quick-item {
+          display: flex; flex-direction: column; align-items: flex-start;
+          gap: 6px; background: var(--surface); border: 1px solid var(--border);
+          border-radius: var(--radius-md); padding: 12px;
+          text-align: left; cursor: pointer; transition: all 0.15s ease;
+          position: relative;
+        }
+        .home-quick-item:active {
+          transform: scale(0.97); background: var(--surface-2);
+        }
+        .home-quick-icon {
+          width: 32px; height: 32px; border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .home-quick-info {
+          display: flex; flex-direction: column; gap: 2px;
+        }
+        .home-quick-info strong {
+          font-size: 12px; font-weight: var(--weight-bold);
+          color: var(--text-primary); line-height: 1.25;
+        }
+        .home-quick-info span {
+          font-size: 11px; color: var(--text-secondary); line-height: 1.2;
         }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -646,6 +685,23 @@ export default function Home() {
           setSpeakingState(topicId, part, 0);
           setShowTopicsLib(false);
         }}
+      />
+
+      {/* Real-time Audio Visualizer Mic Check Modal */}
+      <MicTestModal
+        isOpen={showMicTest}
+        onClose={() => setShowMicTest(false)}
+      />
+
+      {/* Direct Private Room with a Friend Modal */}
+      <PrivateRoomModal
+        isOpen={showPrivateRoom}
+        onClose={() => setShowPrivateRoom(false)}
+        onJoinRoom={(code) => {
+          setShowPrivateRoom(false);
+          navigate('matching', { roomCode: code });
+        }}
+        botUsername={user?.username || 'suhbatdoshbot'}
       />
     </div>
   );

@@ -1,25 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMatch } from '../hooks/useMatch';
+import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { Users, RotateCcw, Megaphone, GraduationCap, MessageSquare } from 'lucide-react';
+import { Users, RotateCcw, Megaphone, GraduationCap, MessageSquare, KeyRound } from 'lucide-react';
 
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
 /**
- * Sherik qidirish ekrani.
+ * Sherik qidirish ekrani (Umumiy yoki Do'st bilan xona).
  */
 export default function Matching() {
-  const { user, navigate, waitingCount, callMode } = useAppStore();
+  const { user, navigate, waitingCount, callMode, screenParams } = useAppStore();
   const { matchingStatus, startSearch, cancel } = useMatch();
+  const { joinPrivateRoom, leavePrivateRoom } = useSocket();
   const t = useT();
   const started = useRef(false);
   const [elapsed, setElapsed] = useState(0);
 
-  const cancelRef = useRef(cancel);
-  cancelRef.current = cancel;
+  const roomCode = screenParams?.roomCode ? String(screenParams.roomCode).toUpperCase() : null;
+  const isPrivateRoom = Boolean(roomCode);
+
+  const handleCancel = () => {
+    if (isPrivateRoom && roomCode) {
+      leavePrivateRoom(roomCode);
+      navigate('home');
+    } else {
+      cancel();
+    }
+  };
+
+  const cancelRef = useRef(handleCancel);
+  cancelRef.current = handleCancel;
 
   useEffect(() => {
     const backBtn = window.Telegram?.WebApp?.BackButton;
@@ -29,14 +43,21 @@ export default function Matching() {
       backBtn.onClick(handleBack);
       backBtn.show();
     }
-    if (!started.current) { started.current = true; startSearch(); }
+    if (!started.current) {
+      started.current = true;
+      if (isPrivateRoom && roomCode) {
+        joinPrivateRoom(roomCode);
+      } else {
+        startSearch();
+      }
+    }
     return () => {
       if (backBtn) {
         if (handleBack) backBtn.offClick(handleBack);
         backBtn.hide();
       }
     };
-  }, []);
+  }, [isPrivateRoom, roomCode]);
 
   useEffect(() => {
     if (matchingStatus !== 'searching') { setElapsed(0); return; }
@@ -82,7 +103,12 @@ export default function Matching() {
     <div className="mt">
       <div className="mt__body scale-in">
         <div className="mt__mode-badge">
-          {callMode === 'ielts' ? (
+          {isPrivateRoom ? (
+            <>
+              <KeyRound size={13} />
+              <span>Xona #{roomCode}</span>
+            </>
+          ) : callMode === 'ielts' ? (
             <>
               <GraduationCap size={13} />
               <span>IELTS Practice</span>
@@ -107,19 +133,27 @@ export default function Matching() {
 
         <div className="mt__copy">
           <h2 className="mt__title">
-            {t('match.searching')}
+            {isPrivateRoom ? "Do'stingiz kutilmoqda" : t('match.searching')}
             <span className="mt__dots" aria-hidden="true"><i /><i /><i /></span>
           </h2>
-          <p className="mt__desc">{t('match.lookingFor')}</p>
+          <p className="mt__desc">
+            {isPrivateRoom
+              ? "Do'stingiz xonaga kirishi bilan suhbat avtomatik boshlanadi"
+              : t('match.lookingFor')}
+          </p>
         </div>
 
         <div className="mt__status">
           <div className="mt__meta">
             <div className="mt__cell">
-              <span className="eyebrow">{t('match.queueLabel')}</span>
+              <span className="eyebrow">{isPrivateRoom ? 'Rejim' : t('match.queueLabel')}</span>
               <span className={`mt__val${others ? ' mt__val--live' : ''}`}>
-                {others && <span className="dot-live" />}
-                {others ? t('match.queueMany', { n: waitingCount }) : t('match.queueAlone')}
+                {isPrivateRoom ? 'To\'g\'ridan-to\'g\'ri' : others && <span className="dot-live" />}
+                {isPrivateRoom
+                  ? `Xona #${roomCode}`
+                  : others
+                  ? t('match.queueMany', { n: waitingCount })
+                  : t('match.queueAlone')}
               </span>
             </div>
             <span className="mt__div" aria-hidden="true" />
@@ -128,11 +162,16 @@ export default function Matching() {
               <span className="mt__val num">{fmtElapsed(elapsed)}</span>
             </div>
           </div>
-          <p className="mt__hint">{others ? t('match.hintMany') : t('match.hintAlone')}</p>
+          <p className="mt__hint">
+            {isPrivateRoom
+              ? "Havolani Telegram orqali do'stingizga yuboring"
+              : others
+              ? t('match.hintMany')
+              : t('match.hintAlone')}
+          </p>
         </div>
 
-
-        <button className="btn-quiet mt__cancel" onClick={cancel}>{t('common.cancel')}</button>
+        <button className="btn-quiet mt__cancel" onClick={handleCancel}>{t('common.cancel')}</button>
       </div>
 
       <Styles />

@@ -9,6 +9,7 @@ import { ArrowLeft, ChevronRight, Gauge, User, Bell, Check, Loader2, Mic } from 
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { notifyHaptic } from '../utils/haptics';
+import MicTestModal from '../components/MicTestModal';
 
 const LEVELS = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }];
 
@@ -32,6 +33,7 @@ export default function Settings() {
   useTelegramBackButton(() => back());
 
   const [section, setSection] = useState<'menu' | 'level' | 'gender' | 'notifications'>('menu');
+  const [showMicModal, setShowMicModal] = useState(false);
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
 
   const level = user?.level || 1;
@@ -185,7 +187,10 @@ export default function Settings() {
               as="button"
               type="button"
               className="w-full text-left p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-all active:scale-[0.99] border-[var(--border)]"
-              onClick={testMic}
+              onClick={() => {
+                tapHaptic('light');
+                setShowMicModal(true);
+              }}
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-xl transition-colors ${
@@ -328,6 +333,11 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      <MicTestModal
+        isOpen={showMicModal}
+        onClose={() => setShowMicModal(false)}
+      />
     </div>
   );
 }

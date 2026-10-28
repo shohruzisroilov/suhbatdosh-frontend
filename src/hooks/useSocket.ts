@@ -42,8 +42,13 @@ function attachListeners(sock: Socket) {
   sock.off('waiting_update');
   sock.off('limit_reached');
   sock.off('speaking_topic_changed');
+  sock.off('private_room_waiting');
   sock.off('connect_error');
   sock.off('error');
+
+  sock.on('private_room_waiting', () => {
+    useAppStore.getState().setMatchingStatus('searching');
+  });
 
   sock.on('match_no_partner_yet', () => {
     useAppStore.getState().setNoPartnerYet(true);
@@ -277,6 +282,14 @@ export function useSocket() {
     []
   );
 
+  const joinPrivateRoom = useCallback((roomCode: string) => {
+    socketRef.current?.emit('join_private_room', { room_code: roomCode });
+  }, []);
+
+  const leavePrivateRoom = useCallback((roomCode?: string) => {
+    socketRef.current?.emit('leave_private_room', { room_code: roomCode });
+  }, []);
+
   return {
     socket: socketRef.current,
     joinSession,
@@ -285,6 +298,8 @@ export function useSocket() {
     startCall,
     startMatching,
     cancelMatching,
+    joinPrivateRoom,
+    leavePrivateRoom,
     disconnect,
     changeSpeakingTopic,
   };
