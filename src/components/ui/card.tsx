@@ -17,6 +17,7 @@ const Card = React.forwardRef<HTMLElement, CardProps>(
       ref={ref as never}
       className={cn(
         'rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm',
+        Component === 'button' && 'w-full text-left block flex-shrink-0',
         className
       )}
       {...props}

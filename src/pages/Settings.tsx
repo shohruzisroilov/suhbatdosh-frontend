@@ -242,7 +242,7 @@ export default function Settings() {
         {section === 'level' && (
           <div className="space-y-3">
             <p className="text-xs text-[var(--text-secondary)] px-1">{t('settings.levelSub')}</p>
-            <div className="space-y-2">
+            <div className="space-y-2.5" role="radiogroup" aria-label={t('settings.levelTitle')}>
               {LEVELS.map((lv) => {
                 const selected = level === lv.value;
                 return (
@@ -250,29 +250,31 @@ export default function Settings() {
                     as="button"
                     type="button"
                     role="radio"
-                    aria-checked={level === lv.value}
+                    aria-checked={selected}
                     key={lv.value}
                     onClick={() => pickLevel(lv.value)}
-                    className={`p-4 cursor-pointer transition-all active:scale-[0.98] ${
-                      selected ? 'border-[var(--primary)] bg-[var(--surface-2)]' : 'border-[var(--border)] bg-[var(--surface)]'
+                    className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.98] border rounded-2xl ${
+                      selected
+                        ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm ring-1 ring-[var(--primary)]'
+                        : 'border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 text-center text-sm font-black text-[var(--primary)] font-mono">
+                    <div className="flex items-center gap-3.5">
+                      <span className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-[var(--primary)] bg-[var(--surface-2)] font-mono shrink-0">
                         {t(`level.${lv.value}`)}
                       </span>
-                      <div className="flex-1">
-                        <div className="text-sm font-bold">{t(`levelName.${lv.value}`)}</div>
-                        <div className="text-xs text-[var(--text-secondary)]">{t(`ob.level${lv.value}.sub`)}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-[var(--text-primary)]">{t(`levelName.${lv.value}`)}</div>
+                        <div className="text-xs text-[var(--text-secondary)] truncate">{t(`ob.level${lv.value}.sub`)}</div>
                       </div>
                       <div
-                        className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
+                        className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                           selected
-                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-contrast)]'
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[#FFFFFF]'
                             : 'border-[var(--border-strong)]'
                         }`}
                       >
-                        {selected && <Check className="h-3 w-3" />}
+                        {selected && <Check className="h-3 w-3" strokeWidth={3} />}
                       </div>
                     </div>
                   </Card>
@@ -286,22 +288,38 @@ export default function Settings() {
         {section === 'gender' && (
           <div className="space-y-3">
             <p className="text-xs text-[var(--text-secondary)] px-1">{t('settings.genderSub')}</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-2.5" role="radiogroup" aria-label={t('settings.genderTitle')}>
               {GENDERS.map((g) => {
                 const selected = (g.v === 'skip' ? null : g.v) === gender;
                 return (
-                  <button
-                    key={g.v}
+                  <Card
+                    as="button"
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    key={g.v}
                     onClick={() => pickGender(g.v)}
-                    className={`flex-1 min-w-[120px] min-h-[48px] px-4 py-3 rounded-[var(--radius-md)] border text-xs font-bold transition-all active:scale-95 ${
+                    className={`w-full text-left p-4 cursor-pointer transition-all active:scale-[0.98] border rounded-2xl ${
                       selected
-                        ? 'border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]'
-                        : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]'
+                        ? 'border-[var(--primary)] bg-[var(--primary-subtle)] shadow-sm ring-1 ring-[var(--primary)]'
+                        : 'border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]'
                     }`}
                   >
-                    {t(g.key)}
-                  </button>
+                    <div className="flex items-center gap-3.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-[var(--text-primary)]">{t(g.key)}</div>
+                      </div>
+                      <div
+                        className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                          selected
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[#FFFFFF]'
+                            : 'border-[var(--border-strong)]'
+                        }`}
+                      >
+                        {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                    </div>
+                  </Card>
                 );
               })}
             </div>
