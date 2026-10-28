@@ -9,7 +9,6 @@ import {
   ChevronRight,
   MessageSquare,
   Users,
-  GraduationCap,
   Sparkles,
   Target,
   BookOpen,
@@ -43,8 +42,6 @@ export default function Home() {
     partnerPref,
     setPartnerPref,
     waitingCount,
-    callMode,
-    setCallMode,
     setSpeakingState,
   } = useAppStore();
   const t = useT();
@@ -150,34 +147,6 @@ export default function Home() {
           <div className="hero__orb hero__orb--3" aria-hidden="true" />
 
           <div className="hero__inner">
-            {/* Rejim tanlash (Free Talk yoki IELTS Practice) */}
-            <div className="hero-mode-switch">
-              <button
-                type="button"
-                className={`hero-mode-btn ${callMode === 'free' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  selectionHaptic();
-                  setCallMode('free');
-                }}
-              >
-                <MessageSquare size={13} />
-                <span>Free Talk</span>
-              </button>
-              <button
-                type="button"
-                className={`hero-mode-btn ${callMode === 'ielts' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  selectionHaptic();
-                  setCallMode('ielts');
-                }}
-              >
-                <GraduationCap size={14} />
-                <span>IELTS Practice</span>
-              </button>
-            </div>
-
             {/* Live badge & presence */}
             <div className="hero__top-row">
               <span className="hero__tag">
@@ -196,15 +165,13 @@ export default function Home() {
               )}
             </div>
 
-            {/* Sarlavha va Tavsif */}
+            {/* Sarlavha va Tavsif — Barcha maqsadlar uchun umumiy (Erkin, IELTS, CEFR) */}
             <div className="hero__content">
               <h1 className="hero__title">
-                {callMode === 'ielts' ? 'IELTS Speaking Partner' : t('home.ctaTitle')}
+                {t('home.ctaTitle')}
               </h1>
               <p className="hero__sub">
-                {callMode === 'ielts'
-                  ? 'Practise Part 1, 2, and 3 cue cards with real partners'
-                  : t('home.ctaSub')}
+                Erkin muloqot, IELTS, CEFR yoki kundalik mashq uchun darajangizga mos sherik toping
               </p>
             </div>
 
@@ -224,7 +191,7 @@ export default function Home() {
                     <Mic size={20} strokeWidth={2.5} />
                   </div>
                 </div>
-                <span>{callMode === 'ielts' ? 'Start IELTS Call' : t('home.start')}</span>
+                <span>{t('home.start')}</span>
                 <ChevronRight size={18} strokeWidth={2.5} />
               </button>
 
@@ -290,7 +257,7 @@ export default function Home() {
             </button>
           </div>
           <p className="home-topic-question">“{todayQuestion}”</p>
-          <span className="home-topic-hint">Break the ice on your next call with this question</span>
+          <span className="home-topic-hint">Suhbat mavzusi: erkin muloqot, IELTS yoki CEFR uchun</span>
         </div>
 
         {/* ── 4. FOYDALI BO'LIMLAR (2 ta qulay kartochka: E'lonlar va Mikrofon) ── */}
@@ -407,30 +374,6 @@ export default function Home() {
         @keyframes orbFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5px,5px) scale(0.95); } }
 
         .hero__inner { display: flex; flex-direction: column; gap: 12px; }
-
-        /* Mode Switcher pill inside Hero */
-        .hero-mode-switch {
-          display: inline-flex;
-          align-self: flex-start;
-          gap: 3px;
-          background: rgba(0, 0, 0, 0.22);
-          padding: 3px;
-          border-radius: var(--radius-full);
-          backdrop-filter: blur(6px);
-        }
-        .hero-mode-btn {
-          display: inline-flex; align-items: center; gap: 5px;
-          padding: 5px 12px; border-radius: var(--radius-full);
-          border: none; background: transparent;
-          color: rgba(255, 255, 255, 0.85);
-          font-size: 11px; font-weight: var(--weight-bold);
-          cursor: pointer; transition: all 0.18s ease;
-        }
-        .hero-mode-btn.active {
-          background: #FFFFFF;
-          color: #0077EE;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
 
         /* Top row: live badge + online count */
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }

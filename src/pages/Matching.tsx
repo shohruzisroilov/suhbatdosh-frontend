@@ -3,7 +3,7 @@ import { useMatch } from '../hooks/useMatch';
 import { useSocket } from '../hooks/useSocket';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
-import { Users, RotateCcw, Megaphone, GraduationCap, MessageSquare, KeyRound } from 'lucide-react';
+import { Users, RotateCcw, Megaphone, MessageSquare, KeyRound } from 'lucide-react';
 
 function fmtElapsed(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -13,7 +13,7 @@ function fmtElapsed(s: number): string {
  * Sherik qidirish ekrani (Umumiy yoki Do'st bilan xona).
  */
 export default function Matching() {
-  const { user, navigate, waitingCount, callMode, screenParams } = useAppStore();
+  const { user, navigate, waitingCount, screenParams } = useAppStore();
   const { matchingStatus, startSearch, cancel } = useMatch();
   const { joinPrivateRoom, leavePrivateRoom } = useSocket();
   const t = useT();
@@ -108,15 +108,10 @@ export default function Matching() {
               <KeyRound size={13} />
               <span>Xona #{roomCode}</span>
             </>
-          ) : callMode === 'ielts' ? (
-            <>
-              <GraduationCap size={13} />
-              <span>IELTS Practice</span>
-            </>
           ) : (
             <>
-              <MessageSquare size={13} />
-              <span>Free Talk</span>
+              <Users size={13} />
+              <span>Jonli suhbat · {user?.level ? t(`level.${user.level}`) : 'General'}</span>
             </>
           )}
         </div>
@@ -139,7 +134,7 @@ export default function Matching() {
           <p className="mt__desc">
             {isPrivateRoom
               ? "Do'stingiz xonaga kirishi bilan suhbat avtomatik boshlanadi"
-              : t('match.lookingFor')}
+              : "Erkin muloqot, IELTS yoki CEFR uchun mos sherik qidirilmoqda"}
           </p>
         </div>
 
