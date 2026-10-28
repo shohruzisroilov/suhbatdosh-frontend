@@ -7,7 +7,7 @@ import { tapHaptic, selectionHaptic } from '../utils/haptics';
 import ReportSheet from '../components/ReportSheet';
 import Modal from '../components/Modal';
 import ReviewPrompt from '../components/ReviewPrompt';
-import { Star, Check, Flag, PartyPopper, LogOut, Flame, Sparkles, Target } from 'lucide-react';
+import { Star, Check, Flag, PartyPopper, LogOut } from 'lucide-react';
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hov, setHov] = useState(0);
@@ -125,18 +125,6 @@ export default function SessionEnd() {
               <span>{t('se.duration')}</span>
               <span className="end-row-val">{durText}</span>
             </div>
-          )}
-        </div>
-
-        {/* ── Celebration & Streak Motivation Banner ── */}
-        <div className="end-streak-banner scale-in">
-          <div className="end-streak-badge">
-            <Flame size={15} fill="#FF9F0A" className="end-flame-ico" />
-            <span>{t('end.badge')}</span>
-          </div>
-          <p className="end-streak-title">{t('end.title')}</p>
-          {durText && (
-            <p className="end-streak-sub">{t('end.sub', { dur: durText })}</p>
           )}
         </div>
 
@@ -300,28 +288,6 @@ export default function SessionEnd() {
           font-size: var(--text-2xs); font-weight: var(--weight-bold);
           text-transform: uppercase; letter-spacing: 0.06em;
           color: var(--text-secondary); text-align: center;
-        }
-
-        .end-streak-banner {
-          width: 100%;
-          border-radius: var(--radius-lg);
-          background: var(--soft-yellow);
-          border: 1px solid rgba(255, 200, 87, 0.45);
-          padding: 14px 16px;
-          display: flex; flex-direction: column; gap: 4px; text-align: left;
-          box-shadow: 0 4px 14px rgba(255, 200, 87, 0.12);
-        }
-        .end-streak-badge {
-          display: inline-flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: 800; color: #B45309;
-          letter-spacing: 0.04em; text-transform: uppercase;
-        }
-        .end-flame-ico { color: #FFC857; filter: drop-shadow(0 0 4px rgba(255, 200, 87, 0.6)); }
-        .end-streak-title {
-          font-size: 14px; font-weight: 700; color: #182338; margin: 2px 0 0 0;
-        }
-        .end-streak-sub {
-          font-size: 12px; color: #6B778C; margin: 0; line-height: 1.4;
         }
 
         .end-report {
