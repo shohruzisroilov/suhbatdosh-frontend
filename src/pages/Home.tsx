@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect } from 'react';
 import { getMe } from '../api/endpoints';
 import useAppStore from '../store/useAppStore';
 import { useT } from '../i18n';
@@ -9,24 +9,14 @@ import {
   ChevronRight,
   MessageSquare,
   Users,
-  Sparkles,
-  Target,
-  BookOpen,
-  Volume2,
-  Users2,
-  Trophy,
 } from 'lucide-react';
 
 import HomeHeader from '../components/HomeHeader';
 import SessionRow from '../components/SessionRow';
 import SkeletonRow from '../components/SkeletonRow';
-import TopicsLibraryModal from '../components/TopicsLibraryModal';
-import MicTestModal from '../components/MicTestModal';
-import PrivateRoomModal from '../components/PrivateRoomModal';
-import { PART1 } from '../constants/speakingTopics';
 
 /**
- * Bosh sahifa — Conversation-First layout with Mode Selection & Topic of the Day.
+ * Bosh sahifa — Oddiy, qulay va toza suhbat markazi.
  */
 export default function Home() {
   const {
@@ -42,61 +32,11 @@ export default function Home() {
     partnerPref,
     setPartnerPref,
     waitingCount,
-    setSpeakingState,
   } = useAppStore();
   const t = useT();
 
-  const [showTopicsLib, setShowTopicsLib] = useState(false);
-  const [showMicTest, setShowMicTest] = useState(false);
-  const [showPrivateRoom, setShowPrivateRoom] = useState(false);
-
   const isFemale = user?.gender === 'female';
   const womenOnly = isFemale && partnerPref === 'female';
-
-  // Topic of the day calculation
-  const dayIndex = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const diff = now.getTime() - start.getTime() + (start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000;
-    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return dayOfYear % PART1.length;
-  }, []);
-  const todayTopic = PART1[dayIndex] || PART1[0];
-  const todayQuestion = todayTopic.questions[0] || 'What is your favorite way to spend a weekend?';
-
-  // Daily goal calculation (15 minutes)
-  const dailyGoalMins = 15;
-  const todayMins = useMemo(() => {
-    if (!recentSessions || recentSessions.length === 0) return stats?.hasPracticedToday ? 15 : 0;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    let sum = 0;
-    for (const s of recentSessions) {
-      if (s.ended_at && String(s.ended_at).startsWith(todayStr)) {
-        const dur = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-        if (dur > 0) sum += dur;
-      }
-    }
-    return sum || (stats?.hasPracticedToday ? 15 : 0);
-  }, [recentSessions, stats]);
-  const goalReached = todayMins >= dailyGoalMins || !!stats?.hasPracticedToday;
-  const goalPct = Math.min(100, Math.round((todayMins / dailyGoalMins) * 100));
-
-  // Weekly challenge goal calculation (60 minutes)
-  const weeklyGoalMins = 60;
-  const weeklyMins = useMemo(() => {
-    if (!recentSessions || recentSessions.length === 0) return Math.min(60, stats?.total_minutes || 0);
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    let sum = 0;
-    for (const s of recentSessions) {
-      if (s.ended_at && new Date(s.ended_at).getTime() >= oneWeekAgo) {
-        const dur = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-        if (dur > 0) sum += dur;
-      }
-    }
-    return sum || Math.min(60, stats?.total_minutes || 0);
-  }, [recentSessions, stats]);
-  const weeklyGoalReached = weeklyMins >= weeklyGoalMins;
-  const weeklyGoalPct = Math.min(100, Math.round((weeklyMins / weeklyGoalMins) * 100));
 
   useEffect(() => {
     getMe()
@@ -118,7 +58,6 @@ export default function Home() {
       />
 
       <div className="home__scroll">
-
         {/* Xavfsizlik filtri (Ayollar / Girls uchun eng tepada) */}
         {isFemale && (
           <button
@@ -126,7 +65,7 @@ export default function Home() {
             className={`row${womenOnly ? ' row--on' : ''} fade-up`}
             onClick={() => { selectionHaptic(); setPartnerPref(womenOnly ? 'any' : 'female'); }}
             aria-pressed={womenOnly}
-            style={{ marginBottom: '12px' }}
+            style={{ marginBottom: '8px' }}
           >
             <span className={`row__ico${womenOnly ? ' row__ico--primary' : ''}`}>
               <ShieldCheck size={18} />
@@ -139,8 +78,7 @@ export default function Home() {
           </button>
         )}
 
-
-        {/* ── 1. ASOSIY QO'NG'IROQ MARKAZI (Hero Card) ── */}
+        {/* ── ASOSIY QO'NG'IROQ MARKAZI (Hero Card) ── */}
         <section className="hero fade-up">
           <div className="hero__orb hero__orb--1" aria-hidden="true" />
           <div className="hero__orb hero__orb--2" aria-hidden="true" />
@@ -165,7 +103,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Sarlavha va Tavsif — Barcha maqsadlar uchun umumiy (Erkin, IELTS, CEFR) */}
+            {/* Sarlavha va Tavsif */}
             <div className="hero__content">
               <h1 className="hero__title">
                 {t('home.ctaTitle')}
@@ -175,129 +113,50 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Boshqaruv tugmalari: Asosiy Sherik Topish + Do'st bilan Xona */}
-            <div className="hero__actions-wrap">
-              <button
-                type="button"
-                className="hero__main-btn"
-                onClick={() => {
-                  tapHaptic('heavy');
-                  navigate('matching');
-                }}
-              >
-                <div className="hero__mic-ring">
-                  <div className="hero__mic-pulse" />
-                  <div className="hero__mic-icon">
-                    <Mic size={20} strokeWidth={2.5} />
-                  </div>
+            {/* Boshqaruv tugmasi: Asosiy Sherik Topish */}
+            <button
+              type="button"
+              className="hero__main-btn"
+              onClick={() => {
+                tapHaptic('heavy');
+                navigate('matching');
+              }}
+            >
+              <div className="hero__mic-ring">
+                <div className="hero__mic-pulse" />
+                <div className="hero__mic-icon">
+                  <Mic size={20} strokeWidth={2.5} />
                 </div>
-                <span>{t('home.start')}</span>
-                <ChevronRight size={18} strokeWidth={2.5} />
-              </button>
-
-              <button
-                type="button"
-                className="hero__friend-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  tapHaptic('medium');
-                  setShowPrivateRoom(true);
-                }}
-              >
-                <Users2 size={16} />
-                <span>Do'st bilan suhbat (Xona / Havola)</span>
-              </button>
-            </div>
+              </div>
+              <span>{t('home.start')}</span>
+              <ChevronRight size={18} strokeWidth={2.5} />
+            </button>
           </div>
         </section>
 
-        {/* ── 2. KUNLIK VA HAFTALIK MASHQ MAQSADI (Ixcham yagona kartochka) ── */}
-        <div className="home-goal-card fade-up">
-          <div className="home-goal-top">
-            <div className="home-goal-label">
-              <Target size={14} className="home-goal-icon" />
-              <span>Daily Practice Goal</span>
-            </div>
-            <div className="home-goal-badges">
-              <span className={`home-goal-badge ${goalReached ? 'done' : ''}`}>
-                {goalReached ? '🎉 15m Done' : `${todayMins} / 15m`}
-              </span>
-              <span className={`home-goal-badge weekly ${weeklyGoalReached ? 'done' : ''}`}>
-                <Trophy size={11} />
-                <span>{weeklyGoalReached ? '🏆 60m' : `${weeklyMins}/60m`}</span>
-              </span>
-            </div>
-          </div>
-          <div className="home-goal-track">
-            <div
-              className={`home-goal-fill ${goalReached ? 'completed' : ''}`}
-              style={{ width: `${goalReached ? 100 : Math.max(6, goalPct)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* ── 3. BUGUNGI MAVZU (Icebreaker & Question Bank) ── */}
-        <div className="home-topic-card fade-up">
-          <div className="home-topic-head">
-            <div className="home-topic-tag">
-              <Sparkles size={13} />
-              <span>Today's Topic · {todayTopic.title}</span>
-            </div>
-            <button
-              type="button"
-              className="home-topic-all-btn"
-              onClick={() => {
-                tapHaptic('light');
-                setShowTopicsLib(true);
-              }}
-            >
-              <BookOpen size={12} />
-              <span>Question Bank</span>
-              <ChevronRight size={12} />
-            </button>
-          </div>
-          <p className="home-topic-question">“{todayQuestion}”</p>
-          <span className="home-topic-hint">Suhbat mavzusi: erkin muloqot, IELTS yoki CEFR uchun</span>
-        </div>
-
-        {/* ── 4. FOYDALI BO'LIMLAR (2 ta qulay kartochka: E'lonlar va Mikrofon) ── */}
-        <div className="home-quick-grid fade-up">
-          <button
-            type="button"
-            className="home-quick-item"
-            onClick={() => {
-              tapHaptic('medium');
-              navigate('listings');
-            }}
+        {/* ── HAMKORLAR E'LONLARI (Listings Board) ── */}
+        <button
+          type="button"
+          className="row fade-up"
+          onClick={() => {
+            tapHaptic('medium');
+            navigate('listings');
+          }}
+        >
+          <span
+            className="row__ico"
+            style={{ background: 'rgba(255, 159, 10, 0.12)', color: '#FF9F0A' }}
           >
-            <div className="home-quick-icon" style={{ background: 'rgba(255, 159, 10, 0.12)', color: '#FF9F0A' }}>
-              <Users size={18} />
-            </div>
-            <div className="home-quick-info">
-              <strong>{t('home.listingsTitle')}</strong>
-              <span>Find study partners or tutors</span>
-            </div>
-          </button>
+            <Users size={18} aria-hidden="true" />
+          </span>
+          <span className="row__text">
+            <span className="row__title">{t('home.listingsTitle')}</span>
+            <span className="row__sub">{t('home.listingsSub')}</span>
+          </span>
+          <ChevronRight size={18} className="row__arrow" aria-hidden="true" />
+        </button>
 
-          <button
-            type="button"
-            className="home-quick-item"
-            onClick={() => {
-              tapHaptic('light');
-              setShowMicTest(true);
-            }}
-          >
-            <div className="home-quick-icon" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
-              <Volume2 size={18} />
-            </div>
-            <div className="home-quick-info">
-              <strong>Mikrofonni sinash</strong>
-              <span>Real-time audio visualizer</span>
-            </div>
-          </button>
-        </div>
-
-        {/* ── 5. OXIRGI SUHBATLAR TARIXI ── */}
+        {/* ── OXIRGI SUHBATLAR TARIXI ── */}
         {!homeLoaded ? (
           <section className="home__section">
             <p className="eyebrow">{t('home.recent')}</p>
@@ -340,7 +199,7 @@ export default function Home() {
           background: linear-gradient(135deg, #00A8FF 0%, #0077EE 50%, #0055D4 100%);
           border: 1px solid rgba(255, 255, 255, 0.20);
           border-radius: var(--radius-lg);
-          padding: 16px;
+          padding: 18px 16px;
           display: flex; flex-direction: column;
           box-shadow: 0 8px 30px rgba(0, 168, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
           transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
@@ -373,7 +232,7 @@ export default function Home() {
         @keyframes orbFloat2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
         @keyframes orbFloat3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5px,5px) scale(0.95); } }
 
-        .hero__inner { display: flex; flex-direction: column; gap: 12px; }
+        .hero__inner { display: flex; flex-direction: column; gap: 14px; }
 
         /* Top row: live badge + online count */
         .hero__top-row { display: flex; align-items: center; justify-content: space-between; }
@@ -423,13 +282,10 @@ export default function Home() {
           color: rgba(255, 255, 255, 0.85);
         }
 
-        /* CTA buttons inside Hero */
-        .hero__actions-wrap {
-          display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
-        }
+        /* CTA main button */
         .hero__main-btn {
           display: flex; align-items: center; justify-content: center; gap: 10px;
-          min-height: 48px; width: 100%;
+          min-height: 50px; width: 100%;
           background: #FFFFFF; color: #0077EE;
           border-radius: var(--radius-md); border: none;
           font-size: 15px; font-weight: var(--weight-heavy);
@@ -437,6 +293,7 @@ export default function Home() {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
           cursor: pointer;
           transition: transform 0.15s var(--ease-out);
+          margin-top: 4px;
         }
         .hero__main-btn:active {
           transform: scale(0.97);
@@ -459,125 +316,6 @@ export default function Home() {
         .hero__mic-icon {
           display: flex; align-items: center; justify-content: center;
           color: #0077EE;
-        }
-        .hero__friend-btn {
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-          min-height: 38px; width: 100%;
-          background: rgba(255, 255, 255, 0.18);
-          color: #FFFFFF;
-          border: 1px solid rgba(255, 255, 255, 0.32);
-          border-radius: var(--radius-md);
-          font-size: 12px; font-weight: var(--weight-bold);
-          cursor: pointer;
-          backdrop-filter: blur(4px);
-          transition: all 0.15s ease;
-        }
-        .hero__friend-btn:active {
-          transform: scale(0.98);
-          background: rgba(255, 255, 255, 0.28);
-        }
-
-        /* ── Unified Practice Goal Card ── */
-        .home-goal-card {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: var(--radius-md); padding: 12px 14px;
-          display: flex; flex-direction: column; gap: 8px;
-        }
-        .home-goal-top {
-          display: flex; align-items: center; justify-content: space-between;
-        }
-        .home-goal-label {
-          display: inline-flex; align-items: center; gap: 6px;
-          font-size: 12px; font-weight: var(--weight-bold);
-          color: var(--text-primary);
-        }
-        .home-goal-icon { color: var(--primary); }
-        .home-goal-badges {
-          display: inline-flex; align-items: center; gap: 6px;
-        }
-        .home-goal-badge {
-          font-size: 11px; font-weight: var(--weight-heavy);
-          padding: 2px 7px; border-radius: var(--radius-full);
-          background: var(--surface-2); color: var(--text-secondary);
-        }
-        .home-goal-badge.done {
-          background: rgba(52, 199, 89, 0.14); color: var(--success);
-        }
-        .home-goal-badge.weekly {
-          display: inline-flex; align-items: center; gap: 3px;
-          color: #FFB300; background: rgba(255, 179, 0, 0.12);
-        }
-        .home-goal-badge.weekly.done {
-          color: #FF9F0A; background: rgba(255, 159, 10, 0.18);
-        }
-        .home-goal-track {
-          height: 6px; border-radius: var(--radius-full);
-          background: var(--surface-2); overflow: hidden;
-        }
-        .home-goal-fill {
-          height: 100%; border-radius: var(--radius-full);
-          background: var(--grad-primary); transition: width 0.4s ease;
-        }
-        .home-goal-fill.completed {
-          background: linear-gradient(90deg, #34C759, #30D158);
-        }
-
-        /* ── Topic of the Day Card ── */
-        .home-topic-card {
-          background: var(--surface); border: 1px solid var(--border);
-          border-radius: var(--radius-md); padding: 12px 14px;
-          display: flex; flex-direction: column; gap: 6px;
-        }
-        .home-topic-head {
-          display: flex; align-items: center; justify-content: space-between;
-        }
-        .home-topic-tag {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-size: 11px; font-weight: var(--weight-bold);
-          color: var(--primary); text-transform: uppercase; letter-spacing: 0.04em;
-        }
-        .home-topic-all-btn {
-          display: inline-flex; align-items: center; gap: 3px;
-          background: var(--primary-subtle); border: 1px solid rgba(0, 168, 255, 0.2);
-          color: var(--primary); padding: 3px 8px; border-radius: var(--radius-full);
-          font-size: 10px; font-weight: var(--weight-bold); cursor: pointer;
-        }
-        .home-topic-all-btn:active { transform: scale(0.95); }
-        .home-topic-question {
-          font-size: 13px; font-weight: var(--weight-semibold); color: var(--text-primary);
-          line-height: 1.35; margin: 0;
-        }
-        .home-topic-hint {
-          font-size: 11px; color: var(--text-tertiary);
-        }
-
-        /* ── Quick Tools Grid (Listings & Mic Test) ── */
-        .home-quick-grid {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-        }
-        .home-quick-item {
-          display: flex; flex-direction: column; align-items: flex-start;
-          gap: 6px; background: var(--surface); border: 1px solid var(--border);
-          border-radius: var(--radius-md); padding: 12px;
-          text-align: left; cursor: pointer; transition: all 0.15s ease;
-          position: relative;
-        }
-        .home-quick-item:active {
-          transform: scale(0.97); background: var(--surface-2);
-        }
-        .home-quick-icon {
-          width: 32px; height: 32px; border-radius: 8px;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .home-quick-info {
-          display: flex; flex-direction: column; gap: 2px;
-        }
-        .home-quick-info strong {
-          font-size: 12px; font-weight: var(--weight-bold);
-          color: var(--text-primary); line-height: 1.25;
-        }
-        .home-quick-info span {
-          font-size: 11px; color: var(--text-secondary); line-height: 1.2;
         }
 
         .home__section { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -619,34 +357,6 @@ export default function Home() {
 
         .home__foot { padding-bottom: var(--space-2); }
       `}</style>
-
-      {/* Standalone Question Bank & Topics Library Sheet */}
-      <TopicsLibraryModal
-        isOpen={showTopicsLib}
-        onClose={() => setShowTopicsLib(false)}
-        onSelectTopic={(topicId, part) => {
-          setSpeakingState(topicId, part, 0);
-          setShowTopicsLib(false);
-        }}
-      />
-
-      {/* Real-time Audio Visualizer Mic Check Modal */}
-      <MicTestModal
-        isOpen={showMicTest}
-        onClose={() => setShowMicTest(false)}
-      />
-
-      {/* Direct Private Room with a Friend Modal */}
-      <PrivateRoomModal
-        isOpen={showPrivateRoom}
-        onClose={() => setShowPrivateRoom(false)}
-        onJoinRoom={(code) => {
-          setShowPrivateRoom(false);
-          navigate('matching', { roomCode: code });
-        }}
-        botUsername={user?.username || 'suhbatdoshbot'}
-      />
     </div>
   );
 }
-
