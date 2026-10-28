@@ -171,7 +171,7 @@ export default function Home() {
         >
           <span
             className="row__ico"
-            style={{ background: 'var(--soft-yellow, #FFF5DE)', color: '#D97706' }}
+            style={{ background: 'var(--soft-yellow)', color: 'var(--warning, #F59E0B)' }}
           >
             <Users size={18} aria-hidden="true" />
           </span>

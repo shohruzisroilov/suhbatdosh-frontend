@@ -229,17 +229,17 @@ export default function Leaderboard() {
         .lb-row.me { border-color: var(--primary) !important; background: var(--primary-subtle) !important; }
 
         .lb-row--rank-1 {
-          border-color: rgba(255, 200, 87, 0.6);
-          background: linear-gradient(90deg, #FFFDF5 0%, var(--bg-secondary) 75%);
-          box-shadow: 0 4px 14px rgba(255, 200, 87, 0.15);
+          border-color: rgba(255, 200, 87, 0.55);
+          background: linear-gradient(135deg, rgba(255, 200, 87, 0.12) 0%, var(--bg-secondary) 100%);
+          box-shadow: 0 4px 14px rgba(255, 200, 87, 0.12);
         }
         .lb-row--rank-2 {
-          border-color: rgba(203, 213, 225, 0.7);
-          background: linear-gradient(90deg, #F8FAFC 0%, var(--bg-secondary) 75%);
+          border-color: rgba(148, 163, 184, 0.45);
+          background: linear-gradient(135deg, rgba(148, 163, 184, 0.10) 0%, var(--bg-secondary) 100%);
         }
         .lb-row--rank-3 {
-          border-color: rgba(252, 211, 77, 0.6);
-          background: linear-gradient(90deg, #FFFDF8 0%, var(--bg-secondary) 75%);
+          border-color: rgba(217, 119, 6, 0.45);
+          background: linear-gradient(135deg, rgba(217, 119, 6, 0.10) 0%, var(--bg-secondary) 100%);
         }
 
         .lb-rank-col {
@@ -251,13 +251,21 @@ export default function Leaderboard() {
         }
         .lb-rank-badge {
           display: flex; align-items: center; justify-content: center;
-          width: 22px; height: 22px; border-radius: 50%;
+          width: 24px; height: 24px; border-radius: 50%;
           font-size: 11px; font-weight: var(--weight-heavy);
         }
-        .lb-rank-badge--2 { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
-        .lb-rank-badge--3 { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+        .lb-rank-badge--2 {
+          background: var(--surface-2);
+          color: var(--text-primary);
+          border: 1px solid rgba(148, 163, 184, 0.5);
+        }
+        .lb-rank-badge--3 {
+          background: rgba(217, 119, 6, 0.16);
+          color: #F59E0B;
+          border: 1px solid rgba(217, 119, 6, 0.4);
+        }
 
-        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .lb-row__info { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
         .lb-row__name-line {
           display: flex; align-items: center; gap: 6px; min-width: 0;
         }
@@ -271,7 +279,13 @@ export default function Leaderboard() {
           background: var(--primary); color: #FFFFFF;
           flex-shrink: 0;
         }
-        .lb-row__level { font-size: 10px; font-weight: var(--weight-bold); color: var(--primary); opacity: 0.9; }
+        .lb-row__level {
+          font-size: 10px; font-weight: var(--weight-bold);
+          color: var(--primary);
+          background: var(--primary-subtle);
+          padding: 1px 6px; border-radius: 4px;
+          width: fit-content;
+        }
 
         .lb-row__value-col { flex-shrink: 0; text-align: right; }
         .lb-row__value {
