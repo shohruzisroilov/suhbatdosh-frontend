@@ -46,7 +46,7 @@ export default function Home() {
         setRecentSessions(d.recentSessions);
         if (d.user) setUser(d.user);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setHomeLoaded(true));
   }, []);
 

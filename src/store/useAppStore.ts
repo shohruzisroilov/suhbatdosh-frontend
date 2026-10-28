@@ -184,7 +184,7 @@ const useAppStore = create<AppState>((set) => ({
   livekitToken: null,
   livekitUrl: null,
 
-  speakingTopicId: 'hometown',
+  speakingTopicId: '',
   speakingPart: 1,
   speakingQuestionIndex: 0,
 
@@ -223,7 +223,7 @@ const useAppStore = create<AppState>((set) => ({
       isCallActive: false,
       livekitToken: null,
       livekitUrl: null,
-      speakingTopicId: 'hometown',
+      speakingTopicId: '',
       speakingPart: 1,
       speakingQuestionIndex: 0,
     }),

@@ -10,8 +10,8 @@ import EndSessionSheet from '../components/EndSessionSheet';
 import Avatar from '../components/Avatar';
 import SpeakingQuestions from '../components/SpeakingQuestions';
 import { useT } from '../i18n';
-import { notifyHaptic } from '../utils/haptics';
-import { AlertCircle, AlertTriangle, X } from 'lucide-react';
+import { notifyHaptic, tapHaptic } from '../utils/haptics';
+import { AlertCircle, AlertTriangle, X, Lightbulb, ChevronRight, ArrowLeft } from 'lucide-react';
 
 function fmt(s: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -193,6 +193,7 @@ export default function Chat() {
     clearSession, setMatchingStatus,
     partnerConnected, setPartnerConnected,
     user, updateUser, addMessage,
+    speakingTopicId,
   } = useAppStore();
   const { joinSession, sendMessage, sendTyping } = useSocket();
   const t = useT();
@@ -200,6 +201,7 @@ export default function Chat() {
   const [elapsed, setElapsed]       = useState(0);
   const [showChat, setShowChat]     = useState(false);
   const [showEnd, setShowEnd]       = useState(false);
+  const [showTopics, setShowTopics] = useState(false);
   const [ending, setEnding]         = useState(false);
   const [micOn, setMicOn]           = useState(true);
   const [camOn, setCamOn]           = useState(false);
@@ -211,6 +213,11 @@ export default function Chat() {
   const [youSpeaking, setYouSpeaking] = useState(false);
   const [partnerSpeaking, setPartnerSpeaking] = useState(false);
 
+  const showTopicsRef = useRef(false);
+  showTopicsRef.current = showTopics;
+  const showChatRef = useRef(false);
+  showChatRef.current = showChat;
+
   const handleSpeaking = useCallback((you: boolean, partner: boolean) => {
     setYouSpeaking(you);
     setPartnerSpeaking(partner);
@@ -221,7 +228,15 @@ export default function Chat() {
   useEffect(() => {
     if (session?.id) joinSession(session.id);
     const backBtn = window.Telegram?.WebApp?.BackButton;
-    const onBack = () => setShowEnd(true);
+    const onBack = () => {
+      if (showTopicsRef.current) {
+        setShowTopics(false);
+      } else if (showChatRef.current) {
+        setShowChat(false);
+      } else {
+        setShowEnd(true);
+      }
+    };
     if (backBtn) {
       backBtn.show();
       backBtn.onClick(onBack);
@@ -360,56 +375,145 @@ export default function Chat() {
         </div>
       )}
 
-      {/* ── Header — audio mode ── */}
+      {/* ── Audio Mode: Clean Voice Call Screen or Topics View ── */}
       {!camOn && (
-        <div className="call-header">
-          <div className={`call-presence${partnerSpeaking ? ' call-presence--speaking' : ''}`}>
-            <Avatar name={session?.partnerName} avatarUrl={session?.partnerAvatarUrl} size={44} />
-          </div>
-          <div className="call-header__info">
-            <span className="call-header__name">
-              {session?.partnerName || 'Partner'}
-            </span>
-            <div className="call-header__meta">
-              <div className="call-header__meta-row">
-                <span className="call-tag">{t('lang.en')}</span>
-                {(session?.partnerLevel || user?.level) && (
-                  <span className="call-tag call-tag--dim">{t(`level.${session?.partnerLevel || user?.level}`)}</span>
-                )}
-                {partnerSpeaking ? (
-                  <span className="call-status call-status--speaking">
-                    {t('call.speaking')}
-                  </span>
-                ) : null}
+        <>
+          {showTopics ? (
+            <div className="call-topics-pane">
+              <div className="call-topics-header">
+                <button
+                  type="button"
+                  className="call-topics-back-btn"
+                  onClick={() => {
+                    tapHaptic('light');
+                    setShowTopics(false);
+                  }}
+                >
+                  <ArrowLeft size={18} />
+                  <span>{t('call.backToCall') || 'Back to Voice Call'}</span>
+                </button>
+                <div className="call-topics-timer">
+                  <span
+                    className="call-dot"
+                    style={{
+                      background: partnerConnected ? 'var(--success)' : 'var(--warning)',
+                      boxShadow: partnerConnected ? '0 0 8px var(--success)' : '0 0 8px var(--warning)',
+                    }}
+                  />
+                  <span>{partnerConnected ? fmt(elapsed) : t('call.waiting')}</span>
+                </div>
+              </div>
+
+              <div className="call-topics-body">
+                <SpeakingQuestions onDetailChange={setSpeakingDetail} />
               </div>
             </div>
-          </div>
-          <div className="call-header__timer">
-            <span
-              className="call-dot"
-              style={{
-                background: partnerConnected ? 'var(--success)' : 'var(--warning)',
-                boxShadow: partnerConnected ? '0 0 8px var(--success)' : '0 0 8px var(--warning)',
-              }}
-            />
-            <span className="call-header__elapsed">
-              {partnerConnected ? fmt(elapsed) : t('call.waiting')}
-            </span>
-          </div>
-        </div>
-      )}
+          ) : (
+            <div className="call-stage">
+              {/* Top status bar */}
+              <div className="call-stage__topbar">
+                <div className="call-stage__status">
+                  <span
+                    className="call-dot"
+                    style={{
+                      background: partnerConnected ? 'var(--success)' : 'var(--warning)',
+                      boxShadow: partnerConnected ? '0 0 8px var(--success)' : '0 0 8px var(--warning)',
+                    }}
+                  />
+                  <span>{partnerConnected ? 'Live 1-on-1 Audio Call' : t('call.waiting')}</span>
+                </div>
+                <div className="call-stage__timer-pill">
+                  {partnerConnected ? fmt(elapsed) : t('call.waiting')}
+                </div>
+              </div>
 
-      {/* ── Speaking section — audio mode ── */}
-      {!camOn && (
-        <div className="call-body">
-          {!partnerConnected && (
-            <div className="call-waiting-note">
-              <span className="call-waiting-spinner" />
-              <span>{t('call.waiting')}</span>
+              {/* Central stage */}
+              <div className="call-stage__center">
+                {/* Large partner avatar with pulse ring */}
+                <div className="call-stage__avatar-box">
+                  <div className={`call-stage__halo ${partnerSpeaking ? 'active' : ''}`} />
+                  <div className={`call-stage__halo-outer ${partnerSpeaking ? 'active' : ''}`} />
+                  <div className={`call-stage__avatar ${partnerSpeaking ? 'speaking' : ''}`}>
+                    <Avatar
+                      name={session?.partnerName}
+                      avatarUrl={session?.partnerAvatarUrl}
+                      size={96}
+                    />
+                  </div>
+                </div>
+
+                <div className="call-stage__identity">
+                  <h2 className="call-stage__name">{session?.partnerName || 'Speaking Partner'}</h2>
+                  <div className="call-stage__meta-row">
+                    <span className="call-tag">{t('lang.en')}</span>
+                    {(session?.partnerLevel || user?.level) && (
+                      <span className="call-tag call-tag--level">
+                        {t(`level.${session?.partnerLevel || user?.level}`)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Live soundwave animated visualizer */}
+                <div className="call-stage__soundwave" aria-hidden="true">
+                  {[4, 12, 22, 16, 28, 18, 8].map((h, i) => (
+                    <span
+                      key={i}
+                      className={`call-stage__wave-bar ${
+                        partnerSpeaking
+                          ? 'speaking-partner'
+                          : youSpeaking && micOn
+                          ? 'speaking-you'
+                          : 'idle'
+                      }`}
+                      style={{
+                        '--bar-h': `${h}px`,
+                        animationDelay: `${i * 0.1}s`,
+                      } as React.CSSProperties}
+                    />
+                  ))}
+                </div>
+
+                {/* Audio speech indicator text */}
+                <div className="call-stage__speech-indicator">
+                  {partnerSpeaking ? (
+                    <span className="call-status--speaking">
+                      <span className="speaking-dot" /> {t('call.speaking')}
+                    </span>
+                  ) : youSpeaking && micOn ? (
+                    <span className="call-status--you">
+                      <span className="speaking-dot speaking-dot--you" /> You are speaking…
+                    </span>
+                  ) : !partnerConnected ? (
+                    <span className="call-status--waiting">
+                      <span className="call-waiting-spinner" /> Connecting to partner…
+                    </span>
+                  ) : (
+                    <span className="call-status--connected">
+                      Ready to speak · Say hello!
+                    </span>
+                  )}
+                </div>
+
+                {/* Topics / Questions button */}
+                <button
+                  type="button"
+                  className="call-stage__topics-btn"
+                  onClick={() => {
+                    tapHaptic('light');
+                    setShowTopics(true);
+                  }}
+                >
+                  <Lightbulb size={17} className="text-amber-400" />
+                  <span>
+                    {speakingTopicId ? 'View Selected Question' : 'Conversation Topics & Ideas'}
+                  </span>
+                  <ChevronRight size={16} className="text-white/40" />
+                </button>
+              </div>
             </div>
           )}
-          <SpeakingQuestions onDetailChange={setSpeakingDetail} />
-        </div>
+        </>
       )}
 
       <CallControls
@@ -421,7 +525,7 @@ export default function Chat() {
         onEnd={() => setShowEnd(true)}
         onOpenChat={() => setShowChat(true)}
         unread={unread}
-        hidden={!camOn && speakingDetail}
+        hidden={!camOn && showTopics && speakingDetail}
       />
 
       {showChat && (
@@ -444,6 +548,172 @@ export default function Chat() {
       )}
 
       <style>{`
+        /* ── Call Stage (Main Clean Voice Screen) ── */
+        .call-stage {
+          flex: 1; min-height: 0;
+          display: flex; flex-direction: column;
+          position: relative; z-index: 5;
+          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) calc(120px + env(safe-area-inset-bottom, 0px));
+        }
+        .call-stage__topbar {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 8px 14px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: var(--radius-full);
+          backdrop-filter: blur(12px);
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          color: rgba(255, 255, 255, 0.85);
+          flex-shrink: 0;
+        }
+        .call-stage__status {
+          display: flex; align-items: center; gap: 8px;
+        }
+        .call-stage__timer-pill {
+          font-variant-numeric: tabular-nums;
+          font-weight: var(--weight-heavy);
+          color: #FFFFFF;
+        }
+
+        .call-stage__center {
+          flex: 1; display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          gap: 16px; text-align: center;
+          padding: 16px 0;
+        }
+
+        .call-stage__avatar-box {
+          position: relative;
+          width: 130px; height: 130px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .call-stage__halo, .call-stage__halo-outer {
+          position: absolute; inset: 0; border-radius: 50%;
+          border: 2px solid transparent;
+          pointer-events: none;
+          transition: all 0.25s ease;
+        }
+        .call-stage__halo.active {
+          border-color: rgba(33, 184, 135, 0.45);
+          animation: ringPulse 1.6s ease-out infinite;
+        }
+        .call-stage__halo-outer.active {
+          border-color: rgba(33, 184, 135, 0.25);
+          animation: ringPulse 1.6s ease-out 0.4s infinite;
+        }
+        @keyframes ringPulse {
+          0% { transform: scale(0.95); opacity: 0.9; }
+          100% { transform: scale(1.4); opacity: 0; }
+        }
+        .call-stage__avatar {
+          position: relative; z-index: 2;
+          border-radius: 50%;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .call-stage__avatar.speaking {
+          transform: scale(1.05);
+          box-shadow: 0 0 28px rgba(33, 184, 135, 0.5);
+        }
+
+        .call-stage__identity {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .call-stage__name {
+          font-size: 24px; font-weight: var(--weight-heavy);
+          color: #FFFFFF; margin: 0;
+          letter-spacing: -0.4px;
+        }
+        .call-stage__meta-row {
+          display: flex; align-items: center; gap: 6px;
+        }
+        .call-stage__tag--level {
+          color: var(--primary); background: rgba(40, 120, 240, 0.16);
+          border: 1px solid rgba(40, 120, 240, 0.3);
+        }
+
+        /* Soundwave */
+        .call-stage__soundwave {
+          display: flex; align-items: center; justify-content: center;
+          gap: 5px; height: 32px; padding: 0 16px;
+        }
+        .call-stage__wave-bar {
+          width: 4px; border-radius: 2px;
+          background: rgba(255, 255, 255, 0.2);
+          height: 6px; transition: height 0.15s ease, background-color 0.15s ease;
+        }
+        .call-stage__wave-bar.speaking-partner {
+          background: var(--success);
+          animation: waveBounce 0.7s ease-in-out infinite alternate;
+        }
+        .call-stage__wave-bar.speaking-you {
+          background: var(--primary);
+          animation: waveBounce 0.7s ease-in-out infinite alternate;
+        }
+        @keyframes waveBounce {
+          0% { height: 6px; }
+          100% { height: var(--bar-h, 24px); }
+        }
+
+        .call-stage__speech-indicator {
+          font-size: 13px; font-weight: var(--weight-semi);
+          color: rgba(255, 255, 255, 0.65);
+          min-height: 22px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .call-status--you { color: #60A5FA; display: inline-flex; align-items: center; gap: 6px; }
+        .speaking-dot {
+          width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+          box-shadow: 0 0 8px var(--success); flex-shrink: 0;
+        }
+        .speaking-dot--you { background: #60A5FA; box-shadow: 0 0 8px #60A5FA; }
+
+        .call-stage__topics-btn {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 18px;
+          border-radius: var(--radius-full);
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          color: #FFFFFF; font-size: 13px; font-weight: var(--weight-bold);
+          cursor: pointer; transition: all 0.2s ease;
+          margin-top: 10px;
+        }
+        .call-stage__topics-btn:active {
+          transform: scale(0.97);
+          background: rgba(255, 255, 255, 0.14);
+        }
+
+        /* ── Call Topics Pane ── */
+        .call-topics-pane {
+          flex: 1; display: flex; flex-direction: column;
+          min-height: 0; overflow: hidden; position: relative; z-index: 5;
+        }
+        .call-topics-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3);
+          background: rgba(8, 12, 20, 0.85);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(14px);
+          flex-shrink: 0;
+        }
+        .call-topics-back-btn {
+          display: flex; align-items: center; gap: 8px;
+          background: transparent; border: none; color: #FFFFFF;
+          font-size: var(--text-sm); font-weight: var(--weight-bold);
+          cursor: pointer; padding: 6px 12px; border-radius: var(--radius-full);
+          transition: background 0.15s ease;
+        }
+        .call-topics-back-btn:active { background: rgba(255, 255, 255, 0.12); }
+        .call-topics-timer {
+          display: flex; align-items: center; gap: 6px;
+          font-size: var(--text-xs); font-weight: var(--weight-bold);
+          color: rgba(255, 255, 255, 0.85);
+          font-variant-numeric: tabular-nums;
+        }
+        .call-topics-body {
+          flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+          padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+        }
+
         .call-screen {
           --bg: #080C14;
           --bg-secondary: rgba(255,255,255,0.07);
