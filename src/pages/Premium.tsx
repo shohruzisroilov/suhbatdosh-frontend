@@ -41,11 +41,11 @@ export default function Premium() {
         <div className="free-hero">
           <div className="free-hero__badge">
             <HeartHandshake size={16} />
-            <span>100% Bepul Platforma</span>
+            <span>100% Free Platform</span>
           </div>
-          <h2>Barcha imkoniyatlar to'liq bepul!</h2>
+          <h2>Practice English for Free!</h2>
           <p>
-            Suhbatdosh platformasida barcha foydalanuvchilar uchun ingliz tilida suhbatlashish va sherik topish to'liq bepul va cheksiz.
+            Talk in English and meet speaking partners completely free. No cards, no fees.
           </p>
         </div>
 
@@ -55,8 +55,8 @@ export default function Premium() {
               <Mic size={20} />
             </span>
             <div className="free-feat-text">
-              <h3>Cheksiz Jonli Muloqot</h3>
-              <p>Har kuni istagancha real odamlar bilan ovozli gaplashing. Hech qanday daqiqa limiti yo'q.</p>
+              <h3>Unlimited Voice Talks</h3>
+              <p>Talk with real people every day. No time limits.</p>
             </div>
             <CheckCircle2 size={18} className="free-check" />
           </div>
@@ -66,8 +66,8 @@ export default function Premium() {
               <Users size={20} />
             </span>
             <div className="free-feat-text">
-              <h3>Sheriklar va Ustozlar Doskasi</h3>
-              <p>O'zingizga mos sherik, ustoz yoki o'quvchi toping, bepul e'lon joylang va bog'laning.</p>
+              <h3>Partner &amp; Teacher Board</h3>
+              <p>Find study partners, teachers or students. Post a note for free.</p>
             </div>
             <CheckCircle2 size={18} className="free-check" />
           </div>
@@ -77,8 +77,8 @@ export default function Premium() {
               <HeartHandshake size={20} />
             </span>
             <div className="free-feat-text">
-              <h3>Hech Qanday To'lov Yo'q</h3>
-              <p>Platformadan foydalanish uchun obuna yoki karta to'lovi talab etilmaydi.</p>
+              <h3>Zero Payments</h3>
+              <p>No subscriptions or bank cards required. Just open and talk.</p>
             </div>
             <CheckCircle2 size={18} className="free-check" />
           </div>
@@ -93,7 +93,7 @@ export default function Premium() {
           }}
         >
           <Mic size={18} />
-          <span>Suhbatni boshlash</span>
+          <span>Start Speaking</span>
         </button>
       </div>
 

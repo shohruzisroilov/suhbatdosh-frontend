@@ -106,12 +106,12 @@ export default function Matching() {
           {isPrivateRoom ? (
             <>
               <KeyRound size={13} />
-              <span>Xona #{roomCode}</span>
+              <span>Room #{roomCode}</span>
             </>
           ) : (
             <>
               <Users size={13} />
-              <span>Jonli suhbat · {user?.level ? t(`level.${user.level}`) : 'General'}</span>
+              <span>Live Partner · {user?.level ? t(`level.${user.level}`) : 'General'}</span>
             </>
           )}
         </div>
@@ -128,24 +128,24 @@ export default function Matching() {
 
         <div className="mt__copy">
           <h2 className="mt__title">
-            {isPrivateRoom ? "Do'stingiz kutilmoqda" : t('match.searching')}
+            {isPrivateRoom ? "Waiting for your friend…" : t('match.searching')}
             <span className="mt__dots" aria-hidden="true"><i /><i /><i /></span>
           </h2>
           <p className="mt__desc">
             {isPrivateRoom
-              ? "Do'stingiz xonaga kirishi bilan suhbat avtomatik boshlanadi"
-              : "Erkin muloqot, IELTS yoki CEFR uchun mos sherik qidirilmoqda"}
+              ? "The call will start as soon as your friend opens the link."
+              : t('match.lookingFor')}
           </p>
         </div>
 
         <div className="mt__status">
           <div className="mt__meta">
             <div className="mt__cell">
-              <span className="eyebrow">{isPrivateRoom ? 'Rejim' : t('match.queueLabel')}</span>
+              <span className="eyebrow">{isPrivateRoom ? 'Mode' : t('match.queueLabel')}</span>
               <span className={`mt__val${others ? ' mt__val--live' : ''}`}>
-                {isPrivateRoom ? 'To\'g\'ridan-to\'g\'ri' : others && <span className="dot-live" />}
+                {isPrivateRoom ? 'Direct Room' : others && <span className="dot-live" />}
                 {isPrivateRoom
-                  ? `Xona #${roomCode}`
+                  ? `Room #${roomCode}`
                   : others
                   ? t('match.queueMany', { n: waitingCount })
                   : t('match.queueAlone')}
@@ -159,7 +159,7 @@ export default function Matching() {
           </div>
           <p className="mt__hint">
             {isPrivateRoom
-              ? "Havolani Telegram orqali do'stingizga yuboring"
+              ? "Share the invite link with your friend on Telegram"
               : others
               ? t('match.hintMany')
               : t('match.hintAlone')}

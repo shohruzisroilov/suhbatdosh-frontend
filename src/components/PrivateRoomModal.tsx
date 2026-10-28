@@ -34,7 +34,7 @@ export default function PrivateRoomModal({
 
   const botName = botUsername?.replace(/^@/, '') || 'suhbatdoshbot';
   const shareLink = `https://t.me/${botName}?startapp=room_${createdCode.toLowerCase()}`;
-  const shareText = `Salom! Suhbatdosh'da men bilan ingliz tilida gaplashish uchun ushbu havolani bosing 🎙️`;
+  const shareText = `Hello! Tap this link to practice speaking English with me on Suhbatdosh 🎙️`;
 
   const handleCopy = () => {
     tapHaptic('light');
@@ -77,7 +77,7 @@ export default function PrivateRoomModal({
         <div className="private-room-head">
           <div className="private-room-badge">
             <Users2 size={16} />
-            <span>Do'st Bilan Suhbat</span>
+            <span>Talk with a Friend</span>
           </div>
           <button
             type="button"
@@ -102,7 +102,7 @@ export default function PrivateRoomModal({
             }}
           >
             <Sparkles size={14} />
-            <span>Xona Ochish</span>
+            <span>Create Room</span>
           </button>
           <button
             type="button"
@@ -113,18 +113,18 @@ export default function PrivateRoomModal({
             }}
           >
             <KeyRound size={14} />
-            <span>Xonaga Ulanish</span>
+            <span>Join Room</span>
           </button>
         </div>
 
         {tab === 'create' ? (
           <div className="private-room-create">
             <p className="private-room-desc">
-              Do'stingizga quyidagi kod yoki havolani yuboring. U ochishi bilan suhbatingiz to'g'ridan-to'g'ri boshlanadi!
+              Send this link or code to your friend. Your voice call starts when they join!
             </p>
 
             <div className="private-room-code-card">
-              <span className="private-room-code-lbl">Xona Kodi</span>
+              <span className="private-room-code-lbl">Room Code</span>
               <div className="private-room-code-val">{createdCode}</div>
             </div>
 
@@ -135,7 +135,7 @@ export default function PrivateRoomModal({
                 onClick={handleShareTelegram}
               >
                 <Share2 size={16} />
-                <span>Telegram orqali yuborish</span>
+                <span>Share on Telegram</span>
               </button>
 
               <button
@@ -144,7 +144,7 @@ export default function PrivateRoomModal({
                 onClick={handleCopy}
               >
                 {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
-                <span>{copied ? 'Havola nusxalandi!' : 'Havoladan nusxa olish'}</span>
+                <span>{copied ? 'Link copied!' : 'Copy invite link'}</span>
               </button>
 
               <button
@@ -152,7 +152,7 @@ export default function PrivateRoomModal({
                 className="btn-quiet flex items-center justify-center gap-1.5 w-full mt-2"
                 onClick={handleStartHost}
               >
-                <span>Xonaga kirish va do'stni kutish</span>
+                <span>Enter Room &amp; Wait for Friend</span>
                 <ArrowRight size={15} />
               </button>
             </div>
@@ -160,14 +160,14 @@ export default function PrivateRoomModal({
         ) : (
           <div className="private-room-join">
             <p className="private-room-desc">
-              Do'stingiz yuborgan 6 xonali xona kodini kiriting:
+              Enter the 6-character room code from your friend:
             </p>
 
             <div className="private-room-input-wrap">
               <input
                 type="text"
                 className="private-room-input"
-                placeholder="Masalan: K7P9Q2"
+                placeholder="Example: K7P9Q2"
                 maxLength={10}
                 value={inputCode}
                 onChange={(e) => setInputCode(e.target.value.toUpperCase())}
@@ -181,7 +181,7 @@ export default function PrivateRoomModal({
               disabled={inputCode.trim().length < 3}
               onClick={handleJoinGuest}
             >
-              <span>Xonaga ulanish</span>
+              <span>Join Room</span>
               <ArrowRight size={16} />
             </button>
           </div>

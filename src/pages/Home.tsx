@@ -103,13 +103,13 @@ export default function Home() {
               )}
             </div>
 
-            {/* Sarlavha va Tavsif */}
+            {/* Title & Description */}
             <div className="hero__content">
               <h1 className="hero__title">
                 {t('home.ctaTitle')}
               </h1>
               <p className="hero__sub">
-                Erkin muloqot, IELTS, CEFR yoki kundalik mashq uchun darajangizga mos sherik toping
+                {t('home.ctaSub')}
               </p>
             </div>
 

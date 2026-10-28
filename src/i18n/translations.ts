@@ -227,6 +227,24 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'daily.limitReached': 'None left',
     'daily.getPremium': 'Get Premium for unlimited talking',
 
+    // header
+    'hh.tapToChange': 'Tap to change',
+    'hh.levelTitle': 'Your English level',
+
+    // matching
+    'match.searching': 'Searching for a partner',
+    'match.lookingFor': 'Looking for someone at your English level…',
+    'match.queueLabel': 'Queue',
+    'match.queueMany': '{n} people waiting',
+    'match.queueAlone': 'You are first in queue',
+    'match.waitLabel': 'Wait time',
+    'match.hintMany': 'Connecting takes a few seconds.',
+    'match.hintAlone': 'We will connect you as soon as someone joins.',
+    'match.noneTitle': 'No partner found right now',
+    'match.noneDesc': 'Nobody was available right now. You can try again or post on the partner board.',
+    'match.pref.womenOnly': 'Women only',
+    'match.pref.womenOnlyHint': 'Talk only with women',
+
     // report / block
     'rep.link': 'Report or block',
     'rep.title': 'Report {name}',
@@ -262,17 +280,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'profile.support': 'Support',
     'profile.supportSub': 'Questions or help? Message us',
 
-    // match
-    'match.searching': 'Searching',
-    'match.lookingFor': 'Looking for a partner',
-    'match.queueLabel': 'In queue',
-    'match.waitLabel': 'Waiting',
-    'match.queueAlone': 'You are first',
-    'match.queueMany': '{n} people',
-    'match.hintAlone': 'As soon as a partner joins, we connect you.',
-    'match.hintMany': 'Connecting you with the first free partner.',
-    'match.pref.womenOnly': 'Only girls',
-    'match.pref.womenOnlyHint': 'For your safety, match only with female partners. Free.',
+    // match limits
     'match.limitTitle': 'Your {min} free minutes are used',
     'match.limitDesc': 'Come back tomorrow, or get Premium and talk with no limit.',
     'match.unlimitedDaily': 'Unlimited daily talking with partners',
@@ -734,8 +742,6 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'vocab.save': 'Save',
     'vocab.saved': 'Saved',
     'vocab.dismiss': 'Dismiss',
-    'hh.tapToChange': 'Tap to change',
-    'hh.levelTitle': 'Choose your English level',
     'hh.levelDesc': 'Your level decides who we find for you, and how hard the AI talks.',
 
     // ─── Session end ────────────────────────────────────────────────────────
@@ -744,8 +750,6 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'end.sub': '{dur} of spoken English today.',
 
     // ─── Waiting for a partner ──────────────────────────────────────────────
-    'match.noneTitle': 'Nobody is free right now',
-    'match.noneDesc': 'Practise with the AI partner while you wait — it talks back at your level and saves the new words you meet.',
     'match.practiseWithAi': 'Practise with AI partner',
 
     // ─── Premium comparison table ───────────────────────────────────────────

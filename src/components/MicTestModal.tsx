@@ -120,7 +120,7 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
         <div className="mic-test-head">
           <div className="mic-test-badge">
             <Mic size={16} />
-            <span>Mikrofon Testi</span>
+            <span>Microphone Test</span>
           </div>
           <button
             type="button"
@@ -138,15 +138,15 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
           {status === 'requesting' && (
             <div className="mic-test-status requesting">
               <span className="mic-test-spinner" />
-              <p>Mikrofonga ulanmoqda...</p>
+              <p>Connecting to microphone…</p>
             </div>
           )}
 
           {status === 'denied' && (
             <div className="mic-test-status denied">
               <AlertCircle size={36} className="text-danger" />
-              <h4>Mikrofonga ruxsat berilmadi</h4>
-              <p>Telegram sozlamalarida yoki brauzerda mikrofon ruxsatini yoqing.</p>
+              <h4>Microphone access denied</h4>
+              <p>Please allow microphone access in Telegram or browser settings.</p>
               <button
                 type="button"
                 className="btn-primary mt-3"
@@ -155,7 +155,7 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
                   startMicTest();
                 }}
               >
-                Qayta urinish
+                Try Again
               </button>
             </div>
           )}
@@ -183,18 +183,18 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
                 {status === 'ok' ? (
                   <span className="mic-tag ok">
                     <CheckCircle2 size={16} />
-                    <span>Mikrofon a'lo darajada ishlayapti!</span>
+                    <span>Microphone is working great!</span>
                   </span>
                 ) : (
                   <span className="mic-tag listening">
                     <Volume2 size={16} />
-                    <span>Mikrofonga gapirib ko'ring...</span>
+                    <span>Say something into your microphone…</span>
                   </span>
                 )}
               </div>
 
               <p className="mic-test-hint">
-                Ovoz balandligi: <strong>{volume}%</strong> · So'zlaringiz jonli suhbatda tiniq eshitiladi.
+                Volume: <strong>{volume}%</strong> · Your voice will be clear during calls.
               </p>
 
               <button
@@ -205,7 +205,7 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
                   onClose();
                 }}
               >
-                Tayyor
+                Done
               </button>
             </div>
           )}
